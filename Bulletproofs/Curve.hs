@@ -1,4 +1,13 @@
-module Bulletproofs.Curve where
+module Bulletproofs.Curve (
+  q,
+  g,
+  h,
+  gs,
+  hs,
+  curve,
+  oracle,
+  pointToBS,
+) where
 
 import Protolude hiding (hash)
 
@@ -11,7 +20,6 @@ import qualified Data.ByteArray as BA
 import Crypto.Number.Serialize (os2ip)
 import Math.NumberTheory.Moduli.Sqrt (sqrtModP)
 
--- TEST
 import Numeric
 import qualified Data.List as L
 

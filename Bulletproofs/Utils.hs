@@ -1,4 +1,19 @@
-module Bulletproofs.Utils where
+module Bulletproofs.Utils (
+  dotp,
+  addP,
+  subP,
+  mulP,
+  shamirU,
+  shamirX,
+  shamirX',
+  shamirY,
+  shamirZ,
+  commit,
+  hadamardp,
+  powerVector,
+  logBase2,
+  logBase2M,
+) where
 
 import Protolude
 

@@ -1,4 +1,8 @@
-module Bulletproofs.InnerProductProof.Internal where
+module Bulletproofs.InnerProductProof.Internal (
+  InnerProductProof(..),
+  InnerProductWitness(..),
+  InnerProductBase(..),
+) where
 
 import Protolude
 

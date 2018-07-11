@@ -1,4 +1,18 @@
-module Bulletproofs.RangeProof.Internal where
+module Bulletproofs.RangeProof.Internal (
+  RangeProof(..),
+  RangeProofError(..),
+  LRPolys(..),
+  TPoly(..),
+  delta,
+  checkRange,
+  reversedEncodeBit,
+  complementaryVector,
+  chooseBlindingVectors,
+  commitBitVectors,
+  computeLRCommitment,
+  obfuscateEncodedBits,
+  obfuscateEncodedBitsSingle,
+) where
 
 import Protolude
 

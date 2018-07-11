@@ -1,6 +1,10 @@
 {-# LANGUAGE RecordWildCards, MultiWayIf, NamedFieldPuns, ViewPatterns #-}
 
-module Bulletproofs.RangeProof.Verifier where
+module Bulletproofs.RangeProof.Verifier (
+  verifyProof,
+  verifyTPoly,
+  verifyLRCommitment,
+) where
 
 import Protolude
 import Prelude (zipWith3)
@@ -14,7 +18,8 @@ import Bulletproofs.Curve
 import Bulletproofs.Utils
 import Bulletproofs.Fq as Fq
 
-import Bulletproofs.InnerProductProof as IPP
+import Bulletproofs.InnerProductProof as IPP hiding (verifyProof)
+import qualified Bulletproofs.InnerProductProof as IPP
 
 -- | Verify that a commitment was computed from a value in a given range
 verifyProof

@@ -1,8 +1,8 @@
 {-# LANGUAGE RecordWildCards, NamedFieldPuns, MultiWayIf #-}
 
-module Bulletproofs.InnerProductProof.Verifier
-  ( verifyProof
-  ) where
+module Bulletproofs.InnerProductProof.Verifier ( 
+  verifyProof,
+) where
 
 import Protolude
 

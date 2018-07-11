@@ -1,6 +1,9 @@
 {-# LANGUAGE RecordWildCards, MultiWayIf #-}
 
-module Bulletproofs.RangeProof.Prover where
+module Bulletproofs.RangeProof.Prover (
+  generateProof,
+  generateProofUnsafe,
+) where
 
 import Protolude
 
@@ -14,7 +17,8 @@ import Bulletproofs.Utils
 import Bulletproofs.Fq as Fq
 import Bulletproofs.RangeProof.Internal
 
-import Bulletproofs.InnerProductProof as IPP
+import Bulletproofs.InnerProductProof as IPP hiding (generateProof)
+import qualified Bulletproofs.InnerProductProof as IPP
 
 -- | Prove that a value lies in a specific range
 generateProof

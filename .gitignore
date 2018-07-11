@@ -1,3 +1,4 @@
+*.sw[ponml]
 .stack-work/
 bulletproofs.cabal
 *~

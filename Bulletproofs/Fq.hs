@@ -1,6 +1,19 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Bulletproofs.Fq where
+module Bulletproofs.Fq (
+  Fq(..),
+  new,
+  inv,
+  fqInv,
+  fqZero,
+  fqOne,
+  fqSquare,
+  fqCube,
+  fqSubV,
+  fqAddV,
+  euclidean,
+  random
+) where
 
 import Protolude
 

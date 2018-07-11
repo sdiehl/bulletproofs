@@ -1,7 +1,7 @@
 {-# LANGUAGE NamedFieldPuns, MultiWayIf #-}
 
-module Bulletproofs.InnerProductProof.Prover
-( generateProof
+module Bulletproofs.InnerProductProof.Prover ( 
+  generateProof,
 ) where
 
 import Protolude
