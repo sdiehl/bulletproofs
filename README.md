@@ -2,7 +2,7 @@
   <a href="http://www.adjoint.io"><img src="https://www.adjoint.io/assets/img/adjoint-logo@2x.png" width="250"/></a>
 </p>
 
-[![CircleCI](http://circleci.com/gh/adjoint-io/bulletproofs.svg?style=svg)](https://circleci.com/gh/adjoint-io/bulletproofs)
+[![CircleCI](http://circleci.com/gh/adjoint-io/bulletproofs.svg?style=shield)](https://circleci.com/gh/adjoint-io/bulletproofs)
 [![Hackage](https://img.shields.io/hackage/v/bulletproofs.svg)](http://hackage.haskell.org/package/bulletproofs)
 
 Bulletproofs are short zero-knowledge arguments of knowledge that do not require a trusted setup.
