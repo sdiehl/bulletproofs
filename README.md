@@ -62,7 +62,7 @@ the coefficients t<sub>1</sub>, of a polynomial t constructed from the existing 
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;\mu&space;=&space;\alpha&space;&plus;&space;\rho&space;\cdot&space;x&space;\in&space;\mathcal{Z}_p&space;$)
 
-See [Prover.hs](https://github.com/adjoint-io/bulletproofs/blob/master/src/RangeProof/Prover.hs "Prover.hs") for implementation details.
+See [Prover.hs](https://github.com/adjoint-io/bulletproofs/blob/master/Bulletproofs/RangeProof/Prover.hs "Prover.hs") for implementation details.
 
 The interaction described is made non-interactive using the Fiat-Shamir Transform wherein all the random
 challenges made by V are replaced with a hash of the transcript up until that point.
