@@ -110,7 +110,7 @@ Further information about this curve can be found in the Uplink docs:
 
 **References**:
 
-1.  Bunz B., Bootle J., Boneh J., Poelstra A., Wuille P., Maxwell G.
+1.  Bunz B., Bootle J., Boneh D., Poelstra A., Wuille P., Maxwell G.
     "Bulletproofs: Short Proofs for Confidential Transactions and More". Stanford, UCL, Blockstream, 2017
 
 2. Groth J. "Linear Algebra with Sub-linear Zero-Knowledge Arguments". University College London, 2009
