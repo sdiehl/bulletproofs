@@ -20,6 +20,10 @@ import Bulletproofs.RangeProof.Internal
 import Bulletproofs.InnerProductProof as IPP hiding (generateProof)
 import qualified Bulletproofs.InnerProductProof as IPP
 
+data RangeProofGenErr
+  = InnerProdProofGenErr Text
+  | RangeProofGenErr Text
+
 -- | Prove that a value lies in a specific range
 generateProof
   :: MonadRandom m
@@ -28,13 +32,17 @@ generateProof
   -> Integer  -- ^ Blinding factor
   -> ExceptT RangeProofError m RangeProof
 generateProof upperBound v vBlinding = do
-  unless (upperBound < q) $ throwE $ UpperBoundTooLarge upperBound
+  unless (upperBound < q) $
+    throwE $ UpperBoundTooLarge upperBound
 
   case doubleLogM of
      Nothing -> throwE $ NNotPowerOf2 upperBound
      Just n -> do
        unless (checkRange n v) $ throwE $ ValueNotInRange v
-       lift $ generateProofUnsafe upperBound v vBlinding
+       eRangeProof <- lift $ generateProofUnsafe upperBound v vBlinding
+       case eRangeProof of
+         Left err -> throwE err
+         Right p  -> pure p
 
   where
     doubleLogM :: Maybe Integer
@@ -50,7 +58,7 @@ generateProofUnsafe
   => Integer  -- ^ Upper bound of the range we want to prove
   -> Integer  -- ^ Value we want to prove in range
   -> Integer  -- ^ Blinding factor
-  -> m RangeProof
+  -> m (Either RangeProofError RangeProof)
 generateProofUnsafe upperBound v vBlinding = do
   let n = logBase2 upperBound
       vFq = Fq.new v
@@ -84,38 +92,54 @@ generateProofUnsafe upperBound v vBlinding = do
       rs = r0 `fqAddV` ((*) x <$> r1)
       t = t0 + (t1 * x) + (t2 * fqSquare x)
 
-  unless (t == dotp ls rs) $
-    panic "Error on: t = dotp l r"
+  -- Check equalities that must hold for proof to be valid
+  let checkEqualities = do
+        checkT t ls rs
+        checkT1 t1 (l0,l1) (r0,r1)
+        checkT0 t0 vFq z n y
 
-  unless (t1 == dotp l1 r0 + dotp l0 r1) $
-    panic "Error on: t1 = dotp l1 r0 + dotp l0 r1"
+  case checkEqualities of
+    Left err -> pure (Left err)
+    Right _  -> do
 
-  unless (t0 == (vFq * fqSquare z) + delta n y z) $
-    panic "Error on: t0 = v * z^2 + delta(y, z)"
+      let tBlinding = (fqSquare z * vBlindingFq) + (t2Blinding * fqSquare x) + (t1Blinding * x)
+          mu = aBlinding + (sBlinding * x)
 
-  let tBlinding = (fqSquare z * vBlindingFq) + (t2Blinding * fqSquare x) + (t1Blinding * x)
-      mu = aBlinding + (sBlinding * x)
+      let uChallenge = shamirU tBlinding mu t
+          u = uChallenge `mulP` g
+          hs' = zipWith (\yi hi-> inv yi `mulP` hi) (powerVector y n) hs
+          commitmentLR = computeLRCommitment n aCommit sCommit t tBlinding mu x y z hs'
+          eProductProof = IPP.generateProof
+                            InnerProductBase { bGs = gs, bHs = hs', bH = u }
+                            commitmentLR
+                            InnerProductWitness { ls = ls, rs = rs }
+      case eProductProof of
+        Left err -> pure (Left (InnerProductProofErr err))
+        Right productProof ->
+          pure . Right $
+            RangeProof
+              { tBlinding = tBlinding
+              , mu = mu
+              , t = t
+              , aCommit = aCommit
+              , sCommit = sCommit
+              , t1Commit = t1Commit
+              , t2Commit = t2Commit
+              , productProof = productProof
+              }
 
-  let uChallenge = shamirU tBlinding mu t
-      u = uChallenge `mulP` g
-      hs' = zipWith (\yi hi-> inv yi `mulP` hi) (powerVector y n) hs
-      commitmentLR = computeLRCommitment n aCommit sCommit t tBlinding mu x y z hs'
-      productProof = IPP.generateProof
-                        InnerProductBase { bGs = gs, bHs = hs', bH = u }
-                        commitmentLR
-                        InnerProductWitness { ls = ls, rs = rs }
+  where
+    checkT t ls rs
+      | t == dotp ls rs = Right ()
+      | otherwise = Left $ AssertionError "t" "dotp l r"
 
-  pure RangeProof
-      { tBlinding = tBlinding
-      , mu = mu
-      , t = t
-      , aCommit = aCommit
-      , sCommit = sCommit
-      , t1Commit = t1Commit
-      , t2Commit = t2Commit
-      , productProof = productProof
-      }
+    checkT1 t1 (l0, l1) (r0, r1)
+      | t1 == dotp l1 r0 + dotp l0 r1 = Right ()
+      | otherwise = Left $ AssertionError "t1" "dotp l1 r0 + dotp l0 r1"
 
+    checkT0 t0 vFq z n y
+      | t0 == (vFq * fqSquare z) + delta n y z = Right ()
+      | otherwise = Left $ AssertionError "t0" "v * z^2 + delta(y,z)"
 
 -- | Compute l and r polynomials to prove knowledge of aL, aR without revealing them.
 -- We achieve it by transferring the vectors l, r.
@@ -158,6 +182,3 @@ computeTPoly lrPoly@LRPolys{..}
   where
     t0 = dotp l0 r0
     t2 = dotp l1 r1
-
-
-

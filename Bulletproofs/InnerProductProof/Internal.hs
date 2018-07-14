@@ -2,6 +2,7 @@ module Bulletproofs.InnerProductProof.Internal (
   InnerProductProof(..),
   InnerProductWitness(..),
   InnerProductBase(..),
+  InnerProductProofErr(..),
 ) where
 
 import Protolude
@@ -44,3 +45,6 @@ data InnerProductBase
     -- for which there is no known discrete-log relation among Gs, Hs, bG
     } deriving (Show, Eq)
 
+data InnerProductProofErr
+  = AssertionError Text Text -- ^ Two values that must be equal are not
+  deriving (Show)

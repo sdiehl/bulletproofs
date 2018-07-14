@@ -1,6 +1,6 @@
 {-# LANGUAGE NamedFieldPuns, MultiWayIf #-}
 
-module Bulletproofs.InnerProductProof.Prover ( 
+module Bulletproofs.InnerProductProof.Prover (
   generateProof,
 ) where
 
@@ -26,7 +26,7 @@ generateProof
   -- whose inner product is t
   -> InnerProductWitness
   -- ^ Vectors l and r that hide bit vectors aL and aR, respectively
-  -> InnerProductProof
+  -> Either InnerProductProofErr InnerProductProof
 generateProof productBase commitmentLR witness
   = generateProof' productBase commitmentLR witness [] []
 
@@ -36,7 +36,7 @@ generateProof'
   -> InnerProductWitness
   -> [Crypto.Point]
   -> [Crypto.Point]
-  -> InnerProductProof
+  -> Either InnerProductProofErr InnerProductProof
 generateProof'
   InnerProductBase{ bGs, bHs, bH }
   commitmentLR
@@ -44,12 +44,12 @@ generateProof'
   lCommits
   rCommits
   = case (ls, rs) of
-    ([l], [r]) -> InnerProductProof (reverse lCommits) (reverse rCommits) l r
-    _          -> if | not checkLGs -> panic "Error in: l' * Gs' == l * Gs + x^2 * A_L + x^(-2) * A_R"
-                     | not checkRHs -> panic "Error in: r' * Hs' == r * Hs + x^2 * B_L + x^(-2) * B_R"
-                     | not checkLBs -> panic "Error in: l' * r' == l * r + x^2 * (lsLeft * rsRight) + x^-2 * (lsRight * rsLeft)"
-                     | not checkC -> panic "Error in: C == zG + aG + bH'"
-                     | not checkC' -> panic "Error in: C' = C + x^2 L + x^-2 R == z'G + a'G + b'H'"
+    ([l], [r]) -> Right $ InnerProductProof (reverse lCommits) (reverse rCommits) l r
+    _          -> if | not checkLGs -> reportErr "l' * Gs'" "l * Gs + x^2 * A_L + x^(-2) * A_R"
+                     | not checkRHs -> reportErr "r' * Hs'" "r * Hs + x^2 * B_L + x^(-2) * B_R"
+                     | not checkLBs -> reportErr "l' * r'" "l * r + x^2 * (lsLeft * rsRight) + x^-2 * (lsRight * rsLeft)"
+                     | not checkC -> reportErr "C" "zG + aG + bH'"
+                     | not checkC' -> reportErr "C + x^2 L + x^-2 R" "z'G + a'G + b'H'"
                      | otherwise -> generateProof'
                          InnerProductBase { bGs = gs'', bHs = hs'', bH = bH }
                          commitmentLR'
@@ -57,6 +57,8 @@ generateProof'
                          (lCommit:lCommits)
                          (rCommit:rCommits)
   where
+    reportErr e e' = Left (AssertionError e e')
+
     n' = fromIntegral $ length ls
     nPrime = n' `div` 2
 
@@ -158,5 +160,3 @@ generateProof'
         lGs'
         `addP`
         rHs'
-
-

@@ -58,6 +58,8 @@ data RangeProofError
   = UpperBoundTooLarge Integer  -- ^ The upper bound of the range is too large
   | ValueNotInRange Integer     -- ^ Value is not within the range required
   | NNotPowerOf2 Integer        -- ^ Dimension n is required to be a power of 2
+  | AssertionError Text Text    -- ^ Two values expected to be equal are not
+  | InnerProductProofErr InnerProductProofErr -- ^ Error when generating the inner product proof
   deriving (Show)
 
 -----------------------------
