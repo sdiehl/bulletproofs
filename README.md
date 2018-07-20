@@ -46,11 +46,11 @@ and require that **a<sub>L</sub>** ◦ **a<sub>R</sub>** = 0 holds.
 - **P -> V : T<sub>1</sub>, T<sub>2</sub>** - where T<sub>1</sub> and T<sub>2</sub> are commitments to
 the coefficients t<sub>1</sub>, of a polynomial t constructed from the existing values in the protocol.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;\textbf{l}&space;=&space;l(x)&space;=&space;\textbf{a}_L&space;-&space;z&space;\cdot&space;\textbf{1}^n&space;&plus;&space;\textbf{s}_L&space;\cdot&space;x&space;\in&space;\mathcal{Z}^n_p$)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;\textbf{l}&space;=&space;l(x)&space;=&space;\textbf{a}_L&space;-&space;z&space;\cdot&space;\textbf{1}^n&space;&plus;&space;\textbf{s}_L&space;\cdot&space;x&space;\in&space;\mathbb{Z}^n_p$)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;\textbf{r}&space;=&space;r(x)&space;=&space;\textbf{y}^n&space;\circ&space;(\textbf{a}_R&space;&plus;&space;z&space;\cdot&space;\textbf{1}^n&space;&plus;&space;\textbf{s}_R&space;\cdot&space;x&space;)&space;&plus;&space;z^2&space;\cdot&space;\textbf{2}^n&space;\in&space;\mathcal{Z}^n_p&space;$)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;\textbf{r}&space;=&space;r(x)&space;=&space;\textbf{y}^n&space;\circ&space;(\textbf{a}_R&space;&plus;&space;z&space;\cdot&space;\textbf{1}^n&space;&plus;&space;\textbf{s}_R&space;\cdot&space;x&space;)&space;&plus;&space;z^2&space;\cdot&space;\textbf{2}^n&space;\in&space;\mathbb{Z}^n_p&space;$)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;t&space;=&space;\langle&space;\textbf{l},&space;\textbf{r}&space;\rangle&space;\in&space;\mathcal{Z}_p$)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;t&space;=&space;\langle&space;\textbf{l},&space;\textbf{r}&space;\rangle&space;\in&space;\mathbb{Z}_p$)
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$T_i&space;=&space;g&space;\cdot&space;t_i&space;&plus;&space;h&space;\cdot&space;\tau_i&space;\in&space;\mathcal{G},&space;\hspace{3em}&space;i&space;=&space;\{1,&space;2\}&space;$)
 
@@ -58,9 +58,9 @@ the coefficients t<sub>1</sub>, of a polynomial t constructed from the existing 
 
 - **P -> V : tau, mu, t, l, r** - Prover sends several commitments that the verifier will then check.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;\tau_x&space;=&space;\tau_2&space;\cdot&space;x^2&space;&plus;&space;\tau_1&space;\cdot&space;x&space;&plus;&space;z^2&space;\cdot&space;\gamma&space;\in&space;\mathcal{Z}_p&space;$)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;\tau_x&space;=&space;\tau_2&space;\cdot&space;x^2&space;&plus;&space;\tau_1&space;\cdot&space;x&space;&plus;&space;z^2&space;\cdot&space;\gamma&space;\in&space;\mathbb{Z}_p&space;$)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;\mu&space;=&space;\alpha&space;&plus;&space;\rho&space;\cdot&space;x&space;\in&space;\mathcal{Z}_p&space;$)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;\mu&space;=&space;\alpha&space;&plus;&space;\rho&space;\cdot&space;x&space;\in&space;\mathbb{Z}_p&space;$)
 
 See [Prover.hs](https://github.com/adjoint-io/bulletproofs/blob/master/Bulletproofs/RangeProof/Prover.hs "Prover.hs") for implementation details.
 
