@@ -6,6 +6,7 @@ module Bulletproofs.RangeProof.Internal (
   delta,
   checkRange,
   reversedEncodeBit,
+  reversedEncodeBitVector,
   complementaryVector,
   chooseBlindingVectors,
   commitBitVectors,
@@ -56,9 +57,9 @@ data RangeProof
 
 data RangeProofError
   = UpperBoundTooLarge Integer  -- ^ The upper bound of the range is too large
-  | ValueNotInRange Integer     -- ^ Value is not within the range required
+  | ValuesNotInRange [Integer]     -- ^ Value is not within the range required
   | NNotPowerOf2 Integer        -- ^ Dimension n is required to be a power of 2
-  deriving (Show)
+  deriving (Show, Eq)
 
 -----------------------------
 -- Polynomials
@@ -83,7 +84,6 @@ data TPoly
 -- Internal functions
 -----------------------------
 
-
 -- | Encode the value v into a bit representation. Let aL be a vector
 -- of bits such that <aL, 2^n> = v (put more simply, the components of a L are the
 -- binary digits of v).
@@ -94,6 +94,10 @@ encodeBit n (Fq v) = fillWithZeros n $ Fq.new . fromIntegral . digitToInt <$> sh
 -- v = <a, 2^n> = a_0 * 2^0 + ... + a_n-1 * 2^(n-1)
 reversedEncodeBit :: Integer -> Fq -> [Fq]
 reversedEncodeBit n = reverse . encodeBit n
+
+-- TODO: Test it
+reversedEncodeBitVector :: Integer -> [Fq] -> [Fq]
+reversedEncodeBitVector n = foldl' (\acc v -> acc ++ reversedEncodeBit n v) []
 
 -- | In order to prove that v is in range, each element of aL is either 0 or 1.
 -- We construct a “complementary” vector aR = aL − 1^n and require that
@@ -119,7 +123,7 @@ obfuscateEncodedBits n aL aR y z
   where
     yN = powerVector y n
 
--- Convert obfuscateEncodedBits into aCommit sCommitingle inner product.
+-- Convert obfuscateEncodedBits into aCommit sCommit single inner product.
 -- We can afford for this factorization to leave terms “dangling”, but
 -- what’s important is that the aL , aR terms be kept inside
 -- (since they can’t be shared with the Verifier):
@@ -168,19 +172,24 @@ chooseBlindingVectors n = do
   pure (sL, sR)
 
 -- | (z − z^2) * <1^n, y^n> − z^3 * <1^n, 2^n>
-delta :: Integer -> Fq -> Fq -> Fq
-delta n y z
-  = ((z - Fq.fqSquare z) * dotp (powerVector 1 n) (powerVector y n))
-  - (Fq.fqCube z * dotp (powerVector 1 n) (powerVector 2 n))
+delta :: Integer -> Integer -> Fq -> Fq -> Fq
+delta n m y z
+  = ((z - Fq.fqSquare z) * dotp (powerVector 1 nm) (powerVector y nm))
+  - foldl' (\acc j -> acc + (Fq.fqPower z (j + 2) * dotp (powerVector 1 n) (powerVector 2 n))) (Fq 0) [1..m]
+  {-- (Fq.fqCube z * dotp (powerVector 1 n) (powerVector 2 n))-}
+  {-- (Fq.fqPower z (1 + 2)) * dotp (powerVector 1 n) (powerVector 2 n)-}
+  where
+    nm = n * m
 
 -- | Check that a value is in aCommit sCommitpecific range
-checkRange :: Integer -> Integer -> Bool
-checkRange n v = v >= 0 && v < 2 ^ n
+checkRange :: Integer -> [Integer] -> Bool
+checkRange n vs = and $ fmap (\v -> v >= 0 && v < 2 ^ n) vs
 
 -- | Compute commitment of linear vector polynomials l and r
 -- P = A + xS − zG + (z*y^n + z^2 * 2^n) * hs'
 computeLRCommitment
   :: Integer
+  -> Integer
   -> Crypto.Point
   -> Crypto.Point
   -> Fq
@@ -191,20 +200,29 @@ computeLRCommitment
   -> Fq
   -> [Crypto.Point]
   -> Crypto.Point
-computeLRCommitment n aCommit sCommit t tBlinding mu x y z hs'
-  = aCommit
+computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
+  = aCommit                                               -- A
     `addP`
-    (x `mulP` sCommit)
+    (x `mulP` sCommit)                                    -- xS
     `addP`
-    Crypto.pointNegate curve (z `mulP` gsSum)
+    Crypto.pointNegate curve (z `mulP` gsSum)             -- (- zG)
     `addP`
-    foldl' addP Crypto.PointO (zipWith mulP hExp hs')
+    foldl' addP Crypto.PointO (zipWith mulP hExp hs')     -- (hExp Hs')
+    `addP`
+    foldl'
+      (\acc j -> acc `addP` foldl' addP Crypto.PointO (zipWith mulP (hExp' j) (sliceHs' j)))
+      Crypto.PointO
+      [1..m]
     `addP`
     Crypto.pointNegate curve (mu `mulP` h)
     `addP`
     (t `mulP` u)
     where
       gsSum = foldl' addP Crypto.PointO (take (fromIntegral n) gs)
-      hExp = ((*) z <$> powerVector y n) `fqAddV` ((*) (fqSquare z) <$> powerVector 2 n)
+      hExp = ((*) z <$> powerVector y n)
+      hExp' j = (*) (fqPower z (j+1)) <$> powerVector 2 n
+      sliceHs' j =
+              take (fromIntegral $ (j * n) - (j - 1) * n) (drop (fromIntegral $ (j - 1) * n) hs')
       uChallenge = shamirU tBlinding mu t
       u = uChallenge `mulP` g
+      nm = n * m

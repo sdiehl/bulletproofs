@@ -22,46 +22,49 @@ import qualified Bulletproofs.InnerProductProof as IPP
 
 -- | Prove that a value lies in a specific range
 generateProof
-  :: MonadRandom m
-  => Integer  -- ^ Upper bound of the range we want to prove
-  -> Integer  -- ^ Value we want to prove in range
-  -> Integer  -- ^ Blinding factor
+  :: (MonadRandom m, MonadIO m)
+  => Integer                -- ^ Upper bound of the range we want to prove
+  -> [(Integer, Integer)]
+  -- ^ Values we want to prove in range and their blinding factors
   -> ExceptT RangeProofError m RangeProof
-generateProof upperBound v vBlinding = do
+generateProof upperBound vsAndvBlindings = do
   unless (upperBound < q) $ throwE $ UpperBoundTooLarge upperBound
 
   case doubleLogM of
      Nothing -> throwE $ NNotPowerOf2 upperBound
      Just n -> do
-       unless (checkRange n v) $ throwE $ ValueNotInRange v
-       lift $ generateProofUnsafe upperBound v vBlinding
+       unless (checkRange n vs) $ throwE $ ValuesNotInRange vs
+       lift $ generateProofUnsafe upperBound vsAndvBlindings
 
   where
     doubleLogM :: Maybe Integer
     doubleLogM = do
-     x <- logBase2M upperBound
-     logBase2M x
-     pure x
+      x <- logBase2M upperBound
+      logBase2M x
+      pure x
+    vs = fst <$> vsAndvBlindings
 
 
 -- | Generate range proof from valid inputs
 generateProofUnsafe
-  :: MonadRandom m
-  => Integer  -- ^ Upper bound of the range we want to prove
-  -> Integer  -- ^ Value we want to prove in range
-  -> Integer  -- ^ Blinding factor
+  :: (MonadRandom m, MonadIO m)
+  => Integer    -- ^ Upper bound of the range we want to prove
+  -> [(Integer, Integer)]
+  -- ^ Values we want to prove in range and their blinding factors
   -> m RangeProof
-generateProofUnsafe upperBound v vBlinding = do
+generateProofUnsafe upperBound vsAndvBlindings = do
   let n = logBase2 upperBound
-      vFq = Fq.new v
-      vBlindingFq = Fq.new vBlinding
+      m = fromIntegral $ length vsAndvBlindings
+      nm = n * m
+      vsFq = Fq.new . fst <$> vsAndvBlindings
+      vBlindingsFq = Fq.new . snd <$> vsAndvBlindings
 
-  let aL = reversedEncodeBit n vFq
+  let aL = reversedEncodeBitVector n vsFq
       aR = complementaryVector aL
 
-  (sL, sR) <- chooseBlindingVectors n
+  (sL, sR) <- chooseBlindingVectors nm
 
-  [aBlinding, sBlinding] <- replicateM 2 (Fq.random n)
+  [aBlinding, sBlinding] <- replicateM 2 (Fq.random nm)
 
   (aCommit, sCommit) <- commitBitVectors aBlinding sBlinding aL aR sL sR
 
@@ -69,7 +72,7 @@ generateProofUnsafe upperBound v vBlinding = do
   let y = shamirY aCommit sCommit
       z = shamirZ aCommit sCommit y
 
-  let lrPoly@LRPolys{..} = computeLRPolys n aL aR sL sR y z
+  let lrPoly@LRPolys{..} = computeLRPolys n m aL aR sL sR y z
       tPoly@TPoly{..} = computeTPoly lrPoly
 
   [t1Blinding, t2Blinding] <- replicateM 2 (Fq.random n)
@@ -90,16 +93,18 @@ generateProofUnsafe upperBound v vBlinding = do
   unless (t1 == dotp l1 r0 + dotp l0 r1) $
     panic "Error on: t1 = dotp l1 r0 + dotp l0 r1"
 
-  unless (t0 == (vFq * fqSquare z) + delta n y z) $
-    panic "Error on: t0 = v * z^2 + delta(y, z)"
+  {-unless (t0 == (vFq * fqSquare z) + delta n y z) $-}
+    {-panic "Error on: t0 = v * z^2 + delta(y, z)"-}
 
-  let tBlinding = (fqSquare z * vBlindingFq) + (t2Blinding * fqSquare x) + (t1Blinding * x)
+  let tBlinding = sum (zipWith (\vBlindingFq j -> fqPower z (j+1) * vBlindingFq) vBlindingsFq [1..m])
+                + (t2Blinding * fqSquare x)
+                + (t1Blinding * x)
       mu = aBlinding + (sBlinding * x)
 
   let uChallenge = shamirU tBlinding mu t
       u = uChallenge `mulP` g
       hs' = zipWith (\yi hi-> inv yi `mulP` hi) (powerVector y n) hs
-      commitmentLR = computeLRCommitment n aCommit sCommit t tBlinding mu x y z hs'
+      commitmentLR = computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
       productProof = IPP.generateProof
                         InnerProductBase { bGs = gs, bHs = hs', bH = u }
                         commitmentLR
@@ -126,6 +131,7 @@ generateProofUnsafe upperBound v vBlinding = do
 -- r(x) = y^n ◦ (aR + z * 1^n + sR * x) + z^2 * 2^n
 computeLRPolys
   :: Integer
+  -> Integer
   -> [Fq]
   -> [Fq]
   -> [Fq]
@@ -133,17 +139,21 @@ computeLRPolys
   -> Fq
   -> Fq
   -> LRPolys
-computeLRPolys n aL aR sL sR y z
+computeLRPolys n m aL aR sL sR y z
   = LRPolys
-        { l0 = aL `fqSubV` ((*) z <$> powerVector 1 n)
+        { l0 = aL `fqSubV` ((*) z <$> powerVector 1 nm)
         , l1 = sL
-        , r0 = (powerVector y n `hadamardp` (aR `fqAddV` z1n))
+        , r0 =
+               (powerVector y nm `hadamardp` (aR `fqAddV` z1nm))
                `fqAddV`
-               ((*) (fqSquare z) <$> powerVector 2 n)
-        , r1 = hadamardp (powerVector y n) sR
+                foldl' (\acc j -> iter j `fqAddV` acc) (replicate (fromIntegral nm) (Fq 0)) [1..m]
+        , r1 = hadamardp (powerVector y nm) sR
         }
   where
-    z1n = (*) z <$> powerVector 1 n
+    z1nm = (*) z <$> powerVector 1 nm
+    nm = n * m
+    iter j = (*) (fqPower z (j + 1)) <$> (powerVector 0 ((j - 1) * n) ++ powerVector 2 n ++ powerVector 0 ((m - j) * n))
+
 
 
 -- | Compute polynomial t from polynomial r
