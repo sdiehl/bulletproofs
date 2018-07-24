@@ -126,7 +126,7 @@ obfuscateEncodedBits n aL aR y z
   where
     yN = powerVector y n
 
--- Convert obfuscateEncodedBits into aCommit sCommit single inner product.
+-- Convert obfuscateEncodedBits into a single inner product.
 -- We can afford for this factorization to leave terms “dangling”, but
 -- what’s important is that the aL , aR terms be kept inside
 -- (since they can’t be shared with the Verifier):
@@ -214,9 +214,6 @@ computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
     `addP`
     foldl' addP Crypto.PointO (zipWith mulP hExp hs')     -- (hExp Hs')
     `addP`
-    {-foldl' addP Crypto.PointO (zipWith mulP ((*) (fqSquare z) <$> powerVector 2 n) (sliceHs' 1))     -- (hExp Hs')-}
-    {-`addP`-}
-    {-foldl' addP Crypto.PointO (zipWith mulP ((*) (fqCube z) <$> powerVector 2 n) (sliceHs' 2))     -- (hExp Hs')-}
     foldl'
       (\acc j -> acc `addP` foldl' addP Crypto.PointO (zipWith mulP (hExp' j) (sliceHs' j)))
       Crypto.PointO
@@ -227,8 +224,7 @@ computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
     (t `mulP` u)
     where
       gsSum = foldl' addP Crypto.PointO (take (fromIntegral nm) gs)
-      hExp = ((*) z <$> powerVector y nm)
-              {-`fqAddV` ((*) (fqSquare z) <$> powerVector 2 n)-}
+      hExp = (*) z <$> powerVector y nm
       hExp' j = (*) (fqPower z (j+1)) <$> powerVector 2 n
       sliceHs' j = slice n j hs'
       uChallenge = shamirU tBlinding mu t

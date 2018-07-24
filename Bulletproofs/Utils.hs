@@ -13,7 +13,9 @@ module Bulletproofs.Utils (
   powerVector,
   logBase2,
   logBase2M,
-  slice
+  log2Ceil,
+  slice,
+  padToNearestPowerOfTwo
 ) where
 
 import Protolude
@@ -72,6 +74,33 @@ logBase2M x
 
 slice :: Integer -> Integer -> [a] -> [a]
 slice n j vs = take (fromIntegral $ j  * n - (j - 1)*n) (drop (fromIntegral $ (j - 1) * n) vs)
+
+-- | Append minimal amount of zeroes until the list has a length which
+-- is a power of two.
+padToNearestPowerOfTwo
+  :: Num f => [f] -> [f]
+padToNearestPowerOfTwo [] = []
+padToNearestPowerOfTwo xs = padToNearestPowerOfTwoOf (length xs) xs
+
+-- | Given n, append zeroes until the list has length 2^n.
+padToNearestPowerOfTwoOf
+  :: Num f
+  => Int -- ^ n
+  -> [f] -- ^ list which should have length <= 2^n
+  -> [f] -- ^ list which will have length 2^n
+padToNearestPowerOfTwoOf i xs = xs ++ replicate padLength 0
+  where
+    padLength = nearestPowerOfTwo - length xs
+    nearestPowerOfTwo = 2 ^ log2Ceil i
+
+-- | Calculate ceiling of log base 2 of an integer.
+log2Ceil :: Int -> Int
+log2Ceil x = floorLog + correction
+  where
+    floorLog = finiteBitSize x - 1 - countLeadingZeros x
+    correction = if countTrailingZeros x < floorLog
+                 then 1
+                 else 0
 
 --------------------------------------------------
 -- Fiat-Shamir transformations

@@ -10,7 +10,7 @@ import Test.QuickCheck
 import qualified Test.QuickCheck.Monadic as QCM
 
 import Crypto.Random.Types (MonadRandom(..))
-import Crypto.Number.Generate (generateMax)
+import Crypto.Number.Generate (generateMax, generateBetween)
 import qualified Crypto.PubKey.ECC.Generate as Crypto
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
@@ -205,7 +205,7 @@ test_completeness :: TestTree
 test_completeness = localOption (QuickCheckTests 10) $
   testProperty "Test multi range proof completeness" $ QCM.monadicIO $ do
     n <- QCM.run $ (2 ^) <$> generateMax 8
-    m <- QCM.run $ (2 ^) <$> generateMax 3
+    m <- QCM.run $ generateBetween 1 10
     ctx <- QCM.run $ replicateM (fromIntegral m) (setupV n)
     let upperBound = getUpperBound n
 

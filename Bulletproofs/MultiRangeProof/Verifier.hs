@@ -30,15 +30,19 @@ verifyProof
   -> Bool
 verifyProof upperBound vCommits proof@RangeProof{..}
   = and
-      [ verifyTPoly n vCommits proof x y z
-      , verifyLRCommitment n m proof x y z
+      [ verifyTPoly n vCommitsExp2 proof x y z
+      , verifyLRCommitment n mExp2 proof x y z
       ]
   where
     x = shamirX aCommit sCommit t1Commit t2Commit y z
     y = shamirY aCommit sCommit
     z = shamirZ aCommit sCommit y
     n = logBase2 upperBound
-    m = fromIntegral $ length vCommits
+    m = length vCommits
+    -- Vector of values passed must be of length 2^x
+    vCommitsExp2 = vCommits ++ residueCommits
+    residueCommits = replicate (2 ^ log2Ceil m - m) Crypto.PointO
+    mExp2 = fromIntegral $ length vCommitsExp2
 
 -- | Verify the constant term of the polynomial t
 -- t = t(x) = t0 + t1*x + t2*x^2

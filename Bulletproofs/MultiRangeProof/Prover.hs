@@ -34,7 +34,8 @@ generateProof upperBound vsAndvBlindings = do
      Nothing -> throwE $ NNotPowerOf2 upperBound
      Just n -> do
        unless (checkRanges n vs) $ throwE $ ValuesNotInRange vs
-       lift $ generateProofUnsafe upperBound vsAndvBlindings
+
+       lift $ generateProofUnsafe upperBound vsAndvBlindingsExp2
 
   where
     doubleLogM :: Maybe Integer
@@ -43,6 +44,10 @@ generateProof upperBound vsAndvBlindings = do
       logBase2M x
       pure x
     vs = fst <$> vsAndvBlindings
+    m = length vsAndvBlindings
+    residue = replicate (2 ^ log2Ceil m - m) (0, 0)
+    -- Vector of values passed must be of length 2^x
+    vsAndvBlindingsExp2 = vsAndvBlindings ++ residue
 
 
 -- | Generate range proof from valid inputs
@@ -94,7 +99,6 @@ generateProofUnsafe upperBound vsAndvBlindings = do
     panic "Error on: t1 = dotp l1 r0 + dotp l0 r1"
 
   let tBlinding = sum (zipWith (\vBlindingFq j -> fqPower z (j + 1) * vBlindingFq) vBlindingsFq [1..m])
-               {-foldl' (\acc (vBlindingFq, j) -> acc + (fqPower z (j+1) * vBlindingFq)) (Fq.new 0) (zip vBlindingsFq [1..m])-}
                 + (t2Blinding * fqSquare x)
                 + (t1Blinding * x)
       mu = aBlinding + (sBlinding * x)
