@@ -6,7 +6,7 @@ module Bulletproofs.RangeProof.Internal (
   delta,
   checkRange,
   reversedEncodeBit,
-  reversedEncodeBitVector,
+  reversedEncodeBitMulti,
   complementaryVector,
   chooseBlindingVectors,
   commitBitVectors,
@@ -96,14 +96,15 @@ reversedEncodeBit :: Integer -> Fq -> [Fq]
 reversedEncodeBit n = reverse . encodeBit n
 
 -- TODO: Test it
-reversedEncodeBitVector :: Integer -> [Fq] -> [Fq]
-reversedEncodeBitVector n = foldl' (\acc v -> acc ++ reversedEncodeBit n v) []
+reversedEncodeBitMulti :: Integer -> [Fq] -> [Fq]
+reversedEncodeBitMulti n = foldl' (\acc v -> acc ++ reversedEncodeBit n v) []
 
 -- | In order to prove that v is in range, each element of aL is either 0 or 1.
 -- We construct a “complementary” vector aR = aL − 1^n and require that
 -- aL ◦ aR = 0 hold.
 complementaryVector :: Num a => [a] -> [a]
 complementaryVector aL = (\vi -> vi - 1) <$> aL
+
 
 -- | Add non-relevant zeros to a vector to match the size
 -- of the other vectors used in the protocol
@@ -176,8 +177,6 @@ delta :: Integer -> Integer -> Fq -> Fq -> Fq
 delta n m y z
   = ((z - Fq.fqSquare z) * dotp (powerVector 1 nm) (powerVector y nm))
   - foldl' (\acc j -> acc + (Fq.fqPower z (j + 2) * dotp (powerVector 1 n) (powerVector 2 n))) (Fq 0) [1..m]
-  {-- (Fq.fqCube z * dotp (powerVector 1 n) (powerVector 2 n))-}
-  {-- (Fq.fqPower z (1 + 2)) * dotp (powerVector 1 n) (powerVector 2 n)-}
   where
     nm = n * m
 
@@ -209,6 +208,9 @@ computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
     `addP`
     foldl' addP Crypto.PointO (zipWith mulP hExp hs')     -- (hExp Hs')
     `addP`
+    {-foldl' addP Crypto.PointO (zipWith mulP ((*) (fqSquare z) <$> powerVector 2 n) (sliceHs' 1))     -- (hExp Hs')-}
+    {-`addP`-}
+    {-foldl' addP Crypto.PointO (zipWith mulP ((*) (fqCube z) <$> powerVector 2 n) (sliceHs' 2))     -- (hExp Hs')-}
     foldl'
       (\acc j -> acc `addP` foldl' addP Crypto.PointO (zipWith mulP (hExp' j) (sliceHs' j)))
       Crypto.PointO
@@ -218,11 +220,11 @@ computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
     `addP`
     (t `mulP` u)
     where
-      gsSum = foldl' addP Crypto.PointO (take (fromIntegral n) gs)
-      hExp = ((*) z <$> powerVector y n)
+      gsSum = foldl' addP Crypto.PointO (take (fromIntegral nm) gs)
+      hExp = ((*) z <$> powerVector y nm)
+              {-`fqAddV` ((*) (fqSquare z) <$> powerVector 2 n)-}
       hExp' j = (*) (fqPower z (j+1)) <$> powerVector 2 n
-      sliceHs' j =
-              take (fromIntegral $ (j * n) - (j - 1) * n) (drop (fromIntegral $ (j - 1) * n) hs')
+      sliceHs' j = slice n j hs'
       uChallenge = shamirU tBlinding mu t
       u = uChallenge `mulP` g
       nm = n * m

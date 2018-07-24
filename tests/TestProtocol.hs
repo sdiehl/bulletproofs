@@ -60,6 +60,27 @@ prop_challengeComplementaryVector = QCM.monadicIO $ do
       ==
       0
 
+prop_reversedEncodeBitAggr :: Int -> Property
+prop_reversedEncodeBitAggr x = QCM.monadicIO $ do
+  n <- QCM.run $ (2 ^) <$> generateMax 8
+  vs <- QCM.run $ replicateM x $ Fq.random n
+  let m = fromIntegral $ length vs
+      reversed = RP.reversedEncodeBitMulti n vs
+  QCM.assert $ vs == fmap (\j -> dotp (slice n j reversed) (powerVector 2 n)) [1..m]
+
+prop_challengeComplementaryVectorAggr :: Int -> Property
+prop_challengeComplementaryVectorAggr x = QCM.monadicIO $ do
+  n <- QCM.run $ (2 ^) <$> generateMax 8
+  vs <- QCM.run $ replicateM 3 $ Fq.random n
+  let aL = RP.reversedEncodeBitMulti n vs
+      aR = RP.complementaryVector aL
+      m = length vs
+  y <- QCM.run $ Fq.random n
+  QCM.assert $
+    replicate m 0
+    ==
+    fmap (\j -> dotp ((slice n j aL `fqSubV` powerVector 1 n) `fqSubV` slice n j aR) (powerVector y n)) [1..fromIntegral m]
+
 prop_obfuscateEncodedBits
   :: Fq
   -> Fq
@@ -87,35 +108,37 @@ prop_singleInnerProduct y z
 
   QCM.assert $ RP.obfuscateEncodedBitsSingle n aL aR y z == (fqSquare z * v) + RP.delta n 1 y z
 
-setupV :: MonadRandom m => Integer -> m (Integer, Integer, Crypto.Point)
+setupV :: MonadRandom m => Integer -> m ((Integer, Integer), Crypto.Point)
 setupV n = do
   v <- generateMax (2^n)
   vBlinding <- Crypto.scalarGenerate curve
   let vCommit = commit (Fq.new v) (Fq.new vBlinding)
-  pure (v, vBlinding, vCommit)
+  pure ((v, vBlinding), vCommit)
 
 test_verifyTPolynomial :: TestTree
-test_verifyTPolynomial = localOption (QuickCheckTests 50) $
+test_verifyTPolynomial = localOption (QuickCheckTests 5) $
   testProperty "Verify T polynomial" $ QCM.monadicIO $ do
     n <- QCM.run $ (2 ^) <$> generateMax 8
-    (v, vBlinding, vCommit) <- QCM.run $ setupV n
+    m <- QCM.run $ (2 ^) <$> generateMax 3
+    ctx <- QCM.run $ replicateM m (setupV n)
 
-    proofE <- QCM.run $ runExceptT $ RP.generateProof (getUpperBound n) [(v, vBlinding)]
+    proofE <- QCM.run $ runExceptT $ RP.generateProof (getUpperBound n) (fst <$> ctx)
     case proofE of
       Left err -> panic $ show err
       Right (proof@RP.RangeProof{..}) -> do
         let x = shamirX aCommit sCommit t1Commit t2Commit y z
             y = shamirY aCommit sCommit
             z = shamirZ aCommit sCommit y
-        QCM.assert $ RP.verifyTPoly n [vCommit] proof x y z
+        QCM.assert $ RP.verifyTPoly n (snd <$> ctx) proof x y z
 
 test_verifyLRCommitments :: TestTree
-test_verifyLRCommitments = localOption (QuickCheckTests 2) $
+test_verifyLRCommitments = localOption (QuickCheckTests 5) $
   testProperty "Verify LR commitments" $ QCM.monadicIO $ do
     n <- QCM.run $ (2 ^) <$> generateMax 8
-    (v, vBlinding, vCommit) <- QCM.run $ setupV n
+    m <- QCM.run $ (2 ^) <$> generateMax 3
+    ctx <- QCM.run $ replicateM (fromIntegral m) (setupV n)
 
-    proofE <- QCM.run $ runExceptT $ RP.generateProof (getUpperBound n) [(v, vBlinding)]
+    proofE <- QCM.run $ runExceptT $ RP.generateProof (getUpperBound n) (fst <$> ctx)
     case proofE of
       Left err -> panic $ show err
       Right (proof@RP.RangeProof{..}) -> do
@@ -123,12 +146,12 @@ test_verifyLRCommitments = localOption (QuickCheckTests 2) $
             y = shamirY aCommit sCommit
             z = shamirZ aCommit sCommit y
 
-        QCM.assert $ RP.verifyLRCommitment n 1 proof x y z
+        QCM.assert $ RP.verifyLRCommitment n m proof x y z
 
 prop_valueNotInRange :: Property
 prop_valueNotInRange = QCM.monadicIO $ do
   n <- QCM.run $ (2 ^) <$> generateMax 8
-  (v, vBlinding, vCommit) <- QCM.run $ setupV n
+  ((v, vBlinding), vCommit) <- QCM.run $ setupV n
   let upperBound = getUpperBound n
       vNotInRange = v + upperBound
 
@@ -142,7 +165,7 @@ prop_valueNotInRange = QCM.monadicIO $ do
 prop_invalidUpperBound :: Property
 prop_invalidUpperBound = QCM.monadicIO $ do
   n <- QCM.run $ (2 ^) <$> generateMax 8
-  (v, vBlinding, vCommit) <- QCM.run $ setupV n
+  ((v, vBlinding), vCommit) <- QCM.run $ setupV n
   let invalidUpperBound = q + 1
   proofE <- QCM.run $ runExceptT $ RP.generateProof invalidUpperBound [(v, vBlinding)]
   case proofE of
@@ -154,7 +177,7 @@ prop_invalidUpperBound = QCM.monadicIO $ do
 prop_differentUpperBound :: Positive Integer -> Property
 prop_differentUpperBound (Positive upperBound') = expectFailure . QCM.monadicIO $ do
   n <- QCM.run $ (2 ^) <$> generateMax 8
-  (v, vBlinding, vCommit) <- QCM.run $ setupV n
+  ((v, vBlinding), vCommit) <- QCM.run $ setupV n
   proofE <- QCM.run $ runExceptT $ RP.generateProof (getUpperBound n) [(v, vBlinding)]
   case proofE of
     Left err -> panic $ show err
@@ -165,7 +188,7 @@ test_invalidCommitment :: TestTree
 test_invalidCommitment = localOption (QuickCheckTests 20) $
   testProperty "Check invalid commitment" $ QCM.monadicIO $ do
   n <- QCM.run $ (2 ^) <$> generateMax 8
-  (v, vBlinding, vCommit) <- QCM.run $ setupV n
+  ((v, vBlinding), vCommit) <- QCM.run $ setupV n
   let invalidVCommit = commit (Fq.new $ v + 1) (Fq.new vBlinding)
       upperBound = getUpperBound n
   proofE <- QCM.run $ runExceptT $ RP.generateProof upperBound [(v, vBlinding)]
@@ -175,14 +198,16 @@ test_invalidCommitment = localOption (QuickCheckTests 20) $
       QCM.assert $ not $ RP.verifyProof upperBound [invalidVCommit] proof
 
 test_completeness :: TestTree
-test_completeness = localOption (QuickCheckTests 3) $
+test_completeness = localOption (QuickCheckTests 10) $
   testProperty "Test range proof completeness" $ QCM.monadicIO $ do
     n <- QCM.run $ (2 ^) <$> generateMax 8
-    (v, vBlinding, vCommit) <- QCM.run $ setupV n
+    m <- QCM.run $ (2 ^) <$> generateMax 3
+    ctx <- QCM.run $ replicateM (fromIntegral m) (setupV n)
     let upperBound = getUpperBound n
-    proofE <- QCM.run $ runExceptT $ RP.generateProof upperBound [(v, vBlinding)]
+
+    proofE <- QCM.run $ runExceptT $ RP.generateProof (getUpperBound n) (fst <$> ctx)
     case proofE of
       Left err -> panic $ show err
       Right (proof@RP.RangeProof{..}) ->
-        QCM.assert $ RP.verifyProof upperBound [vCommit] proof
+        QCM.assert $ RP.verifyProof upperBound (snd <$> ctx) proof
 

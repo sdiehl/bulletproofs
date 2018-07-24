@@ -37,7 +37,6 @@ verifyProof upperBound vCommits proof@RangeProof{..}
     x = shamirX aCommit sCommit t1Commit t2Commit y z
     y = shamirY aCommit sCommit
     z = shamirZ aCommit sCommit y
-    hs' = zipWith (\yi hi-> inv yi `mulP` hi) (powerVector y n) hs
     n = logBase2 upperBound
     m = fromIntegral $ length vCommits
 
@@ -79,14 +78,15 @@ verifyLRCommitment
   -> Bool
 verifyLRCommitment n m proof@RangeProof{..} x y z
   = IPP.verifyProof
-      n
+      nm
       IPP.InnerProductBase { bGs = gs, bHs = hs', bH = u }
       commitmentLR
       productProof
   where
     commitmentLR = computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
-    hs' = zipWith (\yi hi-> inv yi `mulP` hi) (powerVector y n) hs
+    hs' = zipWith (\yi hi-> inv yi `mulP` hi) (powerVector y nm) hs
     uChallenge = shamirU tBlinding mu t
     u = uChallenge `mulP` g
+    nm = n * m
 
 

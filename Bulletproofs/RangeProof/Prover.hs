@@ -59,7 +59,7 @@ generateProofUnsafe upperBound vsAndvBlindings = do
       vsFq = Fq.new . fst <$> vsAndvBlindings
       vBlindingsFq = Fq.new . snd <$> vsAndvBlindings
 
-  let aL = reversedEncodeBitVector n vsFq
+  let aL = reversedEncodeBitMulti n vsFq
       aR = complementaryVector aL
 
   (sL, sR) <- chooseBlindingVectors nm
@@ -75,7 +75,7 @@ generateProofUnsafe upperBound vsAndvBlindings = do
   let lrPoly@LRPolys{..} = computeLRPolys n m aL aR sL sR y z
       tPoly@TPoly{..} = computeTPoly lrPoly
 
-  [t1Blinding, t2Blinding] <- replicateM 2 (Fq.random n)
+  [t1Blinding, t2Blinding] <- replicateM 2 (Fq.random nm)
 
   let t1Commit = commit t1 t1Blinding
       t2Commit = commit t2 t2Blinding
@@ -93,19 +93,21 @@ generateProofUnsafe upperBound vsAndvBlindings = do
   unless (t1 == dotp l1 r0 + dotp l0 r1) $
     panic "Error on: t1 = dotp l1 r0 + dotp l0 r1"
 
-  {-unless (t0 == (vFq * fqSquare z) + delta n y z) $-}
+  {-unless (t0 == (vFq * fqSquare z) + delta n m y z) $-}
     {-panic "Error on: t0 = v * z^2 + delta(y, z)"-}
 
-  let tBlinding = sum (zipWith (\vBlindingFq j -> fqPower z (j+1) * vBlindingFq) vBlindingsFq [1..m])
+  let tBlinding = sum (zipWith (\vBlindingFq j -> fqPower z (j + 1) * vBlindingFq) vBlindingsFq [1..m])
+               {-foldl' (\acc (vBlindingFq, j) -> acc + (fqPower z (j+1) * vBlindingFq)) (Fq.new 0) (zip vBlindingsFq [1..m])-}
                 + (t2Blinding * fqSquare x)
                 + (t1Blinding * x)
       mu = aBlinding + (sBlinding * x)
 
   let uChallenge = shamirU tBlinding mu t
       u = uChallenge `mulP` g
-      hs' = zipWith (\yi hi-> inv yi `mulP` hi) (powerVector y n) hs
+      hs' = zipWith (\yi hi-> inv yi `mulP` hi) (powerVector y nm) hs
       commitmentLR = computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
-      productProof = IPP.generateProof
+
+  productProof <- IPP.generateProof
                         InnerProductBase { bGs = gs, bHs = hs', bH = u }
                         commitmentLR
                         InnerProductWitness { ls = ls, rs = rs }
@@ -143,8 +145,7 @@ computeLRPolys n m aL aR sL sR y z
   = LRPolys
         { l0 = aL `fqSubV` ((*) z <$> powerVector 1 nm)
         , l1 = sL
-        , r0 =
-               (powerVector y nm `hadamardp` (aR `fqAddV` z1nm))
+        , r0 = (powerVector y nm `hadamardp` (aR `fqAddV` z1nm))
                `fqAddV`
                 foldl' (\acc j -> iter j `fqAddV` acc) (replicate (fromIntegral nm) (Fq 0)) [1..m]
         , r1 = hadamardp (powerVector y nm) sR
