@@ -37,9 +37,9 @@ and require that **a<sub>L</sub>** ◦ **a<sub>R</sub>** = 0 holds.
 
 - **P -> V : A, S** - where A and S are blinded Pedersen commitments to **a<sub>L</sub>** and **a<sub>R</sub>**.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;A&space;=&space;h&space;\cdot&space;\alpha&space;&plus;&space;\textbf{g}&space;\cdot&space;\textbf{a}_L&space;&plus;&space;\textbf{h}&space;\cdot&space;\textbf{a}_R&space;\in&space;\mathcal{G}&space;$)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;A&space;=&space;h&space;\cdot&space;\alpha&space;&plus;&space;\textbf{g}&space;\cdot&space;\textbf{a}_L&space;&plus;&space;\textbf{h}&space;\cdot&space;\textbf{a}_R&space;\in&space;\mathbb{G}&space;$)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;S&space;=&space;h&space;\cdot&space;\rho&space;&plus;&space;\textbf{g}&space;\cdot&space;\textbf{s}_L&space;&plus;&space;\textbf{h}&space;\cdot&space;\textbf{s}_R&space;\in&space;\mathcal{G}&space;$)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;S&space;=&space;h&space;\cdot&space;\rho&space;&plus;&space;\textbf{g}&space;\cdot&space;\textbf{s}_L&space;&plus;&space;\textbf{h}&space;\cdot&space;\textbf{s}_R&space;\in&space;\mathbb{G}&space;$)
 
 - **V -> P : y, z** - Verifier sends challenges _y_ and _z_ to fix **A** and **S**.
 
@@ -52,7 +52,7 @@ the coefficients t<sub>1</sub>, of a polynomial t constructed from the existing 
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;t&space;=&space;\langle&space;\textbf{l},&space;\textbf{r}&space;\rangle&space;\in&space;\mathbb{Z}_p$)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$T_i&space;=&space;g&space;\cdot&space;t_i&space;&plus;&space;h&space;\cdot&space;\tau_i&space;\in&space;\mathcal{G},&space;\hspace{3em}&space;i&space;=&space;\{1,&space;2\}&space;$)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$T_i&space;=&space;g&space;\cdot&space;t_i&space;&plus;&space;h&space;\cdot&space;\tau_i&space;\in&space;\mathbb{G},&space;\hspace{3em}&space;i&space;=&space;\{1,&space;2\}&space;$)
 
 - **V -> P : x** - Verifier challenges Prover with value _x_.
 
