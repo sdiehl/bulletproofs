@@ -20,7 +20,7 @@ import Bulletproofs.RangeProof.Internal
 import Bulletproofs.InnerProductProof as IPP hiding (generateProof)
 import qualified Bulletproofs.InnerProductProof as IPP
 
--- | Prove that a value lies in a specific range
+-- | Prove that a list of values lie in a specific range
 generateProof
   :: (MonadRandom m)
   => Integer                -- ^ Upper bound of the range we want to prove

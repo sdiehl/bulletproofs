@@ -80,10 +80,19 @@ Then, instead of sharing **l** and **r**, which has a communication cost of 2n e
 argument transmits only 2 [log<sub>2</sub>] + 2 elements. In total, the prover sends only 2 [log<sub>2</sub>(n)] + 4
 group elements and 5 elements in _Z_<sub>p</sub>
 
+Aggregating Logarithmic Proofs
+==============================
+
+We can construct a single proof of range of multiple values, while only incurring an additional space cost of 2 log<sub>2</sub>(m) for
+_m_ additional values _v_, as opposed to a multiplicative factor of _m_ when creating _m_ independent range proofs.
+
+The aggregate range proof makes use of the inner product argument. It uses 2 [log<sub>2</sub> (n * m)] + 4 group elements and 5 elements in Z<sub>p</sub>.
+
 Usage
 =====
 
-**Single range proof:**
+Single range proof:
+-------------------
 
 ```haskell
 import qualified Bulletproofs.RangeProof as RP
@@ -105,14 +114,15 @@ testProtocol (v, vBlinding) = do
       -> pure $ RP.verifyProof upperBound vCommit proof
 ```
 
-**Multi range proof:**
+Multi range proof:
+------------------
 
 ```haskell
 import qualified Bulletproofs.MultiRangeProof as MRP
 
 testProtocol :: [(Integer, Integer)] -> IO Bool
 testProtocol vsAndvBlindings = do
-  let vCommits = fmap ((v, vBlinding) -> commit v vBlinding) vsAndvBlindings
+  let vCommits = fmap (uncurry commit) vsAndvBlindings
       -- n needs to be a power of 2
       n = 2 ^ 8
       upperBound = 2 ^ n
