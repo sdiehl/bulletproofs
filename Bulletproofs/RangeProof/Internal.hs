@@ -5,6 +5,7 @@ module Bulletproofs.RangeProof.Internal (
   TPoly(..),
   delta,
   checkRange,
+  checkRanges,
   reversedEncodeBit,
   reversedEncodeBitMulti,
   complementaryVector,
@@ -57,7 +58,8 @@ data RangeProof
 
 data RangeProofError
   = UpperBoundTooLarge Integer  -- ^ The upper bound of the range is too large
-  | ValuesNotInRange [Integer]     -- ^ Value is not within the range required
+  | ValueNotInRange Integer     -- ^ Value is not within the range required
+  | ValuesNotInRange [Integer]  -- ^ Values are not within the range required
   | NNotPowerOf2 Integer        -- ^ Dimension n is required to be a power of 2
   deriving (Show, Eq)
 
@@ -180,9 +182,13 @@ delta n m y z
   where
     nm = n * m
 
--- | Check that a value is in aCommit sCommitpecific range
-checkRange :: Integer -> [Integer] -> Bool
-checkRange n vs = and $ fmap (\v -> v >= 0 && v < 2 ^ n) vs
+-- | Check that a value is in a specific range
+checkRange :: Integer -> Integer -> Bool
+checkRange n v = v >= 0 && v < 2 ^ n
+
+-- | Check that a value is in a specific range
+checkRanges :: Integer -> [Integer] -> Bool
+checkRanges n vs = and $ fmap (\v -> v >= 0 && v < 2 ^ n) vs
 
 -- | Compute commitment of linear vector polynomials l and r
 -- P = A + xS − zG + (z*y^n + z^2 * 2^n) * hs'
