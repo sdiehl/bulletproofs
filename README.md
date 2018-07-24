@@ -88,6 +88,8 @@ _m_ additional values _v_, as opposed to a multiplicative factor of _m_ when cre
 
 The aggregate range proof makes use of the inner product argument. It uses 2 [log<sub>2</sub> (n * m)] + 4 group elements and 5 elements in Z<sub>p</sub>.
 
+See [Multi range proof example](https://github.com/adjoint-io/bulletproofs/tree/master#multi-range-proof)
+
 Usage
 =====
 
