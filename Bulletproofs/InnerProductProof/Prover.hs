@@ -1,6 +1,6 @@
 {-# LANGUAGE NamedFieldPuns, MultiWayIf #-}
 
-module Bulletproofs.InnerProductProof.Prover ( 
+module Bulletproofs.InnerProductProof.Prover (
   generateProof,
 ) where
 

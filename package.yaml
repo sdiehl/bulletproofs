@@ -36,6 +36,10 @@ library:
     - Bulletproofs.RangeProof.Prover
     - Bulletproofs.RangeProof.Verifier
 
+    - Bulletproofs.MultiRangeProof
+    - Bulletproofs.MultiRangeProof.Prover
+    - Bulletproofs.MultiRangeProof.Verifier
+
     - Bulletproofs.InnerProductProof
     - Bulletproofs.InnerProductProof.Internal
     - Bulletproofs.InnerProductProof.Prover

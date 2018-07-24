@@ -13,6 +13,9 @@ module Bulletproofs.Utils (
   powerVector,
   logBase2,
   logBase2M,
+  log2Ceil,
+  slice,
+  padToNearestPowerOfTwo
 ) where
 
 import Protolude
@@ -25,7 +28,8 @@ import Bulletproofs.Curve
 
 -- | Return a vector containing the first n powers of a
 powerVector :: Fq -> Integer -> [Fq]
-powerVector (Fq a) x = (\i -> Fq.new (a ^ i)) <$> [0..x-1]
+powerVector (Fq a) x
+  = (\i -> if i == 0 && a == 0 then 0 else Fq.new (a ^ i)) <$> [0..x-1]
 
 -- | Inner product between two vector polynomials
 dotp :: Num a => [a] -> [a] -> a
@@ -67,6 +71,36 @@ logBase2M x
   = if isLogBase2 x
       then Just (logBase2 x)
       else Nothing
+
+slice :: Integer -> Integer -> [a] -> [a]
+slice n j vs = take (fromIntegral $ j  * n - (j - 1)*n) (drop (fromIntegral $ (j - 1) * n) vs)
+
+-- | Append minimal amount of zeroes until the list has a length which
+-- is a power of two.
+padToNearestPowerOfTwo
+  :: Num f => [f] -> [f]
+padToNearestPowerOfTwo [] = []
+padToNearestPowerOfTwo xs = padToNearestPowerOfTwoOf (length xs) xs
+
+-- | Given n, append zeroes until the list has length 2^n.
+padToNearestPowerOfTwoOf
+  :: Num f
+  => Int -- ^ n
+  -> [f] -- ^ list which should have length <= 2^n
+  -> [f] -- ^ list which will have length 2^n
+padToNearestPowerOfTwoOf i xs = xs ++ replicate padLength 0
+  where
+    padLength = nearestPowerOfTwo - length xs
+    nearestPowerOfTwo = 2 ^ log2Ceil i
+
+-- | Calculate ceiling of log base 2 of an integer.
+log2Ceil :: Int -> Int
+log2Ceil x = floorLog + correction
+  where
+    floorLog = finiteBitSize x - 1 - countLeadingZeros x
+    correction = if countTrailingZeros x < floorLog
+                 then 1
+                 else 0
 
 --------------------------------------------------
 -- Fiat-Shamir transformations

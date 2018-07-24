@@ -80,30 +80,68 @@ Then, instead of sharing **l** and **r**, which has a communication cost of 2n e
 argument transmits only 2 [log<sub>2</sub>] + 2 elements. In total, the prover sends only 2 [log<sub>2</sub>(n)] + 4
 group elements and 5 elements in _Z_<sub>p</sub>
 
+Aggregating Logarithmic Proofs
+==============================
+
+We can construct a single proof of range of multiple values, while only incurring an additional space cost of 2 log<sub>2</sub>(m) for
+_m_ additional values _v_, as opposed to a multiplicative factor of _m_ when creating _m_ independent range proofs.
+
+The aggregate range proof makes use of the inner product argument. It uses 2 [log<sub>2</sub> (n * m)] + 4 group elements and 5 elements in Z<sub>p</sub>.
+
+See [Multi range proof example](https://github.com/adjoint-io/bulletproofs/tree/master#multi-range-proof)
+
 Usage
 =====
 
-```haskell
-import Bulletproofs.RangeProof
+Single range proof:
+-------------------
 
-testProtocol :: Integer -> Integer -> IO Bool
-testProtocol v vBlinding = do
+```haskell
+import qualified Bulletproofs.RangeProof as RP
+
+testProtocol :: (Integer, Integer) -> IO Bool
+testProtocol (v, vBlinding) = do
   let vCommit = commit v vBlinding
       -- n needs to be a power of 2
       n = 2 ^ 8
       upperBound = 2 ^ n
 
   -- Prover
-  proofE <- generateProof upperBound v vBlinding
+  proofE <- runExceptT $ RP.generateProof upperBound (v, vBlinding)
+
   -- Verifier
   case proofE of
     Left err -> panic $ show err
     Right (proof@RangeProof{..})
-      -> pure $ verifyProof upperBound vCommit proof
+      -> pure $ RP.verifyProof upperBound vCommit proof
 ```
 
+Multi range proof:
+------------------
+
+```haskell
+import qualified Bulletproofs.MultiRangeProof as MRP
+
+testProtocol :: [(Integer, Integer)] -> IO Bool
+testProtocol vsAndvBlindings = do
+  let vCommits = fmap (uncurry commit) vsAndvBlindings
+      -- n needs to be a power of 2
+      n = 2 ^ 8
+      upperBound = 2 ^ n
+
+  -- Prover
+  proofE <- runExceptT $ MRP.generateProof upperBound vsAndvBlindings
+
+  -- Verifier
+  case proofE of
+    Left err -> panic $ show err
+    Right (proof@RangeProof{..})
+      -> pure $ MRP.verifyProof upperBound vCommits proof
+```
+
+
 The dimension _n_ needs to be a power of 2.
-This implementation offers support for the SECp256k1 curve, a Koblitz curve.
+This implementation offers support for SECp256k1, a Koblitz curve.
 Further information about this curve can be found in the Uplink docs:
 [SECp256k1 curve](https://www.adjoint.io/docs/cryptography.html#id1 "SECp256k1 curve")
 

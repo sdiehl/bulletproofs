@@ -9,6 +9,7 @@ module Bulletproofs.Fq (
   fqOne,
   fqSquare,
   fqCube,
+  fqPower,
   fqSubV,
   fqAddV,
   euclidean,
@@ -87,6 +88,13 @@ fqSquare x = fqMul x x
 
 fqCube :: Fq -> Fq
 fqCube x = fqMul x (fqMul x x)
+
+fqPower :: Fq -> Integer -> Fq
+fqPower base exp = fqPower' base exp (Fq 1)
+
+fqPower' :: Fq  -> Integer -> Fq -> Fq
+fqPower' base 0 acc = acc
+fqPower' base exp acc = fqPower' base (exp - 1) (fqMul base acc)
 
 inv :: Fq -> Fq
 inv (Fq a) = Fq $ euclidean a q `mod` q
