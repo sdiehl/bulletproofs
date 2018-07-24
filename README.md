@@ -83,27 +83,53 @@ group elements and 5 elements in _Z_<sub>p</sub>
 Usage
 =====
 
-```haskell
-import Bulletproofs.RangeProof
+**Single range proof:**
 
-testProtocol :: Integer -> Integer -> IO Bool
-testProtocol v vBlinding = do
+```haskell
+import qualified Bulletproofs.RangeProof as RP
+
+testProtocol :: (Integer, Integer) -> IO Bool
+testProtocol (v, vBlinding) = do
   let vCommit = commit v vBlinding
       -- n needs to be a power of 2
       n = 2 ^ 8
       upperBound = 2 ^ n
 
   -- Prover
-  proofE <- generateProof upperBound v vBlinding
+  proofE <- runExceptT $ RP.generateProof upperBound (v, vBlinding)
+
   -- Verifier
   case proofE of
     Left err -> panic $ show err
     Right (proof@RangeProof{..})
-      -> pure $ verifyProof upperBound vCommit proof
+      -> pure $ RP.verifyProof upperBound vCommit proof
 ```
 
+**Multi range proof:**
+
+```haskell
+import qualified Bulletproofs.MultiRangeProof as MRP
+
+testProtocol :: [(Integer, Integer)] -> IO Bool
+testProtocol vsAndvBlindings = do
+  let vCommits = fmap ((v, vBlinding) -> commit v vBlinding) vsAndvBlindings
+      -- n needs to be a power of 2
+      n = 2 ^ 8
+      upperBound = 2 ^ n
+
+  -- Prover
+  proofE <- runExceptT $ MRP.generateProof upperBound vsAndvBlindings
+
+  -- Verifier
+  case proofE of
+    Left err -> panic $ show err
+    Right (proof@RangeProof{..})
+      -> pure $ MRP.verifyProof upperBound vCommits proof
+```
+
+
 The dimension _n_ needs to be a power of 2.
-This implementation offers support for the SECp256k1 curve, a Koblitz curve.
+This implementation offers support for SECp256k1, a Koblitz curve.
 Further information about this curve can be found in the Uplink docs:
 [SECp256k1 curve](https://www.adjoint.io/docs/cryptography.html#id1 "SECp256k1 curve")
 
