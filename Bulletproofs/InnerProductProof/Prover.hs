@@ -44,6 +44,7 @@ generateProof'
   lCommits
   rCommits
   = case (ls, rs) of
+    ([], [])   -> InnerProductProof [] [] (Fq.new 0) (Fq.new 0)
     ([l], [r]) -> InnerProductProof (reverse lCommits) (reverse rCommits) l r
     _          -> if | not checkLGs -> panic "Error in: l' * Gs' == l * Gs + x^2 * A_L + x^(-2) * A_R"
                      | not checkRHs -> panic "Error in: r' * Hs' == r * Hs + x^2 * B_L + x^(-2) * B_R"
