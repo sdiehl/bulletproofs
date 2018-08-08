@@ -9,7 +9,9 @@ import qualified Crypto.PubKey.ECC.Generate as Crypto
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
 
-import Bulletproofs.Fq as Fq
+import Linear.Vector ((^+^), (^-^))
+import Linear.Metric (dot)
+
 import Bulletproofs.Curve
 import Bulletproofs.Utils hiding (shamirZ)
 import Bulletproofs.RangeProof.Internal hiding (delta)
@@ -18,9 +20,10 @@ import qualified Bulletproofs.InnerProductProof as IPP
 import Bulletproofs.ArithmeticCircuit.Internal
 
 verifyProof
-  :: [Crypto.Point]
-  -> ArithCircuitProof
-  -> ArithCircuit Fq
+  :: (AsInteger f, Field f, Eq f, Show f)
+  => [Crypto.Point]
+  -> ArithCircuitProof f
+  -> ArithCircuit f
   -> Bool
 verifyProof vCommits proof@ArithCircuitProof{..} ArithCircuit{..}
   = verifyLRCommitment && verifyTPoly
@@ -39,12 +42,12 @@ verifyProof vCommits proof@ArithCircuitProof{..} ArithCircuit{..}
     zwR = zs `vectorMatrixProduct` wR
     zwO = zs `vectorMatrixProduct` wO
 
-    hs' = zipWith mulP (powerVector (inv y) n) hs
+    hs' = zipWith mulP (powerVector (recip y) n) hs
 
     wLCommit = foldl' addP Crypto.PointO (zipWith mulP (zs `vectorMatrixProduct` wL) hs')
     wRCommit = foldl' addP Crypto.PointO (zipWith mulP wRExp gs)
     wOCommit = foldl' addP Crypto.PointO (zipWith mulP (zs `vectorMatrixProduct` wO) hs')
-    wRExp = powerVector (inv y) n `hadamardp` (zs `vectorMatrixProduct` wL)
+    wRExp = powerVector (recip y) n `hadamardp` (zs `vectorMatrixProduct` wL)
 
     uChallenge = shamirU tBlinding mu t
     u = uChallenge `mulP` g
@@ -55,11 +58,11 @@ verifyProof vCommits proof@ArithCircuitProof{..} ArithCircuit{..}
         rhs = (gExp `mulP` g)
             `addP` tCommitsExpSum
             `addP` foldl' addP Crypto.PointO ( zipWith mulP vExp vCommits )
-        gExp = fqSquare x * (k + cQ)
-        cQ = zs `dotp` cs
-        vExp = (*) (fqSquare x) <$> (zs `vectorMatrixProduct` commitmentWeights)
+        gExp = fSquare x * (k + cQ)
+        cQ = zs `dot` cs
+        vExp = (*) (fSquare x) <$> (zs `vectorMatrixProduct` commitmentWeights)
         k = delta n y zwL zwR
-        xs = Fq.new 0 : x : Fq.new 0 : (fqPower x <$> [3..6])
+        xs = 0 : x : 0 : (((^) x) <$> [3..6])
         tCommitsExpSum = foldl' addP Crypto.PointO (zipWith mulP xs tCommits)
 
     verifyLRCommitment
@@ -69,11 +72,11 @@ verifyProof vCommits proof@ArithCircuitProof{..} ArithCircuit{..}
           commitmentLR
           productProof
       where
-        gExp = (*) x <$> (powerVector (inv y) n `hadamardp` zwR)
-        hExp = (((*) x <$> zwL) `fqAddV` zwO) `fqSubV` ys
+        gExp = (*) x <$> (powerVector (recip y) n `hadamardp` zwR)
+        hExp = (((*) x <$> zwL) ^+^ zwO) ^-^ ys
         commitmentLR = (x `mulP` aiCommit)
-                     `addP` (fqSquare x `mulP` aoCommit)
-                     `addP` (fqCube x `mulP` sCommit)
+                     `addP` (fSquare x `mulP` aoCommit)
+                     `addP` ((x ^ 3) `mulP` sCommit)
                      `addP` foldl' addP Crypto.PointO (zipWith mulP gExp gs)
                      `addP` foldl' addP Crypto.PointO (zipWith mulP hExp hs')
                      `addP` Crypto.pointNegate curve (mu `mulP` h)

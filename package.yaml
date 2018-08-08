@@ -27,6 +27,7 @@ dependencies:
 - containers
 - random-shuffle
 - MonadRandom
+- linear
 
 library:
   source-dirs: .

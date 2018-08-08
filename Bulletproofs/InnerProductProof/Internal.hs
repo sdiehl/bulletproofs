@@ -7,9 +7,8 @@ module Bulletproofs.InnerProductProof.Internal (
 import Protolude
 
 import qualified Crypto.PubKey.ECC.Types as Crypto
-import Bulletproofs.Fq
 
-data InnerProductProof
+data InnerProductProof f
   = InnerProductProof
     { lCommits :: [Crypto.Point]
     -- ^ Vector of commitments of the elements in the original vector l
@@ -17,20 +16,20 @@ data InnerProductProof
     , rCommits :: [Crypto.Point]
     -- ^ Vector of commitments of the elements in the original vector r
     -- whose size is the logarithm of base 2 of the size of vector r
-    , l :: Fq
+    , l :: f
     -- ^ Remaining element of vector l at the end of
     -- the recursive algorithm that generates the inner-product proof
-    , r :: Fq
+    , r :: f
     -- ^ Remaining element of vector r at the end of
     -- the recursive algorithm that generates the inner-product proof
     } deriving (Show, Eq)
 
-data InnerProductWitness
+data InnerProductWitness f
   = InnerProductWitness
-    { ls :: [Fq]
+    { ls :: [f]
     -- ^ Vector of values l that the prover uses to compute lCommits
     -- in the recursive inner product algorithm
-    , rs :: [Fq]
+    , rs :: [f]
     -- ^ Vector of values r that the prover uses to compute rCommits
     -- in the recursive inner product algorithm
     } deriving (Show, Eq)

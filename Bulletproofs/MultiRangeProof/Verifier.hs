@@ -16,16 +16,16 @@ import qualified Crypto.PubKey.ECC.Types as Crypto
 import Bulletproofs.RangeProof.Internal
 import Bulletproofs.Curve
 import Bulletproofs.Utils
-import Bulletproofs.Fq as Fq
 
 import Bulletproofs.InnerProductProof as IPP hiding (verifyProof)
 import qualified Bulletproofs.InnerProductProof as IPP
 
 -- | Verify that a commitment was computed from a value in a given range
 verifyProof
-  :: Integer        -- ^ Range upper bound
+  :: (AsInteger f, Eq f, Field f, Show f)
+  => Integer        -- ^ Range upper bound
   -> [Crypto.Point]   -- ^ Commitments of in-range values
-  -> RangeProof
+  -> RangeProof f
   -- ^ Proof that a secret committed value lies in a certain interval
   -> Bool
 verifyProof upperBound vCommits proof@RangeProof{..}
@@ -48,13 +48,14 @@ verifyProof upperBound vCommits proof@RangeProof{..}
 -- t = t(x) = t0 + t1*x + t2*x^2
 -- This is what binds the proof to the actual original Pedersen commitment V to the actual value
 verifyTPoly
-  :: Integer         -- ^ Dimension n of the vectors
+  :: (AsInteger f, Eq f, Field f)
+  => Integer         -- ^ Dimension n of the vectors
   -> [Crypto.Point]   -- ^ Commitments of in-range values
-  -> RangeProof
+  -> RangeProof f
   -- ^ Proof that a secret committed value lies in a certain interval
-  -> Fq              -- ^ Challenge x
-  -> Fq              -- ^ Challenge y
-  -> Fq              -- ^ Challenge z
+  -> f              -- ^ Challenge x
+  -> f              -- ^ Challenge y
+  -> f              -- ^ Challenge z
   -> Bool
 verifyTPoly n vCommits proof@RangeProof{..} x y z
   = lhs == rhs
@@ -62,23 +63,24 @@ verifyTPoly n vCommits proof@RangeProof{..} x y z
     m = fromIntegral $ length vCommits
     lhs = commit t tBlinding
     rhs =
-          foldl' addP Crypto.PointO ( zipWith mulP ((*) (fqSquare z) <$> powerVector z m) vCommits )
+          foldl' addP Crypto.PointO ( zipWith mulP ((*) (fSquare z) <$> powerVector z m) vCommits )
           `addP`
           (delta n m y z `mulP` g)
           `addP`
           (x `mulP` t1Commit)
           `addP`
-          (fqSquare x `mulP` t2Commit)
+          (fSquare x `mulP` t2Commit)
 
 -- | Verify the inner product argument for the vectors l and r that form t
 verifyLRCommitment
-  :: Integer         -- ^ Dimension n of the vectors
+  :: (AsInteger f, Eq f, Field f, Show f)
+  => Integer         -- ^ Dimension n of the vectors
   -> Integer
-  -> RangeProof
+  -> RangeProof f
   -- ^ Proof that a secret committed value lies in a certain interval
-  -> Fq              -- ^ Challenge x
-  -> Fq              -- ^ Challenge y
-  -> Fq              -- ^ Challenge z
+  -> f              -- ^ Challenge x
+  -> f              -- ^ Challenge y
+  -> f              -- ^ Challenge z
   -> Bool
 verifyLRCommitment n m proof@RangeProof{..} x y z
   = IPP.verifyProof
@@ -88,7 +90,7 @@ verifyLRCommitment n m proof@RangeProof{..} x y z
       productProof
   where
     commitmentLR = computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
-    hs' = zipWith (\yi hi-> inv yi `mulP` hi) (powerVector y nm) hs
+    hs' = zipWith (\yi hi-> recip yi `mulP` hi) (powerVector y nm) hs
     uChallenge = shamirU tBlinding mu t
     u = uChallenge `mulP` g
     nm = n * m
