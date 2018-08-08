@@ -25,6 +25,7 @@ dependencies:
 - memory
 - arithmoi
 - containers
+- linear
 
 library:
   source-dirs: .
