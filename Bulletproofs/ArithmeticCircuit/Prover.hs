@@ -25,18 +25,14 @@ generateProof
 generateProof circuit@ArithCircuit{..} witness@ArithWitness{..} = do
   unless (upperBound < q) $ throwE $ TooManyGates upperBound
 
-  case doubleLogM of
-     Nothing -> throwE $ NNotPowerOf2 upperBound
-     Just _ -> lift $ generateProofUnsafe circuit witness
+  if doubleLogM
+     then lift $ generateProofUnsafe circuit witness
+     else throwE $ NNotPowerOf2 upperBound
 
   where
     n = fromIntegral $ length (aL inputs)
     upperBound = 2 ^ n
-    doubleLogM :: Maybe Integer
-    doubleLogM = do
-      x <- logBase2M upperBound
-      logBase2M x
-      pure x
+    doubleLogM = n == 0 || isJust (logBase2M n)
 
 generateProofUnsafe
   :: forall f m
