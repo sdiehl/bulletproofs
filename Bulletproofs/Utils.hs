@@ -37,6 +37,15 @@ hadamardp :: Num a => [a] -> [a] -> [a]
 hadamardp a b | length a == length b = zipWith (*) a b
               | otherwise = panic "Vector sizes must match"
 
+dot :: Num a => [a] -> [a] -> a
+dot xs ys = sum $ hadamardp xs ys
+
+(^+^) :: Num a => [a] -> [a] -> [a]
+(^+^) = zipWith (+)
+
+(^-^) :: Num a => [a] -> [a] -> [a]
+(^-^) = zipWith (-)
+
 -- | Add two points of the same curve
 addP :: Crypto.Point -> Crypto.Point -> Crypto.Point
 addP = Crypto.pointAdd curve

@@ -12,8 +12,6 @@ import Crypto.Number.Generate (generateMax)
 import qualified Crypto.PubKey.ECC.Generate as Crypto
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
-import Linear.Vector ((^+^), (^-^))
-import Linear.Metric (dot)
 
 import Bulletproofs.Curve
 import Bulletproofs.Utils

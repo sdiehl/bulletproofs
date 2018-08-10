@@ -10,8 +10,6 @@ import qualified Data.List as L
 import qualified Data.Map as Map
 
 import qualified Crypto.PubKey.ECC.Types as Crypto
-import Linear.Vector ((^+^))
-import Linear.Metric (dot)
 
 import Bulletproofs.Curve
 import Bulletproofs.Utils

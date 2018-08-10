@@ -13,12 +13,10 @@ import Crypto.Number.Generate (generateMax, generateBetween)
 import Control.Monad.Random (MonadRandom)
 import qualified Crypto.PubKey.ECC.Types as Crypto
 import qualified Crypto.PubKey.ECC.Prim as Crypto
-import Linear.Vector ((^+^), (^-^))
-import Linear.Metric (dot)
 
 import Bulletproofs.Curve
 import Bulletproofs.Utils
-import Bulletproofs.RangeProof.Internal
+import Bulletproofs.RangeProof
 import qualified Bulletproofs.InnerProductProof as IPP
 
 data ArithCircuitProofError
