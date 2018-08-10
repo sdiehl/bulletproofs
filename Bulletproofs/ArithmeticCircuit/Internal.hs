@@ -53,7 +53,7 @@ data GateWeights f
 
 data ArithWitness f
   = ArithWitness
-  { inputs :: Assignment f
+  { assignment :: Assignment f
   , commitments :: [Crypto.Point]
   , commitBlinders :: [f]
   } deriving (Show, Eq)
@@ -65,6 +65,26 @@ data Assignment f
     , aO :: [f] -- aO. Vector of outputs of each multiplication gate
     } deriving (Show, Eq)
 
+padCircuit :: Num f => ArithCircuit f -> ArithCircuit f
+padCircuit ArithCircuit{..}
+  = ArithCircuit
+    { weights = GateWeights wLNew wRNew wONew
+    , commitmentWeights = commitmentWeights
+    , cs = cs
+    }
+  where
+    GateWeights{..} = weights
+    wLNew = padToNearestPowerOfTwo <$> wL
+    wRNew = padToNearestPowerOfTwo <$> wR
+    wONew = padToNearestPowerOfTwo <$> wO
+
+padAssignment :: Num f => Assignment f -> Assignment f
+padAssignment Assignment{..}
+  = Assignment aLNew aRNew aONew
+  where
+    aLNew = padToNearestPowerOfTwo aL
+    aRNew = padToNearestPowerOfTwo aR
+    aONew = padToNearestPowerOfTwo aO
 
 delta :: (Eq f, Field f) => Integer -> f -> [f] -> [f] -> f
 delta n y zwL zwR= (powerVector (recip y) n `hadamardp` zwR) `dot` zwL
@@ -85,6 +105,29 @@ shamirGs ps = fromInteger $ oracle $ show q <> foldMap pointToBS ps
 
 shamirZ :: (Show f, Num f) => f -> f
 shamirZ z = fromInteger $ oracle $ show q <> show z
+
+---------------------------------------------
+-- Polynomials
+---------------------------------------------
+
+evaluatePolynomial :: (Num f) => Integer -> [[f]] -> f -> [f]
+evaluatePolynomial (fromIntegral -> n) poly x
+  = foldl'
+    (\acc (idx, e) -> acc ^+^ ((*) (x ^ idx) <$> e))
+    (replicate n 0)
+    (zip [0..] poly)
+
+multiplyPoly :: Num n => [[n]] -> [[n]] -> [n]
+multiplyPoly l r
+  = snd <$> Map.toList (foldl' (\accL (i, li)
+      -> foldl'
+          (\accR (j, rj) -> case Map.lookup (i + j) accR of
+              Just x -> Map.insert (i + j) (x + (li `dot` rj)) accR
+              Nothing -> Map.insert (i + j) (li `dot` rj) accR
+          ) accL (zip [0..] r))
+      (Map.empty :: Num n => Map.Map Int n)
+      (zip [0..] l))
+
 
 ---------------------------------------------
 -- Linear algebra
@@ -108,24 +151,6 @@ powerMatrix m n = matrixProduct m (powerMatrix m (n-1))
 
 matrixProduct :: Num a => [[a]] -> [[a]] -> [[a]]
 matrixProduct a b = (\ar -> sum . zipWith (*) ar <$> transpose b) <$> a
-
-evaluatePolynomial :: (Num f) => Integer -> [[f]] -> f -> [f]
-evaluatePolynomial (fromIntegral -> n) poly x
-  = foldl'
-    (\acc (idx, e) -> acc ^+^ ((*) (x ^ idx) <$> e))
-    (replicate n 0)
-    (zip [0..] poly)
-
-multiplyPoly :: Num n => [[n]] -> [[n]] -> [n]
-multiplyPoly l r
-  = snd <$> Map.toList (foldl' (\accL (i, li)
-      -> foldl'
-          (\accR (j, rj) -> case Map.lookup (i + j) accR of
-              Just x -> Map.insert (i + j) (x + (li `dot` rj)) accR
-              Nothing -> Map.insert (i + j) (li `dot` rj) accR
-          ) accL (zip [0..] r))
-      (Map.empty :: Num n => Map.Map Int n)
-      (zip [0..] l))
 
 insertAt :: Int -> a -> [a] -> [a]
 insertAt z y xs = as ++ (y : bs)

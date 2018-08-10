@@ -1,11 +1,9 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards, ViewPatterns #-}
 module Bulletproofs.ArithmeticCircuit.Verifier where
 
 import Protolude hiding (head)
 import Data.List (head)
 
-import Crypto.Random.Types (MonadRandom(..))
-import qualified Crypto.PubKey.ECC.Generate as Crypto
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
 
@@ -22,7 +20,7 @@ verifyProof
   -> ArithCircuitProof f
   -> ArithCircuit f
   -> Bool
-verifyProof vCommits proof@ArithCircuitProof{..} ArithCircuit{..}
+verifyProof vCommits proof@ArithCircuitProof{..} (padCircuit -> ArithCircuit{..})
   = verifyLRCommitment && verifyTPoly
   where
     GateWeights{..} = weights

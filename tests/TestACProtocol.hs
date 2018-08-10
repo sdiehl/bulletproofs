@@ -1,4 +1,3 @@
-
 {-# LANGUAGE ViewPatterns, RecordWildCards  #-}
 
 module TestACProtocol where
@@ -24,24 +23,24 @@ import Bulletproofs.Fq
 import Bulletproofs.ArithmeticCircuit
 import Bulletproofs.ArithmeticCircuit.Internal
 
--- Premises:
--- 1. An arithmetic circuit is determined only by:
---    aL, aR, aO; wL, wR, wO; c
+-- | Test an arbitrary circuit
+-- Construction:
+-- 1. aL, aR, aO; wL, wR, wO; c
 --    such that wL * aL + wR * aR + wO * aO = c
 --
--- 2. Prover creates wV and v to
---      - reduce the size of the prove
+-- 2. Create wV and v to
+--      - reduce the size of the prove (m <= n)
 --      - hide assignment
 --    wL * aL + wR * aR + wO * aO - c = wV * v
-test_arithCircuitProof_generic :: TestTree
-test_arithCircuitProof_generic = localOption (QuickCheckTests 20) $
+test_arithCircuitProof_arbitrary :: TestTree
+test_arithCircuitProof_arbitrary = localOption (QuickCheckTests 10) $
   testProperty "Arbitrary arithmetic circuit proof" $ QCM.monadicIO $ do
-    n <- QCM.run $ (2 ^) <$> generateMax 8
+    n <- QCM.run $ generateBetween 1 100
     m <- QCM.run $ generateBetween 1 n
-    let q = m
+    let lConstraints = m
 
-    weights@GateWeights{..} <- QCM.run $ generateGateWeights q n
-    commitmentWeights <- QCM.run $ generateWv q m
+    weights@GateWeights{..} <- QCM.run $ generateGateWeights lConstraints n
+    commitmentWeights <- QCM.run $ generateWv lConstraints m
     Assignment{..} <- QCM.run $ generateRandomAssignment n
 
     cs <- QCM.run $ replicateM (fromIntegral m) Fq.random
@@ -54,13 +53,11 @@ test_arithCircuitProof_generic = localOption (QuickCheckTests 20) $
         arithCircuit = ArithCircuit gateWeights commitmentWeights cs
         arithWitness = ArithWitness gateInputs commitments commitBlinders
 
-    proofE <- QCM.run $ runExceptT $ generateProof arithCircuit arithWitness
-    case proofE of
-      Left err -> panic $ show err
-      Right (proof@ArithCircuitProof{..}) ->
-        QCM.assert $ verifyProof commitments proof arithCircuit
+    proof <- QCM.run $ generateProof arithCircuit arithWitness
 
--- | Test hadamard product relation (paper example)
+    QCM.assert $ verifyProof commitments proof arithCircuit
+
+-- | Test hadamard product relation
 test_arithCircuitProof_hadamardp :: TestTree
 test_arithCircuitProof_hadamardp = localOption (QuickCheckTests 20) $
   testProperty "Arithmetic circuit proof. Hadamard product relation" $ QCM.monadicIO $ do
@@ -94,11 +91,9 @@ test_arithCircuitProof_hadamardp = localOption (QuickCheckTests 20) $
         arithCircuit = ArithCircuit gateWeights commitmentWeights cs
         arithWitness = ArithWitness gateInputs commitments commitBlinders
 
-    proofE <- QCM.run $ runExceptT $ generateProof arithCircuit arithWitness
-    case proofE of
-      Left err -> panic $ show err
-      Right (proof@ArithCircuitProof{..}) ->
-        QCM.assert $ verifyProof commitments proof arithCircuit
+    proof <- QCM.run $ generateProof arithCircuit arithWitness
+
+    QCM.assert $ verifyProof commitments proof arithCircuit
 
 -- | Test that a basic addition circuit (without multiplication gates) succeeds
 -- LINEAR CONSTRAINTS:
@@ -127,11 +122,9 @@ test_arithCircuitProof_add_1 = localOption (QuickCheckTests 20) $
         arithCircuit = ArithCircuit gateWeights commitmentWeights cs
         arithWitness = ArithWitness gateInputs commitments commitBlinders
 
-    proofE <- QCM.run $ runExceptT $ generateProof arithCircuit arithWitness
-    case proofE of
-      Left err -> panic $ show err
-      Right (proof@ArithCircuitProof{..}) ->
-        QCM.assert $ verifyProof commitments proof arithCircuit
+    proof <- QCM.run $ generateProof arithCircuit arithWitness
+
+    QCM.assert $ verifyProof commitments proof arithCircuit
 
 --  Test that a basic multiplication circuit on inputs (with linear contraints) succeeds
 --  LINEAR CONSTRAINTS:
@@ -163,11 +156,9 @@ test_arithCircuitProof_mult_1 = localOption (QuickCheckTests 20) $
         arithCircuit = ArithCircuit gateWeights commitmentWeights cs
         arithWitness = ArithWitness gateInputs commitments commitBlinders
 
-    proofE <- QCM.run $ runExceptT $ generateProof arithCircuit arithWitness
-    case proofE of
-      Left err -> panic $ show err
-      Right (proof@ArithCircuitProof{..}) ->
-        QCM.assert $ verifyProof commitments proof arithCircuit
+    proof <- QCM.run $ generateProof arithCircuit arithWitness
+
+    QCM.assert $ verifyProof commitments proof arithCircuit
 
 
 -- Test that a 2 in 2 out shuffle circuit succeeds
@@ -183,11 +174,8 @@ test_arithCircuitProof_mult_1 = localOption (QuickCheckTests 20) $
 test_arithCircuitProof_shuffle_circuit :: TestTree
 test_arithCircuitProof_shuffle_circuit = localOption (QuickCheckTests 20) $
   testProperty "Arithmetic circuit proof. 2 in 2 out shuffle" $ QCM.monadicIO $ do
-    let n = 2
-        m = 4
-
     z <- QCM.run Fq.random
-    commitBlinders <- QCM.run $ replicateM m Fq.random
+    commitBlinders <- QCM.run $ replicateM 4 Fq.random
 
     let wL = [[0, 0]
              ,[1, 0]
@@ -220,9 +208,7 @@ test_arithCircuitProof_shuffle_circuit = localOption (QuickCheckTests 20) $
         arithCircuit = ArithCircuit gateWeights wV cs
         arithWitness = ArithWitness gateInputs commitments commitBlinders
 
-    proofE <- QCM.run $ runExceptT $ generateProof arithCircuit arithWitness
-    case proofE of
-      Left err -> panic $ show err
-      Right (proof@ArithCircuitProof{..}) ->
-        QCM.assert $ verifyProof commitments proof arithCircuit
+    proof <- QCM.run $ generateProof arithCircuit arithWitness
+
+    QCM.assert $ verifyProof commitments proof arithCircuit
 

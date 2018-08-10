@@ -1,4 +1,4 @@
-{-# LANGUAGE RecordWildCards, ScopedTypeVariables #-}
+{-# LANGUAGE RecordWildCards, ScopedTypeVariables, ViewPatterns #-}
 module Bulletproofs.ArithmeticCircuit.Prover where
 
 import Protolude
@@ -13,36 +13,18 @@ import Bulletproofs.Utils hiding (shamirZ)
 import qualified Bulletproofs.InnerProductProof as IPP
 import Bulletproofs.ArithmeticCircuit.Internal
 
--- | Prove that a list of values lie in a specific range
 generateProof
-  :: (AsInteger f, Eq f, Field f, Show f, MonadRandom m)
-  => ArithCircuit f
-  -> ArithWitness f
-  -> ExceptT ArithCircuitProofError m (ArithCircuitProof f)
-generateProof circuit@ArithCircuit{..} witness@ArithWitness{..} = do
-  unless (upperBound < q) $ throwE $ TooManyGates upperBound
-
-  if doubleLogM
-     then lift $ generateProofUnsafe circuit witness
-     else throwE $ NNotPowerOf2 upperBound
-
-  where
-    n = fromIntegral $ length (aL inputs)
-    upperBound = 2 ^ n
-    doubleLogM = n == 0 || isJust (logBase2M n)
-
-generateProofUnsafe
   :: forall f m
    . (MonadRandom m, AsInteger f, Field f, Show f, Eq f)
   => ArithCircuit f
   -> ArithWitness f
   -> m (ArithCircuitProof f)
-generateProofUnsafe ArithCircuit{..} ArithWitness{..} = do
+generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
   let GateWeights{..} = weights
-  let Assignment{..} = inputs
+  let Assignment{..} = padAssignment assignment
   [aiBlinding, aoBlinding, sBlinding] <- replicateM 3 ((fromInteger :: Integer -> f) <$> generateMax q)
-
-  let aiCommit = commitBitVector aiBlinding aL aR  -- commitment to aL, aR
+  let n = fromIntegral $ length aL
+      aiCommit = commitBitVector aiBlinding aL aR  -- commitment to aL, aR
       aoCommit = commitBitVector aoBlinding aO []  -- commitment to aO
 
   (sL, sR) <- chooseBlindingVectors n              -- choose blinding vectors sL, sR
@@ -58,7 +40,7 @@ generateProofUnsafe ArithCircuit{..} ArithWitness{..} = do
       zwO = zs `vectorMatrixProduct` wO
 
       -- Polynomials
-      [lPoly, rPoly] = computePolynomials aL aR aO sL sR y z zwL zwR zwO
+      [lPoly, rPoly] = computePolynomials n aL aR aO sL sR y zwL zwR zwO
       tPoly = multiplyPoly lPoly rPoly
 
       w = (aL `vectorMatrixProductT` wL)
@@ -116,9 +98,8 @@ generateProofUnsafe ArithCircuit{..} ArithWitness{..} = do
       , productProof = productProof
       }
   where
-    n = fromIntegral $ length (aL inputs)
     qLen = fromIntegral $ length commitmentWeights
-    computePolynomials aL aR aO sL sR y z zwL zwR zwO
+    computePolynomials n aL aR aO sL sR y zwL zwR zwO
       = [ [l0, l1, l2, l3]
         , [r0, r1, r2, r3]
         ]
