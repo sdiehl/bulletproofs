@@ -11,7 +11,8 @@ module Bulletproofs.Fq (
   fqCube,
   fqPower,
   euclidean,
-  random
+  random,
+  randomN,
 ) where
 
 import Protolude
@@ -115,8 +116,11 @@ inv' a b =
   where c = a `div` b
         d = a `mod` b
 
-random :: MonadRandom m => Integer -> m Fq
-random n = Fq <$> generateMax (2^n)
+random :: MonadRandom m => m Fq
+random = Fq <$> generateMax q
+
+randomN :: MonadRandom m => Integer -> m Fq
+randomN n = Fq <$> generateMax (2^n)
 
 fqMulV :: [Fq] -> [Fq] -> [Fq]
 fqMulV = zipWith (*)

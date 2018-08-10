@@ -27,7 +27,7 @@ generateProof
 generateProof ArithCircuit{..} ArithWitness{..} = do
   let GateWeights{..} = weights
   let Assignment{..} = inputs
-  [aiBlinding, aoBlinding, sBlinding] <- replicateM 3 ((fromInteger :: Integer -> f) <$> generateMax (2^n))
+  [aiBlinding, aoBlinding, sBlinding] <- replicateM 3 ((fromInteger :: Integer -> f) <$> generateMax q)
 
   let aiCommit = commitBitVector aiBlinding aL aR  -- commitment to aL, aR
       aoCommit = commitBitVector aoBlinding aO []  -- commitment to aO
@@ -57,7 +57,7 @@ generateProof ArithCircuit{..} ArithWitness{..} = do
          + (zs `dot` w)
          + delta n y zwL zwR
 
-  tBlindings <- insertAt 2 0 . (:) 0 <$> replicateM 5 ((fromInteger :: Integer -> f) <$> generateMax (2^n))
+  tBlindings <- insertAt 2 0 . (:) 0 <$> replicateM 5 ((fromInteger :: Integer -> f) <$> generateMax q)
   let tCommits = zipWith commit tPoly tBlindings
 
   let x = shamirGs tCommits

@@ -15,6 +15,7 @@ module Bulletproofs.Utils (
   logBase2,
   logBase2M,
   log2Ceil,
+  isLogBase2,
   slice,
   padToNearestPowerOfTwo
 ) where

@@ -44,8 +44,8 @@ test_arithCircuitProof_generic = localOption (QuickCheckTests 20) $
     commitmentWeights <- QCM.run $ generateWv q m
     Assignment{..} <- QCM.run $ generateRandomAssignment n
 
-    cs <- QCM.run $ replicateM (fromIntegral m) (Fq.random n)
-    commitBlinders <- QCM.run $ replicateM (fromIntegral m) (Fq.random n)
+    cs <- QCM.run $ replicateM (fromIntegral m) Fq.random
+    commitBlinders <- QCM.run $ replicateM (fromIntegral m) Fq.random
 
     let gateWeights = GateWeights wL wR wO
         gateInputs = Assignment aL aR aO
@@ -64,12 +64,12 @@ test_arithCircuitProof_hadamardp = localOption (QuickCheckTests 20) $
   testProperty "Arithmetic circuit proof. Hadamard product relation" $ QCM.monadicIO $ do
 
     let n = 16
-    aL <- QCM.run $ replicateM (fromIntegral n) (Fq.random n)
-    aR <- QCM.run $ replicateM (fromIntegral n) (Fq.random n)
+    aL <- QCM.run $ replicateM (fromIntegral n) Fq.random
+    aR <- QCM.run $ replicateM (fromIntegral n) Fq.random
     let aO = aL `hadamardp` aR
 
-    r <- QCM.run $ Fq.random n
-    s <- QCM.run $ Fq.random n
+    r <- QCM.run Fq.random
+    s <- QCM.run Fq.random
     let v0 = sum aL
         v1 = sum aR
 
@@ -107,7 +107,7 @@ test_arithCircuitProof_add_1 = localOption (QuickCheckTests 20) $
     let n = 0
         m = 3
 
-    commitBlinders <- QCM.run $ replicateM m (Fq.random n)
+    commitBlinders <- QCM.run $ replicateM m Fq.random
     let wL = [[]]
         wR = [[]]
         wO = [[]]
@@ -140,9 +140,8 @@ test_arithCircuitProof_mult_1 = localOption (QuickCheckTests 20) $
     $ QCM.monadicIO $ do
     let n = 1
         m = 0
-        q = 3
 
-    commitBlinders <- QCM.run $ replicateM m (Fq.random n)
+    commitBlinders <- QCM.run $ replicateM m Fq.random
     let wL = [[0], [0], [1]]
         wR = [[0], [1], [0]]
         wO = [[1], [0], [0]]
@@ -178,10 +177,9 @@ test_arithCircuitProof_shuffle_circuit = localOption (QuickCheckTests 20) $
   testProperty "Arithmetic circuit proof. 2 in 2 out shuffle" $ QCM.monadicIO $ do
     let n = 2
         m = 4
-        q = 5
 
-    z <- QCM.run $ Fq.random n
-    commitBlinders <- QCM.run $ replicateM 4 (Fq.random n)
+    z <- QCM.run Fq.random
+    commitBlinders <- QCM.run $ replicateM m Fq.random
 
     let wL = [[0, 0]
              ,[1, 0]
