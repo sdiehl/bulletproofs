@@ -1,29 +1,11 @@
-module Bulletproofs.RangeProof.Internal (
-  RangeProof(..),
-  RangeProofError(..),
-  LRPolys(..),
-  TPoly(..),
-  delta,
-  checkRange,
-  checkRanges,
-  reversedEncodeBit,
-  reversedEncodeBitMulti,
-  complementaryVector,
-  chooseBlindingVectors,
-  commitBitVectors,
-  computeLRCommitment,
-  obfuscateEncodedBits,
-  obfuscateEncodedBitsSingle,
-) where
+module Bulletproofs.RangeProof.Internal where
 
 import Protolude
 
 import Numeric (showIntAtBase)
 import Data.Char (intToDigit, digitToInt)
 
-import Crypto.Number.Generate (generateMax)
 import Crypto.Random.Types (MonadRandom(..))
-import qualified Crypto.PubKey.ECC.Generate as Crypto
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
 import Linear.Vector ((^-^),(^+^))
@@ -170,11 +152,6 @@ commitBitVectors aBlinding sBlinding aL aR sL sR = do
 
     pure (aCommit, sCommit)
 
-chooseBlindingVectors :: (Num f, MonadRandom m) => Integer -> m ([f], [f])
-chooseBlindingVectors n = do
-  sL <- replicateM (fromInteger n) (fromInteger <$> generateMax (2^n))
-  sR <- replicateM (fromInteger n) (fromInteger <$> generateMax (2^n))
-  pure (sL, sR)
 
 -- | (z − z^2) * <1^n, y^n> − z^3 * <1^n, 2^n>
 delta :: (Eq f, Field f) => Integer -> Integer -> f -> f -> f

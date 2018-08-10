@@ -102,6 +102,12 @@ log2Ceil x = floorLog + correction
 randomN :: MonadRandom m => Integer -> m Integer
 randomN n = generateMax (2^n)
 
+chooseBlindingVectors :: (Num f, MonadRandom m) => Integer -> m ([f], [f])
+chooseBlindingVectors n = do
+  sL <- replicateM (fromInteger n) (fromInteger <$> generateMax (2^n))
+  sR <- replicateM (fromInteger n) (fromInteger <$> generateMax (2^n))
+  pure (sL, sR)
+
 --------------------------------------------------
 -- Fiat-Shamir transformations
 --------------------------------------------------

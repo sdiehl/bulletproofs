@@ -21,6 +21,11 @@ import Bulletproofs.Utils
 import Bulletproofs.RangeProof.Internal
 import qualified Bulletproofs.InnerProductProof as IPP
 
+data ArithCircuitProofError
+  = TooManyGates Integer  -- ^ The number of gates is too high
+  | NNotPowerOf2 Integer  -- ^ The number of gates is not a power of 2
+  deriving (Show, Eq)
+
 data ArithCircuitProof f
   = ArithCircuitProof
     { tBlinding :: f

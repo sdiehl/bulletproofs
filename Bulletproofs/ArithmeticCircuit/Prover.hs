@@ -5,7 +5,6 @@ import Protolude
 
 import Crypto.Random.Types (MonadRandom(..))
 import Crypto.Number.Generate (generateMax)
-import qualified Crypto.PubKey.ECC.Generate as Crypto
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
 
@@ -14,17 +13,38 @@ import Linear.Metric (dot)
 
 import Bulletproofs.Curve
 import Bulletproofs.Utils hiding (shamirZ)
-import Bulletproofs.RangeProof.Internal hiding (delta)
 import qualified Bulletproofs.InnerProductProof as IPP
 import Bulletproofs.ArithmeticCircuit.Internal
 
+-- | Prove that a list of values lie in a specific range
 generateProof
+  :: (AsInteger f, Eq f, Field f, Show f, MonadRandom m)
+  => ArithCircuit f
+  -> ArithWitness f
+  -> ExceptT ArithCircuitProofError m (ArithCircuitProof f)
+generateProof circuit@ArithCircuit{..} witness@ArithWitness{..} = do
+  unless (upperBound < q) $ throwE $ TooManyGates upperBound
+
+  case doubleLogM of
+     Nothing -> throwE $ NNotPowerOf2 upperBound
+     Just _ -> lift $ generateProofUnsafe circuit witness
+
+  where
+    n = fromIntegral $ length (aL inputs)
+    upperBound = 2 ^ n
+    doubleLogM :: Maybe Integer
+    doubleLogM = do
+      x <- logBase2M upperBound
+      logBase2M x
+      pure x
+
+generateProofUnsafe
   :: forall f m
    . (MonadRandom m, AsInteger f, Field f, Show f, Eq f)
   => ArithCircuit f
   -> ArithWitness f
   -> m (ArithCircuitProof f)
-generateProof ArithCircuit{..} ArithWitness{..} = do
+generateProofUnsafe ArithCircuit{..} ArithWitness{..} = do
   let GateWeights{..} = weights
   let Assignment{..} = inputs
   [aiBlinding, aoBlinding, sBlinding] <- replicateM 3 ((fromInteger :: Integer -> f) <$> generateMax q)
@@ -103,10 +123,8 @@ generateProof ArithCircuit{..} ArithWitness{..} = do
       , productProof = productProof
       }
   where
-    n = fromIntegral $ length (aL inputs) -- # multiplication gates
+    n = fromIntegral $ length (aL inputs)
     qLen = fromIntegral $ length commitmentWeights
-    removeSnd vs = take 1 vs ++ drop 2 vs
-
     computePolynomials aL aR aO sL sR y z zwL zwR zwO
       = [ [l0, l1, l2, l3]
         , [r0, r1, r2, r3]

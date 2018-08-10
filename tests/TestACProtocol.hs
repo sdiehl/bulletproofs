@@ -54,9 +54,11 @@ test_arithCircuitProof_generic = localOption (QuickCheckTests 20) $
         arithCircuit = ArithCircuit gateWeights commitmentWeights cs
         arithWitness = ArithWitness gateInputs commitments commitBlinders
 
-    proof <- QCM.run $ generateProof arithCircuit arithWitness
-
-    QCM.assert $ verifyProof commitments proof arithCircuit
+    proofE <- QCM.run $ runExceptT $ generateProof arithCircuit arithWitness
+    case proofE of
+      Left err -> panic $ show err
+      Right (proof@ArithCircuitProof{..}) ->
+        QCM.assert $ verifyProof commitments proof arithCircuit
 
 -- | Test hadamard product relation (paper example)
 test_arithCircuitProof_hadamardp :: TestTree
@@ -92,9 +94,11 @@ test_arithCircuitProof_hadamardp = localOption (QuickCheckTests 20) $
         arithCircuit = ArithCircuit gateWeights commitmentWeights cs
         arithWitness = ArithWitness gateInputs commitments commitBlinders
 
-    proof <- QCM.run $ generateProof arithCircuit arithWitness
-
-    QCM.assert $ verifyProof commitments proof arithCircuit
+    proofE <- QCM.run $ runExceptT $ generateProof arithCircuit arithWitness
+    case proofE of
+      Left err -> panic $ show err
+      Right (proof@ArithCircuitProof{..}) ->
+        QCM.assert $ verifyProof commitments proof arithCircuit
 
 -- | Test that a basic addition circuit (without multiplication gates) succeeds
 -- LINEAR CONSTRAINTS:
@@ -123,9 +127,11 @@ test_arithCircuitProof_add_1 = localOption (QuickCheckTests 20) $
         arithCircuit = ArithCircuit gateWeights commitmentWeights cs
         arithWitness = ArithWitness gateInputs commitments commitBlinders
 
-    proof <- QCM.run $ generateProof arithCircuit arithWitness
-
-    QCM.assert $ verifyProof commitments proof arithCircuit
+    proofE <- QCM.run $ runExceptT $ generateProof arithCircuit arithWitness
+    case proofE of
+      Left err -> panic $ show err
+      Right (proof@ArithCircuitProof{..}) ->
+        QCM.assert $ verifyProof commitments proof arithCircuit
 
 --  Test that a basic multiplication circuit on inputs (with linear contraints) succeeds
 --  LINEAR CONSTRAINTS:
@@ -157,10 +163,12 @@ test_arithCircuitProof_mult_1 = localOption (QuickCheckTests 20) $
         arithCircuit = ArithCircuit gateWeights commitmentWeights cs
         arithWitness = ArithWitness gateInputs commitments commitBlinders
 
+    proofE <- QCM.run $ runExceptT $ generateProof arithCircuit arithWitness
+    case proofE of
+      Left err -> panic $ show err
+      Right (proof@ArithCircuitProof{..}) ->
+        QCM.assert $ verifyProof commitments proof arithCircuit
 
-    proof <- QCM.run $ generateProof arithCircuit arithWitness
-
-    QCM.assert $ verifyProof commitments proof arithCircuit
 
 -- Test that a 2 in 2 out shuffle circuit succeeds
 -- LINEAR CONSTRAINTS:
@@ -212,7 +220,9 @@ test_arithCircuitProof_shuffle_circuit = localOption (QuickCheckTests 20) $
         arithCircuit = ArithCircuit gateWeights wV cs
         arithWitness = ArithWitness gateInputs commitments commitBlinders
 
-    proof <- QCM.run $ generateProof arithCircuit arithWitness
-
-    QCM.assert $ verifyProof commitments proof arithCircuit
+    proofE <- QCM.run $ runExceptT $ generateProof arithCircuit arithWitness
+    case proofE of
+      Left err -> panic $ show err
+      Right (proof@ArithCircuitProof{..}) ->
+        QCM.assert $ verifyProof commitments proof arithCircuit
 
