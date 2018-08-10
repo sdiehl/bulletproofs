@@ -1,6 +1,7 @@
 dependencies:
   cache_directories:
     - "~/.stack"
+    - "~/.stack-work"
   pre:
     - wget https://github.com/commercialhaskell/stack/releases/download/v1.7.1/stack-1.7.1-linux-x86_64.tar.gz -O /tmp/stack.tar.gz
     - tar -zxvf /tmp/stack.tar.gz -C /tmp
