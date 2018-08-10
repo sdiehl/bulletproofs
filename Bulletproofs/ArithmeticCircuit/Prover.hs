@@ -25,18 +25,10 @@ generateProof
 generateProof circuit@ArithCircuit{..} witness@ArithWitness{..} = do
   unless (upperBound < q) $ throwE $ TooManyGates upperBound
 
-  case doubleLogM of
-     Nothing -> throwE $ NNotPowerOf2 upperBound
-     Just _ -> lift $ generateProofUnsafe circuit witness
-
+  lift $ generateProofUnsafe circuit witness
   where
     n = fromIntegral $ length (aL inputs)
     upperBound = 2 ^ n
-    doubleLogM :: Maybe Integer
-    doubleLogM = do
-      x <- logBase2M upperBound
-      logBase2M x
-      pure x
 
 generateProofUnsafe
   :: forall f m
@@ -107,12 +99,8 @@ generateProofUnsafe ArithCircuit{..} ArithWitness{..} = do
                    `addP` Crypto.pointNegate curve (mu `mulP` h)
                    `addP` (t `mulP` u)
 
-  let productProof = IPP.generateProof
-                        IPP.InnerProductBase { bGs = gs, bHs = hs', bH = u }
-                        commitmentLR
-                        IPP.InnerProductWitness { ls = ls, rs = rs }
-
-  pure ArithCircuitProof
+  if isLogBase2 upperBound
+    then pure ArithCircuitProof
       { tBlinding = tBlinding
       , mu = mu
       , t = t
@@ -120,10 +108,27 @@ generateProofUnsafe ArithCircuit{..} ArithWitness{..} = do
       , aoCommit = aoCommit
       , sCommit = sCommit
       , tCommits = tCommits
-      , productProof = productProof
+      , productProofM = Just $ IPP.generateProof
+                        IPP.InnerProductBase { bGs = gs, bHs = hs', bH = u }
+                        commitmentLR
+                        IPP.InnerProductWitness { ls = ls, rs = rs }
+      , lrM = Nothing
+      }
+    else
+      pure ArithCircuitProof
+      { tBlinding = tBlinding
+      , mu = mu
+      , t = t
+      , aiCommit = aiCommit
+      , aoCommit = aoCommit
+      , sCommit = sCommit
+      , tCommits = tCommits
+      , productProofM = Nothing
+      , lrM = Just (ls, rs)
       }
   where
     n = fromIntegral $ length (aL inputs)
+    upperBound = 2 ^ n
     qLen = fromIntegral $ length commitmentWeights
     computePolynomials aL aR aO sL sR y z zwL zwR zwO
       = [ [l0, l1, l2, l3]
