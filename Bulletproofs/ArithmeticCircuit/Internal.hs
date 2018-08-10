@@ -9,16 +9,14 @@ import qualified Data.Map as Map
 
 import System.Random.Shuffle (shuffleM)
 import qualified Crypto.Random.Types as Crypto (MonadRandom(..))
-import Crypto.Number.Generate (generateMax, generateBetween)
+import Crypto.Number.Generate (generateMax)
 import Control.Monad.Random (MonadRandom)
 import qualified Crypto.PubKey.ECC.Types as Crypto
-import qualified Crypto.PubKey.ECC.Prim as Crypto
 import Linear.Vector ((^+^), (^-^))
 import Linear.Metric (dot)
 
 import Bulletproofs.Curve
 import Bulletproofs.Utils
-import Bulletproofs.RangeProof.Internal
 import qualified Bulletproofs.InnerProductProof as IPP
 
 data ArithCircuitProofError
@@ -35,7 +33,8 @@ data ArithCircuitProof f
     , aoCommit :: Crypto.Point
     , sCommit :: Crypto.Point
     , tCommits :: [Crypto.Point]
-    , productProof :: IPP.InnerProductProof f
+    , productProofM :: Maybe (IPP.InnerProductProof f)
+    , lrM :: Maybe ([f], [f])
     } deriving (Show, Eq)
 
 data ArithCircuit f

@@ -62,15 +62,18 @@ verifyProof vCommits proof@ArithCircuitProof{..} ArithCircuit{..}
         cQ = zs `dot` cs
         vExp = (*) (fSquare x) <$> (zs `vectorMatrixProduct` commitmentWeights)
         k = delta n y zwL zwR
-        xs = 0 : x : 0 : (((^) x) <$> [3..6])
+        xs = 0 : x : 0 : ((^) x <$> [3..6])
         tCommitsExpSum = foldl' addP Crypto.PointO (zipWith mulP xs tCommits)
 
     verifyLRCommitment
-      = IPP.verifyProof
-          n
-          IPP.InnerProductBase { bGs = gs, bHs = hs', bH = u }
-          commitmentLR
-          productProof
+      = case productProofM of
+        Just productProof
+          -> IPP.verifyProof
+               n
+               IPP.InnerProductBase { bGs = gs, bHs = hs', bH = u }
+               commitmentLR
+               productProof
+        Nothing -> notImplemented
       where
         gExp = (*) x <$> (powerVector (recip y) n `hadamardp` zwR)
         hExp = (((*) x <$> zwL) ^+^ zwO) ^-^ ys
