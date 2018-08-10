@@ -117,7 +117,3 @@ inv' a b =
 
 random :: MonadRandom m => Integer -> m Fq
 random n = Fq <$> generateMax (2^n)
-
-fqMulV :: [Fq] -> [Fq] -> [Fq]
-fqMulV = zipWith (*)
-

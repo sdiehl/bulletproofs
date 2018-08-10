@@ -26,8 +26,6 @@ import Crypto.Random.Types (MonadRandom(..))
 import qualified Crypto.PubKey.ECC.Generate as Crypto
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
-import Linear.Vector ((^-^),(^+^))
-import Linear.Metric (dot)
 
 import Bulletproofs.Utils
 import Bulletproofs.Curve
