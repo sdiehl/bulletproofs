@@ -1,19 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Bulletproofs.Fq (
-  Fq(..),
-  new,
-  inv,
-  fqInv,
-  fqZero,
-  fqOne,
-  fqSquare,
-  fqCube,
-  fqPower,
-  euclidean,
-  random,
-  randomN,
-) where
+module Bulletproofs.Fq where
 
 import Protolude
 
@@ -118,9 +105,6 @@ inv' a b =
 
 random :: MonadRandom m => m Fq
 random = Fq <$> generateMax q
-
-randomN :: MonadRandom m => Integer -> m Fq
-randomN n = Fq <$> generateMax (2^n)
 
 fqMulV :: [Fq] -> [Fq] -> [Fq]
 fqMulV = zipWith (*)
