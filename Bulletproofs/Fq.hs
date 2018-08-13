@@ -1,4 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Bulletproofs.Fq where
 
@@ -15,7 +16,7 @@ import Bulletproofs.Curve
 
 -- | Prime field with characteristic @_q@
 newtype Fq = Fq Integer -- ^ Use @new@ instead of this constructor
-  deriving (Show, Eq, Bits, Ord)
+  deriving (Show, Eq, Bits, Ord, Generic, NFData)
 
 instance Num Fq where
   (+)           = fqAdd
