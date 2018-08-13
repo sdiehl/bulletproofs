@@ -10,8 +10,6 @@ module Bulletproofs.Fq (
   fqSquare,
   fqCube,
   fqPower,
-  fqSubV,
-  fqAddV,
   euclidean,
   random
 ) where
@@ -119,13 +117,3 @@ inv' a b =
 
 random :: MonadRandom m => Integer -> m Fq
 random n = Fq <$> generateMax (2^n)
-
-fqAddV :: [Fq] -> [Fq] -> [Fq]
-fqAddV = zipWith (+)
-
-fqSubV :: [Fq] -> [Fq] -> [Fq]
-fqSubV = zipWith (-)
-
-fqMulV :: [Fq] -> [Fq] -> [Fq]
-fqMulV = zipWith (*)
-

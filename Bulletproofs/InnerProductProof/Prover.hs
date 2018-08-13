@@ -13,30 +13,31 @@ import qualified Crypto.PubKey.ECC.Types as Crypto
 
 import Bulletproofs.Curve
 import Bulletproofs.Utils
-import Bulletproofs.Fq as Fq
 
 import Bulletproofs.InnerProductProof.Internal
 
 -- | Generate proof that a witness l, r satisfies the inner product relation
 -- on public input (Gs, Hs, h)
 generateProof
-  :: InnerProductBase    -- ^ Generators Gs, Hs, h
+  :: (AsInteger f, Eq f, Field f)
+  => InnerProductBase    -- ^ Generators Gs, Hs, h
   -> Crypto.Point
   -- ^ Commitment P = A + xS − zG + (z*y^n + z^2 * 2^n) * hs' of vectors l and r
   -- whose inner product is t
-  -> InnerProductWitness
+  -> InnerProductWitness f
   -- ^ Vectors l and r that hide bit vectors aL and aR, respectively
-  -> InnerProductProof
+  -> InnerProductProof f
 generateProof productBase commitmentLR witness
   = generateProof' productBase commitmentLR witness [] []
 
 generateProof'
-  :: InnerProductBase
+  :: (AsInteger f, Eq f, Field f)
+  => InnerProductBase
   -> Crypto.Point
-  -> InnerProductWitness
+  -> InnerProductWitness f
   -> [Crypto.Point]
   -> [Crypto.Point]
-  -> InnerProductProof
+  -> InnerProductProof f
 generateProof'
   InnerProductBase{ bGs, bHs, bH }
   commitmentLR
@@ -44,7 +45,7 @@ generateProof'
   lCommits
   rCommits
   = case (ls, rs) of
-    ([], [])   -> InnerProductProof [] [] (Fq.new 0) (Fq.new 0)
+    ([], [])   -> InnerProductProof [] [] 0 0
     ([l], [r]) -> InnerProductProof (reverse lCommits) (reverse rCommits) l r
     _          -> if | not checkLGs -> panic "Error in: l' * Gs' == l * Gs + x^2 * A_L + x^(-2) * A_R"
                      | not checkRHs -> panic "Error in: r' * Hs' == r * Hs + x^2 * B_L + x^(-2) * B_R"
@@ -66,8 +67,8 @@ generateProof'
     (gsLeft, gsRight) = splitAt nPrime bGs
     (hsLeft, hsRight) = splitAt nPrime bHs
 
-    cL = dotp lsLeft rsRight
-    cR = dotp lsRight rsLeft
+    cL = dot lsLeft rsRight
+    cR = dot lsRight rsLeft
 
     lCommit = foldl' addP Crypto.PointO (zipWith mulP lsLeft gsRight)
          `addP`
@@ -83,20 +84,20 @@ generateProof'
 
     x = shamirX' commitmentLR lCommit rCommit
 
-    xInv = inv x
+    xInv = recip x
     xs = replicate nPrime x
     xsInv = replicate nPrime xInv
 
     gs'' = zipWith addP (zipWith mulP xsInv gsLeft) (zipWith mulP xs gsRight)
     hs'' = zipWith addP (zipWith mulP xs hsLeft) (zipWith mulP xsInv hsRight)
 
-    ls' = ((*) x <$> lsLeft) `fqAddV` ((*) xInv <$> lsRight)
-    rs' = ((*) xInv <$> rsLeft) `fqAddV` ((*) x <$> rsRight)
+    ls' = ((*) x <$> lsLeft) ^+^ ((*) xInv <$> lsRight)
+    rs' = ((*) xInv <$> rsLeft) ^+^ ((*) x <$> rsRight)
 
     commitmentLR'
-      = (fqSquare x `mulP` lCommit)
+      = (fSquare x `mulP` lCommit)
         `addP`
-        (fqSquare xInv `mulP` rCommit)
+        (fSquare xInv `mulP` rCommit)
         `addP`
         commitmentLR
 
@@ -110,8 +111,8 @@ generateProof'
     bL' = foldl' addP Crypto.PointO (zipWith mulP rsLeft hsRight)
     bR' = foldl' addP Crypto.PointO (zipWith mulP rsRight hsLeft)
 
-    z = dotp ls rs
-    z' = dotp ls' rs'
+    z = dot ls rs
+    z' = dot ls' rs'
 
     lGs = foldl' addP Crypto.PointO (zipWith mulP ls bGs)
     rHs = foldl' addP Crypto.PointO (zipWith mulP rs bHs)
@@ -124,23 +125,23 @@ generateProof'
         ==
         foldl' addP Crypto.PointO (zipWith mulP ls bGs)
         `addP`
-        (fqSquare x `mulP` aL')
+        (fSquare x `mulP` aL')
         `addP`
-        (fqSquare xInv `mulP` aR')
+        (fSquare xInv `mulP` aR')
 
     checkRHs
       = rHs'
         ==
         foldl' addP Crypto.PointO (zipWith mulP rs bHs)
         `addP`
-        (fqSquare x `mulP` bR')
+        (fSquare x `mulP` bR')
         `addP`
-        (fqSquare xInv `mulP` bL')
+        (fSquare xInv `mulP` bL')
 
     checkLBs
-      = dotp ls' rs'
+      = dot ls' rs'
         ==
-        dotp ls rs + fqSquare x * cL + fqSquare xInv * cR
+        dot ls rs + fSquare x * cL + fSquare xInv * cR
 
     checkC
       = commitmentLR

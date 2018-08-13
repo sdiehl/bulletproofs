@@ -1,16 +1,25 @@
 module Bulletproofs.Utils (
-  dotp,
+  -- ^ Classes
+  AsInteger(..),
+  Field(..),
+  -- ^ Points
   addP,
   subP,
   mulP,
+  -- ^ Shamir transformations
   shamirU,
   shamirX,
   shamirX',
   shamirY,
   shamirZ,
   commit,
+  -- ^ Vector operations
   hadamardp,
+  (^+^),
+  (^-^),
+  dot,
   powerVector,
+  -- ^ Logarithm helpers
   logBase2,
   logBase2M,
   log2Ceil,
@@ -26,19 +35,41 @@ import qualified Crypto.PubKey.ECC.Types as Crypto
 import Bulletproofs.Fq as Fq
 import Bulletproofs.Curve
 
--- | Return a vector containing the first n powers of a
-powerVector :: Fq -> Integer -> [Fq]
-powerVector (Fq a) x
-  = (\i -> if i == 0 && a == 0 then 0 else Fq.new (a ^ i)) <$> [0..x-1]
+class AsInteger a where
+  asInteger :: a -> Integer
 
--- | Inner product between two vector polynomials
-dotp :: Num a => [a] -> [a] -> a
-dotp a b = foldl' (+) 0 (hadamardp a b)
+instance AsInteger Fq where
+  asInteger (Fq x) = x
+
+instance AsInteger Integer where
+  asInteger x = x
+
+-- Class for specialisations of field operations that may have
+-- optimised implementations.
+class (Num f, Fractional f) => Field f where
+  fSquare :: f -> f
+
+instance Field Fq where
+  fSquare = Fq.fqSquare
+
+-- | Return a vector containing the first n powers of a
+powerVector :: (Eq f, Num f) => f -> Integer -> [f]
+powerVector a x
+  = (\i -> if i == 0 && a == 0 then 0 else a ^ i) <$> [0..x-1]
 
 -- | Hadamard product or entry wise multiplication of two vectors
 hadamardp :: Num a => [a] -> [a] -> [a]
 hadamardp a b | length a == length b = zipWith (*) a b
               | otherwise = panic "Vector sizes must match"
+
+dot :: Num a => [a] -> [a] -> a
+dot xs ys = sum $ hadamardp xs ys
+
+(^+^) :: Num a => [a] -> [a] -> [a]
+(^+^) = zipWith (+)
+
+(^-^) :: Num a => [a] -> [a] -> [a]
+(^-^) = zipWith (-)
 
 -- | Add two points of the same curve
 addP :: Crypto.Point -> Crypto.Point -> Crypto.Point
@@ -49,12 +80,12 @@ subP :: Crypto.Point -> Crypto.Point -> Crypto.Point
 subP x y = Crypto.pointAdd curve x (Crypto.pointNegate curve y)
 
 -- | Multiply a scalar and a point in an elliptic curve
-mulP :: Fq -> Crypto.Point -> Crypto.Point
-mulP (Fq x) = Crypto.pointMul curve x
+mulP :: AsInteger f => f -> Crypto.Point -> Crypto.Point
+mulP x = Crypto.pointMul curve (asInteger x)
 
 -- | Create a Pedersen commitment to a value given
 -- a value and a blinding factor
-commit :: Fq -> Fq -> Crypto.Point
+commit :: AsInteger f => f -> f -> Crypto.Point
 commit x r = (x `mulP` g) `addP` (r `mulP` h)
 
 isLogBase2 :: Integer -> Bool
@@ -106,38 +137,40 @@ log2Ceil x = floorLog + correction
 -- Fiat-Shamir transformations
 --------------------------------------------------
 
-shamirY :: Crypto.Point -> Crypto.Point -> Fq
+shamirY :: Num f => Crypto.Point -> Crypto.Point -> f
 shamirY aCommit sCommit
-  = Fq.new $ oracle $
+  = fromInteger $ oracle $
       show q <> pointToBS aCommit <> pointToBS sCommit
 
-shamirZ :: Crypto.Point -> Crypto.Point -> Fq -> Fq
+shamirZ :: (Show f, Num f) => Crypto.Point -> Crypto.Point -> f -> f
 shamirZ aCommit sCommit y
-  = Fq.new $ oracle $
+  = fromInteger $ oracle $
       show q <> pointToBS aCommit <> pointToBS sCommit <> show y
 
 shamirX
-  :: Crypto.Point
+  :: (Show f, Num f)
+  => Crypto.Point
   -> Crypto.Point
   -> Crypto.Point
   -> Crypto.Point
-  -> Fq
-  -> Fq
-  -> Fq
+  -> f
+  -> f
+  -> f
 shamirX aCommit sCommit t1Commit t2Commit y z
-  = Fq.new $ oracle $
+  = fromInteger $ oracle $
       show q <> pointToBS aCommit <> pointToBS sCommit <> pointToBS t1Commit <> pointToBS t2Commit <> show y <> show z
 
 shamirX'
-  :: Crypto.Point
+  :: Num f
+  => Crypto.Point
   -> Crypto.Point
   -> Crypto.Point
-  -> Fq
+  -> f
 shamirX' commitmentLR l' r'
-  = Fq.new $ oracle $
+  = fromInteger $ oracle $
       show q <> pointToBS l' <> pointToBS r' <> pointToBS commitmentLR
 
-shamirU :: Fq -> Fq -> Fq -> Fq
+shamirU :: (Show f, Num f) => f -> f -> f -> f
 shamirU tBlinding mu t
-  = Fq.new $ oracle $
+  = fromInteger $ oracle $
       show q <> show tBlinding <> show mu <> show t

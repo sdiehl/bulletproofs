@@ -21,6 +21,7 @@ import Protolude
 import Numeric (showIntAtBase)
 import Data.Char (intToDigit, digitToInt)
 
+import Crypto.Number.Generate (generateMax)
 import Crypto.Random.Types (MonadRandom(..))
 import qualified Crypto.PubKey.ECC.Generate as Crypto
 import qualified Crypto.PubKey.ECC.Prim as Crypto
@@ -28,17 +29,16 @@ import qualified Crypto.PubKey.ECC.Types as Crypto
 
 import Bulletproofs.Utils
 import Bulletproofs.Curve
-import Bulletproofs.Fq as Fq
 import Bulletproofs.InnerProductProof.Internal
 
-data RangeProof
+data RangeProof f
   = RangeProof
-    { tBlinding :: Fq
+    { tBlinding :: f
     -- ^ Blinding factor of the T1 and T2 commitments,
     -- combined into the form required to make the committed version of the x-polynomial add up
-    , mu :: Fq
+    , mu :: f
     -- ^ Blinding factor required for the Verifier to verify commitments A, S
-    , t :: Fq
+    , t :: f
     -- ^ Dot product of vectors l and r that prove knowledge of the value in range
     -- t = t(x) = l(x) · r(x)
     , aCommit :: Crypto.Point
@@ -51,7 +51,7 @@ data RangeProof
     -- ^ Pedersen commitment to coefficient t1
     , t2Commit :: Crypto.Point
     -- ^ Pedersen commitment to coefficient t2
-    , productProof :: InnerProductProof
+    , productProof :: InnerProductProof f
     -- ^ Inner product argument to prove that a commitment P
     -- has vectors l, r ∈  Z^n for which P = l · G + r · H + ( l, r ) · U
     } deriving (Show, Eq)
@@ -67,19 +67,19 @@ data RangeProofError
 -- Polynomials
 -----------------------------
 
-data LRPolys
+data LRPolys f
   = LRPolys
-    { l0 :: [Fq]
-    , l1 :: [Fq]
-    , r0 :: [Fq]
-    , r1 :: [Fq]
+    { l0 :: [f]
+    , l1 :: [f]
+    , r0 :: [f]
+    , r1 :: [f]
     }
 
-data TPoly
+data TPoly f
   = TPoly
-    { t0 :: Fq
-    , t1 :: Fq
-    , t2 :: Fq
+    { t0 :: f
+    , t1 :: f
+    , t2 :: f
     }
 
 -----------------------------
@@ -89,16 +89,16 @@ data TPoly
 -- | Encode the value v into a bit representation. Let aL be a vector
 -- of bits such that <aL, 2^n> = v (put more simply, the components of a L are the
 -- binary digits of v).
-encodeBit :: Integer -> Fq -> [Fq]
-encodeBit n (Fq v) = fillWithZeros n $ Fq.new . fromIntegral . digitToInt <$> showIntAtBase 2 intToDigit v ""
+encodeBit :: (AsInteger f, Num f) => Integer -> f -> [f]
+encodeBit n v = fillWithZeros n $ fromIntegral . digitToInt <$> showIntAtBase 2 intToDigit (asInteger v) ""
 
 -- | Bits of v reversed.
 -- v = <a, 2^n> = a_0 * 2^0 + ... + a_n-1 * 2^(n-1)
-reversedEncodeBit :: Integer -> Fq -> [Fq]
+reversedEncodeBit :: (AsInteger f, Num f) => Integer -> f -> [f]
 reversedEncodeBit n = reverse . encodeBit n
 
 -- TODO: Test it
-reversedEncodeBitMulti :: Integer -> [Fq] -> [Fq]
+reversedEncodeBitMulti :: (AsInteger f, Num f) => Integer -> [f] -> [f]
 reversedEncodeBitMulti n = foldl' (\acc v -> acc ++ reversedEncodeBit n v) []
 
 -- | In order to prove that v is in range, each element of aL is either 0 or 1.
@@ -110,19 +110,19 @@ complementaryVector aL = (\vi -> vi - 1) <$> aL
 
 -- | Add non-relevant zeros to a vector to match the size
 -- of the other vectors used in the protocol
-fillWithZeros :: Integer -> [Fq] -> [Fq]
+fillWithZeros :: Num f => Integer -> [f] -> [f]
 fillWithZeros n aL = zeros ++ aL
   where
-    zeros = replicate (fromInteger n - length aL) (Fq 0)
+    zeros = replicate (fromInteger n - length aL) 0
 
 -- | Obfuscate encoded bits with challenges y and z.
 -- z^2 * <aL, 2^n> + z * <aL − 1^n − aR, y^n> + <aL, aR · y^n> = (z^2) * v
 -- The property holds because <aL − 1^n − aR, y^n> = 0 and <aL · aR,  y^n> = 0
-obfuscateEncodedBits :: Integer -> [Fq] -> [Fq] -> Fq -> Fq -> Fq
+obfuscateEncodedBits :: (Eq f, Field f) => Integer -> [f] -> [f] -> f -> f -> f
 obfuscateEncodedBits n aL aR y z
-  = (fqSquare z * dotp aL (powerVector 2 n))
-    + (z * dotp ((aL `fqSubV` powerVector 1 n) `fqSubV` aR) yN)
-    + dotp (hadamardp aL aR) yN
+  = (fSquare z * dot aL (powerVector 2 n))
+    + (z * dot ((aL ^-^ powerVector 1 n) ^-^ aR) yN)
+    + dot (hadamardp aL aR) yN
   where
     yN = powerVector y n
 
@@ -131,11 +131,11 @@ obfuscateEncodedBits n aL aR y z
 -- what’s important is that the aL , aR terms be kept inside
 -- (since they can’t be shared with the Verifier):
 -- <aL − z * 1^n , y^n ◦ (aR + z * 1^n) + z^2 * 2^n> = z 2 v + δ(y, z)
-obfuscateEncodedBitsSingle :: Integer -> [Fq] -> [Fq] -> Fq -> Fq -> Fq
+obfuscateEncodedBitsSingle :: (Eq f, Field f) => Integer -> [f] -> [f] -> f -> f -> f
 obfuscateEncodedBitsSingle n aL aR y z
-  = dotp
-      (aL `fqSubV` z1n)
-      (hadamardp (powerVector y n) (aR `fqAddV` z1n) `fqAddV` ((*) (fqSquare z) <$> powerVector 2 n))
+  = dot
+      (aL ^-^ z1n)
+      (hadamardp (powerVector y n) (aR ^+^ z1n) ^+^ ((*) (fSquare z) <$> powerVector 2 n))
   where
     z1n = (*) z <$> powerVector 1 n
 
@@ -144,13 +144,13 @@ obfuscateEncodedBitsSingle n aL aR y z
 -- Prover can send commitments to these vectors;
 -- these are properly blinded vector Pedersen commitments:
 commitBitVectors
-  :: MonadRandom m
-  => Fq
-  -> Fq
-  -> [Fq]
-  -> [Fq]
-  -> [Fq]
-  -> [Fq]
+  :: (MonadRandom m, AsInteger f)
+  => f
+  -> f
+  -> [f]
+  -> [f]
+  -> [f]
+  -> [f]
   -> m (Crypto.Point, Crypto.Point)
 commitBitVectors aBlinding sBlinding aL aR sL sR = do
     let aLG = foldl' addP Crypto.PointO ( zipWith mulP aL gs )
@@ -168,17 +168,17 @@ commitBitVectors aBlinding sBlinding aL aR sL sR = do
 
     pure (aCommit, sCommit)
 
-chooseBlindingVectors :: MonadRandom m => Integer -> m ([Fq], [Fq])
+chooseBlindingVectors :: (Num f, MonadRandom m) => Integer -> m ([f], [f])
 chooseBlindingVectors n = do
-  sL <- replicateM (fromInteger n) (Fq.random n)
-  sR <- replicateM (fromInteger n) (Fq.random n)
+  sL <- replicateM (fromInteger n) (fromInteger <$> generateMax (2^n))
+  sR <- replicateM (fromInteger n) (fromInteger <$> generateMax (2^n))
   pure (sL, sR)
 
 -- | (z − z^2) * <1^n, y^n> − z^3 * <1^n, 2^n>
-delta :: Integer -> Integer -> Fq -> Fq -> Fq
+delta :: (Eq f, Field f) => Integer -> Integer -> f -> f -> f
 delta n m y z
-  = ((z - Fq.fqSquare z) * dotp (powerVector 1 nm) (powerVector y nm))
-  - foldl' (\acc j -> acc + (Fq.fqPower z (j + 2) * dotp (powerVector 1 n) (powerVector 2 n))) (Fq 0) [1..m]
+  = ((z - fSquare z) * dot (powerVector 1 nm) (powerVector y nm))
+  - foldl' (\acc j -> acc + ((z ^ (j + 2)) * dot (powerVector 1 n) (powerVector 2 n))) 0 [1..m]
   where
     nm = n * m
 
@@ -193,16 +193,17 @@ checkRanges n vs = and $ fmap (\v -> v >= 0 && v < 2 ^ n) vs
 -- | Compute commitment of linear vector polynomials l and r
 -- P = A + xS − zG + (z*y^n + z^2 * 2^n) * hs'
 computeLRCommitment
-  :: Integer
+  :: (AsInteger f, Eq f, Num f, Show f)
+  => Integer
   -> Integer
   -> Crypto.Point
   -> Crypto.Point
-  -> Fq
-  -> Fq
-  -> Fq
-  -> Fq
-  -> Fq
-  -> Fq
+  -> f
+  -> f
+  -> f
+  -> f
+  -> f
+  -> f
   -> [Crypto.Point]
   -> Crypto.Point
 computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
@@ -225,7 +226,7 @@ computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
     where
       gsSum = foldl' addP Crypto.PointO (take (fromIntegral nm) gs)
       hExp = (*) z <$> powerVector y nm
-      hExp' j = (*) (fqPower z (j+1)) <$> powerVector 2 n
+      hExp' j = (*) (z ^ (j+1)) <$> powerVector 2 n
       sliceHs' j = slice n j hs'
       uChallenge = shamirU tBlinding mu t
       u = uChallenge `mulP` g
