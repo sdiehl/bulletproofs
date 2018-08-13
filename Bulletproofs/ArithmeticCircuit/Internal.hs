@@ -1,4 +1,5 @@
 {-# LANGUAGE ViewPatterns, RecordWildCards, ScopedTypeVariables #-}
+{-# LANGUAGE DeriveAnyClass, DeriveGeneric #-}
 
 module Bulletproofs.ArithmeticCircuit.Internal where
 
@@ -34,14 +35,14 @@ data ArithCircuitProof f
     , sCommit :: Crypto.Point
     , tCommits :: [Crypto.Point]
     , productProof :: IPP.InnerProductProof f
-    } deriving (Show, Eq)
+    } deriving (Show, Eq, Generic, NFData)
 
 data ArithCircuit f
   = ArithCircuit
     { weights :: GateWeights f
     , commitmentWeights :: [[f]]
     , cs :: [f]
-    } deriving (Show, Eq)
+    } deriving (Show, Eq, Generic, NFData)
 
 
 data GateWeights f
@@ -49,21 +50,21 @@ data GateWeights f
     { wL :: [[f]] -- WL in Z(Q x n)
     , wR :: [[f]] -- WR in Z(Q x n)
     , wO :: [[f]] -- WO in Z(Q x n)
-    } deriving (Show, Eq)
+    } deriving (Show, Eq, Generic, NFData)
 
 data ArithWitness f
   = ArithWitness
   { assignment :: Assignment f
   , commitments :: [Crypto.Point]
   , commitBlinders :: [f]
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Generic, NFData)
 
 data Assignment f
   = Assignment
     { aL :: [f] -- aL. Vector of left inputs of each multiplication gate
     , aR :: [f] -- aR. Vector of right inputs of each multiplication gate
     , aO :: [f] -- aO. Vector of outputs of each multiplication gate
-    } deriving (Show, Eq)
+    } deriving (Show, Eq, Generic, NFData)
 
 padCircuit :: Num f => ArithCircuit f -> ArithCircuit f
 padCircuit ArithCircuit{..}
