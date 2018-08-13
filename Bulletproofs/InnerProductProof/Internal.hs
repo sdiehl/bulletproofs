@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass, DeriveGeneric #-}
 module Bulletproofs.InnerProductProof.Internal (
   InnerProductProof(..),
   InnerProductWitness(..),
@@ -22,7 +23,7 @@ data InnerProductProof f
     , r :: f
     -- ^ Remaining element of vector r at the end of
     -- the recursive algorithm that generates the inner-product proof
-    } deriving (Show, Eq)
+    } deriving (Show, Eq, Generic, NFData)
 
 data InnerProductWitness f
   = InnerProductWitness
