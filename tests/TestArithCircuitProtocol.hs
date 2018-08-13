@@ -1,6 +1,6 @@
 {-# LANGUAGE ViewPatterns, RecordWildCards  #-}
 
-module TestACProtocol where
+module TestArithCircuitProtocol where
 
 import Protolude
 
@@ -95,13 +95,16 @@ test_arithCircuitProof_hadamardp = localOption (QuickCheckTests 20) $
 
     QCM.assert $ verifyProof commitments proof arithCircuit
 
--- | Test that a basic addition circuit (without multiplication gates) succeeds
--- LINEAR CONSTRAINTS:
--- V[0] + V[1] = V[2]
--- MUL CONSTRAINTS: none
-test_arithCircuitProof_add_1 :: TestTree
-test_arithCircuitProof_add_1 = localOption (QuickCheckTests 20) $
-  testProperty "Arithmetic circuit proof. Basic addition circuit (without multiplication gates)"
+-- | Test that an addition circuit without multiplication gates succeeds
+--  1 linear constraints (q = 1):
+--  v[0] + v[1] = v[2]
+--
+--  0 multiplication constraints (implicit) (n = 0):
+--
+--  3 input values (m = 3)
+test_arithCircuitProof_no_mult_gates :: TestTree
+test_arithCircuitProof_no_mult_gates = localOption (QuickCheckTests 20) $
+  testProperty "Arithmetic circuit proof. n = 0, m = 3, q = 1"
     $ QCM.monadicIO $ do
     let n = 0
         m = 3
@@ -115,7 +118,7 @@ test_arithCircuitProof_add_1 = localOption (QuickCheckTests 20) $
         aR = []
         aO = []
         commitmentWeights = [[1, 1, -1]]
-        vs = [1, 3, 4]
+        vs = [2, 5, 7]
         commitments = zipWith commit vs commitBlinders
         gateWeights = GateWeights wL wR wO
         gateInputs = Assignment aL aR aO
@@ -126,16 +129,20 @@ test_arithCircuitProof_add_1 = localOption (QuickCheckTests 20) $
 
     QCM.assert $ verifyProof commitments proof arithCircuit
 
---  Test that a basic multiplication circuit on inputs (with linear contraints) succeeds
---  LINEAR CONSTRAINTS:
---  a_L[0] = 2
---  a_R[0] = 3
---  a_O[0] = 6
---  MUL CONSTRAINTS (implicit):
---  a_L[0] * a_R[0] = a_O[0]
-test_arithCircuitProof_mult_1 :: TestTree
-test_arithCircuitProof_mult_1 = localOption (QuickCheckTests 20) $
-  testProperty "Arithmetic circuit proof. Basic multiplication circuit on inputs (with linear contraints)"
+--  | Test that a circuit with a single multiplication gate
+--  with linear contraints and not committed values succeeds
+--  3 linear constraints (q = 3):
+--  aL[0] = 3
+--  aR[0] = 4
+--  aO[0] = 9
+--
+--  1 multiplication constraint (implicit) (n = 1):
+--  aL[0] * aR[0] = aO[0]
+--
+--  0 input values (m = 0)
+test_arithCircuitProof_no_input_values :: TestTree
+test_arithCircuitProof_no_input_values = localOption (QuickCheckTests 20) $
+  testProperty "Arithmetic circuit proof. n = 1, m = 0, q = 3"
     $ QCM.monadicIO $ do
     let n = 1
         m = 0
@@ -144,10 +151,10 @@ test_arithCircuitProof_mult_1 = localOption (QuickCheckTests 20) $
     let wL = [[0], [0], [1]]
         wR = [[0], [1], [0]]
         wO = [[1], [0], [0]]
-        cs = [6, 3, 2]
-        aL = [2]
-        aR = [3]
-        aO = [6]
+        cs = [35, 5, 7]
+        aL = [7]
+        aR = [5]
+        aO = [35]
         commitmentWeights = [[], [], []]
         vs = []
         commitments = zipWith commit vs commitBlinders
@@ -161,19 +168,21 @@ test_arithCircuitProof_mult_1 = localOption (QuickCheckTests 20) $
     QCM.assert $ verifyProof commitments proof arithCircuit
 
 
--- Test that a 2 in 2 out shuffle circuit succeeds
--- LINEAR CONSTRAINTS:
--- a_O[0] = a_O[1]
--- a_L[0] = V[0] - z
--- a_L[1] = V[2] - z
--- a_R[0] = V[1] - z
--- a_R[1] = V[3] - z
--- MUL CONSTRAINTS:
--- a_L[0] * a_R[0] = a_O[0]
--- a_L[1] * a_R[1] = a_O[1]
+--  5 linear constraints (q = 5):
+--  aO[0] = aO[1]
+--  aL[0] = V[0] - z
+--  aL[1] = V[2] - z
+--  aR[0] = V[1] - z
+--  aR[1] = V[3] - z
+--
+--  2 multiplication constraint (implicit) (n = 2):
+--  aL[0] * aR[0] = aO[0]
+--  aL[1] * aR[1] = aO[1]
+--
+--  4 input values (m = 4)
 test_arithCircuitProof_shuffle_circuit :: TestTree
 test_arithCircuitProof_shuffle_circuit = localOption (QuickCheckTests 20) $
-  testProperty "Arithmetic circuit proof. 2 in 2 out shuffle" $ QCM.monadicIO $ do
+  testProperty "Arithmetic circuit proof. n = 2, m = 4, q = 5" $ QCM.monadicIO $ do
     z <- QCM.run Fq.random
     commitBlinders <- QCM.run $ replicateM 4 Fq.random
 
@@ -198,10 +207,10 @@ test_arithCircuitProof_shuffle_circuit = localOption (QuickCheckTests 20) $
              ,[0, 1, 0 ,0]
              ,[0, 0, 0, 1]]
         cs = [0, -z, -z, -z, -z]
-        aL = [3 - z, 7 - z]
-        aR = [7 - z, 3 - z]
+        aL = [4 - z, 9 - z]
+        aR = [9 - z, 4 - z]
         aO = aL `hadamardp` aR
-        vs = [3, 7, 7, 3]
+        vs = [4, 9, 9, 4]
         commitments = zipWith commit vs commitBlinders
         gateWeights = GateWeights wL wR wO
         gateInputs = Assignment aL aR aO
