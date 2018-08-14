@@ -5,6 +5,7 @@ import Protolude
 import Numeric (showIntAtBase)
 import Data.Char (intToDigit, digitToInt)
 
+import Crypto.Number.Generate (generateMax)
 import Crypto.Random.Types (MonadRandom(..))
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
@@ -149,7 +150,6 @@ commitBitVectors aBlinding sBlinding aL aR sL sR = do
     let sCommit = sBlindingH `addP` sLG `addP` sRH
 
     pure (aCommit, sCommit)
-
 
 -- | (z − z^2) * <1^n, y^n> − z^3 * <1^n, 2^n>
 delta :: (Eq f, Field f) => Integer -> Integer -> f -> f -> f

@@ -106,5 +106,3 @@ inv' a b =
 
 random :: MonadRandom m => m Fq
 random = Fq <$> generateMax q
-
-
