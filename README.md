@@ -90,6 +90,7 @@ The aggregate range proof makes use of the inner product argument. It uses 2 [lo
 
 See [Multi range proof example](https://github.com/adjoint-io/bulletproofs/tree/master#multi-range-proof)
 
+
 Usage
 =====
 
@@ -99,8 +100,8 @@ Single range proof:
 ```haskell
 import qualified Bulletproofs.RangeProof as RP
 
-testProtocol :: (Integer, Integer) -> IO Bool
-testProtocol (v, vBlinding) = do
+testSingleRangeProof :: (Integer, Integer) -> IO Bool
+testSingleRangeProof (v, vBlinding) = do
   let vCommit = commit v vBlinding
       -- n needs to be a power of 2
       n = 2 ^ 8
@@ -122,8 +123,8 @@ Multi range proof:
 ```haskell
 import qualified Bulletproofs.MultiRangeProof as MRP
 
-testProtocol :: [(Integer, Integer)] -> IO Bool
-testProtocol vsAndvBlindings = do
+testMultiRangeProof :: [(Integer, Integer)] -> IO Bool
+testMultiRangeProof vsAndvBlindings = do
   let vCommits = fmap (uncurry commit) vsAndvBlindings
       -- n needs to be a power of 2
       n = 2 ^ 8
@@ -145,6 +146,30 @@ This implementation offers support for SECp256k1, a Koblitz curve.
 Further information about this curve can be found in the Uplink docs:
 [SECp256k1 curve](https://www.adjoint.io/docs/cryptography.html#id1 "SECp256k1 curve")
 
+
+Zero-knowledge proof for Arithmetic Circuits
+============================================
+
+An arithmetic circuit over a field and variables (a<sub>1</sub>, ..., a<sub>n</sub>) is a directed acyclic graph whose vertices are called gates.
+
+Arithmetic circuit can be described alternatively as a list of multiplication gates with a collection of linear consistency equations
+relating the inputs and outputs of the gates. Any circuit described as an acyclic graph can be efficiently converted into this alternative description.
+
+Bulletproofs present a protocol to generate zero-knowledge argument for arithmetic circuits using the inner product argument,
+which allows to get a proof of size 2 log<sub>2</sub>(n) + 13 elements and include committed values as inputs to the arithmetic circuit.
+
+In the protocol, the Prover proves that the hadamard product of _a<sub>L</sub>_ and _a<sub>R</sub>_ and a set of linear constraints hold.
+The input values _v_ used to generate the proof are then committed and shared with the Verifier.
+
+```haskell
+import qualified Bulletproofs.ArithmeticCircuit
+
+testArithCircuitProof :: ArithCircuit Fq -> ArithWitness Fq -> IO Bool
+testArithCircuitProof arithCircuit arithWitness@ArithWitness{ commitments } = do
+    proof <- generateProof arithCircuit arithWitness
+
+    pure $ verifyProof commitments proof arithCircuit
+```
 
 **References**:
 
