@@ -164,11 +164,59 @@ The input values _v_ used to generate the proof are then committed and shared wi
 ```haskell
 import qualified Bulletproofs.ArithmeticCircuit
 
-testArithCircuitProof :: ArithCircuit Fq -> ArithWitness Fq -> IO Bool
-testArithCircuitProof arithCircuit arithWitness@ArithWitness{ commitments } = do
-    proof <- generateProof arithCircuit arithWitness
+--  Example:
+--  2 linear constraints (q = 2):
+--  aL[0] + aL[1] + aL[2] + aL[3] = v[0]
+--  aR[0] + aR[1] + aR[2] + aR[3] = v[1]
+--
+--  4 multiplication constraints (implicit) (n = 4):
+--  aL[0] * aR[0] = aO[0]
+--  aL[1] * aR[1] = aO[1]
+--  aL[2] * aR[2] = aO[2]
+--  aL[3] * aR[3] = aO[3]
+--
+--  2 input values (m = 2)
 
-    pure $ verifyProof commitments proof arithCircuit
+arithCircuitExample :: ArithCircuit Fq
+arithCircuitExample = ArithCircuit
+  { weights = GateWeights
+    { wL = [[1, 1, 1, 1]
+           ,[0, 0, 0, 0]]
+    , wR = [[0, 0, 0, 0]
+           ,[1, 1, 1, 1]]
+    , wO = [[0, 0, 0, 0]
+           ,[0, 0, 0, 0]]
+    }
+  , commitmentWeights = [[1, 0]
+                        ,[0, 1]]
+  , cs = [0, 0]
+  }
+
+testArithCircuitProof :: ([Fq], [Fq]) -> ArithCircuit Fq -> IO Bool
+testArithCircuitProof (aL, aR) arithCircuit = do
+  let n = 4
+      m = 2
+      q = 2
+
+  -- Multiplication constraints
+  let aO = aL `hadamardp` aR
+
+  -- Linear constraints
+      v0 = sum aL
+      v1 = sum aR
+
+  commitBlinders <- replicateM m Fq.random
+  let commitments = zipWith commit [v0, v1] commitBlinders
+
+  let arithWitness = ArithWitness
+        { assignment = Assignment aL aR aO
+        , commitments = commitments
+        , commitBlinders = commitBlinders
+        }
+
+  proof <- generateProof arithCircuit arithWitness
+
+  pure $ verifyProof commitments proof arithCircuit
 ```
 
 **References**:
