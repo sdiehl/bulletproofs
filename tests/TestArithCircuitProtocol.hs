@@ -58,6 +58,13 @@ test_arithCircuitProof_arbitrary = localOption (QuickCheckTests 10) $
     QCM.assert $ verifyProof commitments proof arithCircuit
 
 -- | Test hadamard product relation
+--  2 linear constraints (q = 2):
+--  aL[0] + aL[1] + ... + aL[15] = v[0]
+--  aR[0] + aR[1] + ... + aR[15] = v[1]
+--
+--  16 multiplication constraints (implicit) (n = 16):
+--
+--  2 input values (m = 2)
 test_arithCircuitProof_hadamardp :: TestTree
 test_arithCircuitProof_hadamardp = localOption (QuickCheckTests 20) $
   testProperty "Arithmetic circuit proof. Hadamard product relation" $ QCM.monadicIO $ do

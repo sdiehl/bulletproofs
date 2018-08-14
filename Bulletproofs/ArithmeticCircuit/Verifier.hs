@@ -14,6 +14,8 @@ import qualified Bulletproofs.InnerProductProof as IPP
 
 import Bulletproofs.ArithmeticCircuit.Internal
 
+-- | Verify that a zero-knowledge proof holds
+-- for an arithmetic circuit given committed input values
 verifyProof
   :: (AsInteger f, Field f, Eq f, Show f)
   => [Crypto.Point]

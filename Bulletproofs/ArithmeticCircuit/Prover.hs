@@ -13,6 +13,8 @@ import Bulletproofs.Utils hiding (shamirZ)
 import qualified Bulletproofs.InnerProductProof as IPP
 import Bulletproofs.ArithmeticCircuit.Internal
 
+-- | Generate a zero-knowledge proof of computation
+-- for an arithmetic circuit with a valid witness
 generateProof
   :: forall f m
    . (MonadRandom m, AsInteger f, Field f, Show f, Eq f)

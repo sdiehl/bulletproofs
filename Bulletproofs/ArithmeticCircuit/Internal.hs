@@ -28,44 +28,58 @@ data ArithCircuitProofError
 data ArithCircuitProof f
   = ArithCircuitProof
     { tBlinding :: f
+    -- ^ Blinding factor of the T1 and T2 commitments,
+    -- combined into the form required to make the committed version of the x-polynomial add up
     , mu :: f
+    -- ^ Blinding factor required for the Verifier to verify commitments A, S
     , t :: f
+    -- ^ Dot product of vectors l and r that prove knowledge of the value in range
+    -- t = t(x) = l(x) · r(x)
     , aiCommit :: Crypto.Point
+    -- ^ Commitment to vectors aL and aR
     , aoCommit :: Crypto.Point
+    -- ^ Commitment to vectors aO
     , sCommit :: Crypto.Point
+    -- ^ Commitment to new vectors sL, sR, created at random by the Prover
     , tCommits :: [Crypto.Point]
+    -- ^ Commitments to t1, t3, t4, t5, t6
     , productProof :: IPP.InnerProductProof f
     } deriving (Show, Eq, Generic, NFData)
 
 data ArithCircuit f
   = ArithCircuit
     { weights :: GateWeights f
+      -- ^ Weights for vectors of left and right inputs and for vector of outputs
     , commitmentWeights :: [[f]]
+      -- ^ Weigths for a commitments V of rank m
     , cs :: [f]
+      -- ^ Vector of constants of size Q
     } deriving (Show, Eq, Generic, NFData)
 
 
 data GateWeights f
   = GateWeights
-    { wL :: [[f]] -- WL in Z(Q x n)
-    , wR :: [[f]] -- WR in Z(Q x n)
-    , wO :: [[f]] -- WO in Z(Q x n)
+    { wL :: [[f]] -- ^ WL ∈ F^(Q x n)
+    , wR :: [[f]] -- ^ WR ∈ F^(Q x n)
+    , wO :: [[f]] -- ^ WO ∈ F^(Q x n)
     } deriving (Show, Eq, Generic, NFData)
 
 data ArithWitness f
   = ArithWitness
-  { assignment :: Assignment f
-  , commitments :: [Crypto.Point]
-  , commitBlinders :: [f]
+  { assignment :: Assignment f -- ^ Vectors of left and right inputs and vector of outputs
+  , commitments :: [Crypto.Point] -- ^ Vector of commited input values ∈ F^m
+  , commitBlinders :: [f] -- ^ Vector of blinding factors for input values ∈ F^m
   } deriving (Show, Eq, Generic, NFData)
 
 data Assignment f
   = Assignment
-    { aL :: [f] -- aL. Vector of left inputs of each multiplication gate
-    , aR :: [f] -- aR. Vector of right inputs of each multiplication gate
-    , aO :: [f] -- aO. Vector of outputs of each multiplication gate
+    { aL :: [f] -- ^ aL ∈ F^n. Vector of left inputs of each multiplication gate
+    , aR :: [f] -- ^ aR ∈ F^n. Vector of right inputs of each multiplication gate
+    , aO :: [f] -- ^ aO ∈ F^n. Vector of outputs of each multiplication gate
     } deriving (Show, Eq, Generic, NFData)
 
+-- | Pad circuit weights to make n be a power of 2, which
+-- is required to compute the inner product proof
 padCircuit :: Num f => ArithCircuit f -> ArithCircuit f
 padCircuit ArithCircuit{..}
   = ArithCircuit
@@ -79,6 +93,8 @@ padCircuit ArithCircuit{..}
     wRNew = padToNearestPowerOfTwo <$> wR
     wONew = padToNearestPowerOfTwo <$> wO
 
+-- | Pad assignment vectors to make their length n be a power of 2, which
+-- is required to compute the inner product proof
 padAssignment :: Num f => Assignment f -> Assignment f
 padAssignment Assignment{..}
   = Assignment aLNew aRNew aONew
