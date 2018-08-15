@@ -75,7 +75,7 @@ generateProofUnsafe upperBound vsAndvBlindings = do
   (sL, sR) <- chooseBlindingVectors nm
 
   [aBlinding, sBlinding]
-    <- replicateM 2 ((fromInteger :: Integer -> f) <$> generateMax (2^nm))
+    <- replicateM 2 ((fromInteger :: Integer -> f) <$> generateMax q)
 
   (aCommit, sCommit) <- commitBitVectors aBlinding sBlinding aL aR sL sR
 
@@ -87,7 +87,7 @@ generateProofUnsafe upperBound vsAndvBlindings = do
       tPoly@TPoly{..} = computeTPoly lrPoly
 
   [t1Blinding, t2Blinding]
-    <- replicateM 2 ((fromInteger :: Integer -> f) <$> generateMax (2^nm))
+    <- replicateM 2 ((fromInteger :: Integer -> f) <$> generateMax q)
 
 
   let t1Commit = commit t1 t1Blinding
@@ -155,8 +155,7 @@ computeLRPolys n m aL aR sL sR y z
         { l0 = aL ^-^ ((*) z <$> powerVector 1 nm)
         , l1 = sL
         , r0 = (powerVector y nm `hadamardp` (aR ^+^ z1nm))
-               ^+^
-                foldl' (\acc j -> iter j ^+^ acc) (replicate (fromIntegral nm) 0) [1..m]
+             ^+^ foldl' (\acc j -> iter j ^+^ acc) (replicate (fromIntegral nm) 0) [1..m]
         , r1 = hadamardp (powerVector y nm) sR
         }
   where

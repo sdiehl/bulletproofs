@@ -1,38 +1,13 @@
-module Bulletproofs.Utils (
-  -- ^ Classes
-  AsInteger(..),
-  Field(..),
-  -- ^ Points
-  addP,
-  subP,
-  mulP,
-  -- ^ Shamir transformations
-  shamirU,
-  shamirX,
-  shamirX',
-  shamirY,
-  shamirZ,
-  commit,
-  -- ^ Vector operations
-  hadamardp,
-  (^+^),
-  (^-^),
-  dot,
-  powerVector,
-  -- ^ Logarithm helpers
-  logBase2,
-  logBase2M,
-  log2Ceil,
-  slice,
-  padToNearestPowerOfTwo
-) where
+module Bulletproofs.Utils where
 
 import Protolude
 
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
+import Crypto.Random (MonadRandom)
+import Crypto.Number.Generate (generateMax)
 
-import Bulletproofs.Fq as Fq
+import Bulletproofs.Fq as Fq hiding (asInteger)
 import Bulletproofs.Curve
 
 class AsInteger a where
@@ -132,6 +107,15 @@ log2Ceil x = floorLog + correction
     correction = if countTrailingZeros x < floorLog
                  then 1
                  else 0
+
+randomN :: MonadRandom m => Integer -> m Integer
+randomN n = generateMax (2^n)
+
+chooseBlindingVectors :: (Num f, MonadRandom m) => Integer -> m ([f], [f])
+chooseBlindingVectors n = do
+  sL <- replicateM (fromInteger n) (fromInteger <$> generateMax (2^n))
+  sR <- replicateM (fromInteger n) (fromInteger <$> generateMax (2^n))
+  pure (sL, sR)
 
 --------------------------------------------------
 -- Fiat-Shamir transformations

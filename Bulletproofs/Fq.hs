@@ -1,18 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveGeneric #-}
 
-module Bulletproofs.Fq (
-  Fq(..),
-  new,
-  inv,
-  fqInv,
-  fqZero,
-  fqOne,
-  fqSquare,
-  fqCube,
-  fqPower,
-  euclidean,
-  random
-) where
+module Bulletproofs.Fq where
 
 import Protolude
 
@@ -27,7 +16,7 @@ import Bulletproofs.Curve
 
 -- | Prime field with characteristic @_q@
 newtype Fq = Fq Integer -- ^ Use @new@ instead of this constructor
-  deriving (Show, Eq, Bits, Ord)
+  deriving (Show, Eq, Bits, Ord, Generic, NFData)
 
 instance Num Fq where
   (+)           = fqAdd
@@ -115,5 +104,5 @@ inv' a b =
   where c = a `div` b
         d = a `mod` b
 
-random :: MonadRandom m => Integer -> m Fq
-random n = Fq <$> generateMax (2^n)
+random :: MonadRandom m => m Fq
+random = Fq <$> generateMax q

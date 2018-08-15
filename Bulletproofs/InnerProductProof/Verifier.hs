@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards, NamedFieldPuns, MultiWayIf, ScopedTypeVariables #-}
 
-module Bulletproofs.InnerProductProof.Verifier ( 
+module Bulletproofs.InnerProductProof.Verifier (
   verifyProof,
 ) where
 
@@ -14,7 +14,6 @@ import qualified Crypto.PubKey.ECC.Types as Crypto
 import Bulletproofs.Curve
 import Bulletproofs.Utils
 
-import Bulletproofs.RangeProof.Internal
 import Bulletproofs.InnerProductProof.Internal
 
 -- | Optimized non-interactive verifier using multi-exponentiation and batch verification

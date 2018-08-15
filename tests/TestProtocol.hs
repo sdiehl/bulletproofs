@@ -47,16 +47,16 @@ prop_complementaryVector_hadamard ((toInteger . unbin <$>) -> xs)
 prop_dot_aL2n :: Property
 prop_dot_aL2n = QCM.monadicIO $ do
   n <- QCM.run $ (2 ^) <$> generateMax 8
-  v <- QCM.run $ Fq.random n
-  QCM.assert $ RP.reversedEncodeBit n v `dot` powerVector (Fq.new 2) n == v
+  v <- QCM.run $ randomN n
+  QCM.assert $ RP.reversedEncodeBit n v `dot` powerVector 2 n == v
 
 prop_challengeComplementaryVector :: Property
 prop_challengeComplementaryVector = QCM.monadicIO $ do
   n <- QCM.run $ (2 ^) <$> generateMax 8
-  v <- QCM.run $ Fq.random n
+  v <- QCM.run $ randomN n
   let aL = RP.reversedEncodeBit n v
       aR = RP.complementaryVector aL
-  y <- QCM.run $ Fq.random n
+  y <- QCM.run $ randomN n
   QCM.assert
     $ dot
       ((aL ^-^ powerVector 1 n) ^-^ aR)
@@ -67,7 +67,7 @@ prop_challengeComplementaryVector = QCM.monadicIO $ do
 prop_reversedEncodeBitAggr :: Int -> Property
 prop_reversedEncodeBitAggr x = QCM.monadicIO $ do
   n <- QCM.run $ (2 ^) <$> generateMax 8
-  vs <- QCM.run $ replicateM x $ Fq.random n
+  vs <- QCM.run $ replicateM x $ randomN n
   let m = fromIntegral $ length vs
       reversed = RP.reversedEncodeBitMulti n vs
   QCM.assert $ vs == fmap (\j -> dot (slice n j reversed) (powerVector 2 n)) [1..m]
@@ -75,11 +75,11 @@ prop_reversedEncodeBitAggr x = QCM.monadicIO $ do
 prop_challengeComplementaryVectorAggr :: Int -> Property
 prop_challengeComplementaryVectorAggr x = QCM.monadicIO $ do
   n <- QCM.run $ (2 ^) <$> generateMax 8
-  vs <- QCM.run $ replicateM 3 $ Fq.random n
+  vs <- QCM.run $ replicateM 3 $ randomN n
   let aL = RP.reversedEncodeBitMulti n vs
       aR = RP.complementaryVector aL
       m = length vs
-  y <- QCM.run $ Fq.random n
+  y <- QCM.run $ randomN n
   QCM.assert $
     replicate m 0
     ==
@@ -92,11 +92,11 @@ prop_obfuscateEncodedBits
 prop_obfuscateEncodedBits y z
   = QCM.monadicIO $ do
   n <- QCM.run $ (2 ^) <$> generateMax 8
-  v <- QCM.run $ Fq.random n
+  v <- QCM.run $ Fq.new <$> randomN n
   let aL = RP.reversedEncodeBit n v
       aR = RP.complementaryVector aL
 
-  QCM.assert $ RP.obfuscateEncodedBits n aL aR y z == fqSquare z * v
+  QCM.assert $ RP.obfuscateEncodedBits n aL aR y z == fSquare z * v
 
 prop_singleInnerProduct
   :: Fq
@@ -105,12 +105,12 @@ prop_singleInnerProduct
 prop_singleInnerProduct y z
   = QCM.monadicIO $ do
   n <- QCM.run $ (2 ^) <$> generateMax 8
-  v <- QCM.run $ Fq.random n
+  v <- QCM.run $ Fq.new <$> randomN n
 
   let aL = RP.reversedEncodeBit n v
       aR = RP.complementaryVector aL
 
-  QCM.assert $ RP.obfuscateEncodedBitsSingle n aL aR y z == (fqSquare z * v) + RP.delta n 1 y z
+  QCM.assert $ RP.obfuscateEncodedBitsSingle n aL aR y z == (fSquare z * v) + RP.delta n 1 y z
 
 setupV :: MonadRandom m => Integer -> m ((Integer, Integer), Crypto.Point)
 setupV n = do
@@ -203,8 +203,8 @@ test_invalidCommitment = localOption (QuickCheckTests 20) $
     Right (proof@RP.RangeProof{..}) ->
       QCM.assert $ not $ MRP.verifyProof upperBound [invalidVCommit] proof
 
-test_completeness :: TestTree
-test_completeness = localOption (QuickCheckTests 10) $
+test_multiRangeProof_completeness :: TestTree
+test_multiRangeProof_completeness = localOption (QuickCheckTests 5) $
   testProperty "Test multi range proof completeness" $ QCM.monadicIO $ do
     n <- QCM.run $ (2 ^) <$> generateMax 8
     m <- QCM.run $ generateBetween 1 10
@@ -217,8 +217,8 @@ test_completeness = localOption (QuickCheckTests 10) $
       Right (proof@RP.RangeProof{..}) ->
         QCM.assert $ MRP.verifyProof upperBound (snd <$> ctx) proof
 
-test_singleRangeProof :: TestTree
-test_singleRangeProof = localOption (QuickCheckTests 20) $
+test_singleRangeProof_completeness :: TestTree
+test_singleRangeProof_completeness = localOption (QuickCheckTests 20) $
   testProperty "Test single range proof completeness" $ QCM.monadicIO $ do
     n <- QCM.run $ (2 ^) <$> generateMax 8
     ((v, vBlinding), vCommit) <- QCM.run $ setupV n
