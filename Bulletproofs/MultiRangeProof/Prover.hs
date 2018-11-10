@@ -7,6 +7,7 @@ module Bulletproofs.MultiRangeProof.Prover (
 
 import Protolude
 
+import Control.Monad.Fail
 import Crypto.Random.Types (MonadRandom(..))
 import Crypto.Number.Generate (generateMax)
 import qualified Crypto.PubKey.ECC.Generate as Crypto
@@ -20,9 +21,9 @@ import Bulletproofs.RangeProof.Internal
 import Bulletproofs.InnerProductProof as IPP hiding (generateProof)
 import qualified Bulletproofs.InnerProductProof as IPP
 
--- | Prove that a list of values lie in a specific range
+-- | Prove that a list of values lies in a specific range
 generateProof
-  :: (AsInteger f, Eq f, Field f, Show f, MonadRandom m)
+  :: (AsInteger f, Eq f, Field f, Show f, MonadRandom m, MonadFail m)
   => Integer                -- ^ Upper bound of the range we want to prove
   -> [(Integer, Integer)]
   -- ^ Values we want to prove in range and their blinding factors
@@ -53,7 +54,7 @@ generateProof upperBound vsAndvBlindings = do
 -- | Generate range proof from valid inputs
 generateProofUnsafe
   :: forall f m
-   . (AsInteger f, Eq f, Field f, Show f, MonadRandom m)
+   . (AsInteger f, Eq f, Field f, Show f, MonadRandom m, MonadFail m)
   => Integer    -- ^ Upper bound of the range we want to prove
   -> [(Integer, Integer)]
   -- ^ Values we want to prove in range and their blinding factors
