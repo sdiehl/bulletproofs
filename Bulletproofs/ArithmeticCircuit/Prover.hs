@@ -3,6 +3,7 @@ module Bulletproofs.ArithmeticCircuit.Prover where
 
 import Protolude
 
+import Control.Monad.Fail
 import Crypto.Random.Types (MonadRandom(..))
 import Crypto.Number.Generate (generateMax)
 import qualified Crypto.PubKey.ECC.Prim as Crypto
@@ -17,7 +18,7 @@ import Bulletproofs.ArithmeticCircuit.Internal
 -- for an arithmetic circuit with a valid witness
 generateProof
   :: forall f m
-   . (MonadRandom m, AsInteger f, Field f, Show f, Eq f)
+   . (MonadRandom m, MonadFail m, AsInteger f, Field f, Show f, Eq f)
   => ArithCircuit f
   -> ArithWitness f
   -> m (ArithCircuitProof f)
