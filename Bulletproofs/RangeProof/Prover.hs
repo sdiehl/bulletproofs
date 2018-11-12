@@ -5,7 +5,6 @@ module Bulletproofs.RangeProof.Prover (
 
 import Protolude
 
-import Control.Monad.Fail
 import Crypto.Random.Types (MonadRandom(..))
 
 import Bulletproofs.Utils (AsInteger, Field)
@@ -14,7 +13,7 @@ import qualified Bulletproofs.MultiRangeProof.Prover as MRP
 
 -- | Prove that a value lies in a specific range
 generateProof
-  :: (AsInteger f, Eq f, Field f, Show f, MonadRandom m, MonadFail m)
+  :: (AsInteger f, Eq f, Field f, Show f, MonadRandom m)
   => Integer                -- ^ Upper bound of the range we want to prove
   -> (Integer, Integer)
   -- ^ Values we want to prove in range and their blinding factors
@@ -24,7 +23,7 @@ generateProof upperBound (v, vBlinding) =
 
 -- | Generate range proof from valid inputs
 generateProofUnsafe
-  :: (AsInteger f, Eq f, Field f, Show f, MonadRandom m, MonadFail m)
+  :: (AsInteger f, Eq f, Field f, Show f, MonadRandom m)
   => Integer    -- ^ Upper bound of the range we want to prove
   -> (Integer, Integer)
   -- ^ Values we want to prove in range and their blinding factors

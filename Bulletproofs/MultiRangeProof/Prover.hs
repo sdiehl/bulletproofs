@@ -7,7 +7,6 @@ module Bulletproofs.MultiRangeProof.Prover (
 
 import Protolude
 
-import Control.Monad.Fail
 import Crypto.Random.Types (MonadRandom(..))
 import Crypto.Number.Generate (generateMax)
 import qualified Crypto.PubKey.ECC.Generate as Crypto
@@ -23,7 +22,7 @@ import qualified Bulletproofs.InnerProductProof as IPP
 
 -- | Prove that a list of values lies in a specific range
 generateProof
-  :: (AsInteger f, Eq f, Field f, Show f, MonadRandom m, MonadFail m)
+  :: (AsInteger f, Eq f, Field f, Show f, MonadRandom m)
   => Integer                -- ^ Upper bound of the range we want to prove
   -> [(Integer, Integer)]
   -- ^ Values we want to prove in range and their blinding factors
@@ -54,7 +53,7 @@ generateProof upperBound vsAndvBlindings = do
 -- | Generate range proof from valid inputs
 generateProofUnsafe
   :: forall f m
-   . (AsInteger f, Eq f, Field f, Show f, MonadRandom m, MonadFail m)
+   . (AsInteger f, Eq f, Field f, Show f, MonadRandom m)
   => Integer    -- ^ Upper bound of the range we want to prove
   -> [(Integer, Integer)]
   -- ^ Values we want to prove in range and their blinding factors
@@ -75,8 +74,10 @@ generateProofUnsafe upperBound vsAndvBlindings = do
 
   (sL, sR) <- chooseBlindingVectors nm
 
-  [aBlinding, sBlinding]
-    <- replicateM 2 ((fromInteger :: Integer -> f) <$> generateMax q)
+  let genBlinding = (fromInteger :: Integer -> f) <$> generateMax q
+
+  aBlinding <- genBlinding
+  sBlinding <- genBlinding
 
   (aCommit, sCommit) <- commitBitVectors aBlinding sBlinding aL aR sL sR
 
@@ -87,9 +88,8 @@ generateProofUnsafe upperBound vsAndvBlindings = do
   let lrPoly@LRPolys{..} = computeLRPolys n m aL aR sL sR y z
       tPoly@TPoly{..} = computeTPoly lrPoly
 
-  [t1Blinding, t2Blinding]
-    <- replicateM 2 ((fromInteger :: Integer -> f) <$> generateMax q)
-
+  t1Blinding <- genBlinding
+  t2Blinding <- genBlinding
 
   let t1Commit = commit t1 t1Blinding
       t2Commit = commit t2 t2Blinding
