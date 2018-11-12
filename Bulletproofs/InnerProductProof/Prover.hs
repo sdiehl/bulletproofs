@@ -6,6 +6,7 @@ module Bulletproofs.InnerProductProof.Prover (
 
 import Protolude
 
+import Control.Exception (assert)
 import qualified Data.List as L
 import qualified Data.Map as Map
 
@@ -47,17 +48,13 @@ generateProof'
   = case (ls, rs) of
     ([], [])   -> InnerProductProof [] [] 0 0
     ([l], [r]) -> InnerProductProof (reverse lCommits) (reverse rCommits) l r
-    _          -> if | not checkLGs -> panic "Error in: l' * Gs' == l * Gs + x^2 * A_L + x^(-2) * A_R"
-                     | not checkRHs -> panic "Error in: r' * Hs' == r * Hs + x^2 * B_L + x^(-2) * B_R"
-                     | not checkLBs -> panic "Error in: l' * r' == l * r + x^2 * (lsLeft * rsRight) + x^-2 * (lsRight * rsLeft)"
-                     | not checkC -> panic "Error in: C == zG + aG + bH'"
-                     | not checkC' -> panic "Error in: C' = C + x^2 L + x^-2 R == z'G + a'G + b'H'"
-                     | otherwise -> generateProof'
-                         InnerProductBase { bGs = gs'', bHs = hs'', bH = bH }
-                         commitmentLR'
-                         InnerProductWitness { ls = ls', rs = rs' }
-                         (lCommit:lCommits)
-                         (rCommit:rCommits)
+    _          -> assert (checkLGs && checkRHs && checkLBs && checkC && checkC')
+                $ generateProof'
+                    InnerProductBase { bGs = gs'', bHs = hs'', bH = bH }
+                    commitmentLR'
+                    InnerProductWitness { ls = ls', rs = rs' }
+                    (lCommit:lCommits)
+                    (rCommit:rCommits)
   where
     n' = fromIntegral $ length ls
     nPrime = n' `div` 2
