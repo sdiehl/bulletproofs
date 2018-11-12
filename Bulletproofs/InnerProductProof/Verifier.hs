@@ -37,8 +37,8 @@ verifyProof n productBase@InnerProductBase{..} commitmentLR productProof@InnerPr
         `addP`
         ((l * r) `mulP` bH)
 
-    gsCommit = foldl' addP Crypto.PointO (zipWith mulP otherExponents bGs)
-    hsCommit = foldl' addP Crypto.PointO (zipWith mulP (reverse otherExponents) bHs)
+    gsCommit = sumExps otherExponents bGs
+    hsCommit = sumExps (reverse otherExponents) bHs
 
 mkChallenges :: (AsInteger f, Field f) => InnerProductProof f -> Crypto.Point -> ([f], [f], Crypto.Point)
 mkChallenges InnerProductProof{ lCommits, rCommits } commitmentLR

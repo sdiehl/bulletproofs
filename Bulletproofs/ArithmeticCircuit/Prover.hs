@@ -59,7 +59,7 @@ generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
   let tCommits = zipWith commit tPoly tBlindings
 
   let x = shamirGs tCommits
-      evalTCommit = foldl' addP Crypto.PointO (zipWith mulP (powerVector x 7) tCommits)
+      evalTCommit = sumExps (powerVector x 7) tCommits
 
   let ls = evaluatePolynomial n lPoly x
       rs = evaluatePolynomial n rPoly x
@@ -80,8 +80,8 @@ generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
       commitmentLR = (x `mulP` aiCommit)
                    `addP` (fSquare x `mulP` aoCommit)
                    `addP` ((x ^ 3)`mulP` sCommit)
-                   `addP` foldl' addP Crypto.PointO (zipWith mulP gExp gs)
-                   `addP` foldl' addP Crypto.PointO (zipWith mulP hExp hs')
+                   `addP` sumExps gExp gs
+                   `addP` sumExps hExp hs'
                    `addP` Crypto.pointNegate curve (mu `mulP` h)
                    `addP` (t `mulP` u)
 

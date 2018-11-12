@@ -111,8 +111,8 @@ commitBitVector :: (AsInteger f) => f -> [f] -> [f] -> Crypto.Point
 commitBitVector vBlinding vL vR = vLG `addP` vRH `addP` vBlindingH
   where
     vBlindingH = vBlinding `mulP` h
-    vLG = foldl' addP Crypto.PointO ( zipWith mulP vL gs )
-    vRH = foldl' addP Crypto.PointO ( zipWith mulP vR hs )
+    vLG = sumExps vL gs
+    vRH = sumExps vR hs
 
 shamirGxGxG :: (Show f, Num f) => Crypto.Point -> Crypto.Point -> Crypto.Point -> f
 shamirGxGxG p1 p2 p3

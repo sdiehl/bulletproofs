@@ -67,15 +67,15 @@ generateProof'
     cL = dot lsLeft rsRight
     cR = dot lsRight rsLeft
 
-    lCommit = foldl' addP Crypto.PointO (zipWith mulP lsLeft gsRight)
+    lCommit = sumExps lsLeft gsRight
          `addP`
-         foldl' addP Crypto.PointO (zipWith mulP rsRight hsLeft)
+         sumExps rsRight hsLeft
          `addP`
          (cL `mulP` bH)
 
-    rCommit = foldl' addP Crypto.PointO (zipWith mulP lsRight gsLeft)
+    rCommit = sumExps lsRight gsLeft
          `addP`
-         foldl' addP Crypto.PointO (zipWith mulP rsLeft hsRight)
+         sumExps rsLeft hsRight
          `addP`
          (cR `mulP` bH)
 
@@ -85,8 +85,8 @@ generateProof'
     xs = replicate nPrime x
     xsInv = replicate nPrime xInv
 
-    gs'' = zipWith addP (zipWith mulP xsInv gsLeft) (zipWith mulP xs gsRight)
-    hs'' = zipWith addP (zipWith mulP xs hsLeft) (zipWith mulP xsInv hsRight)
+    gs'' = zipWith (\(exp0, pt0) (exp1, pt1) -> addTwoMulP exp0 pt0 exp1 pt1) (zip xsInv gsLeft) (zip xs gsRight)
+    hs'' = zipWith (\(exp0, pt0) (exp1, pt1) -> addTwoMulP exp0 pt0 exp1 pt1) (zip xs hsLeft) (zip xsInv hsRight)
 
     ls' = ((*) x <$> lsLeft) ^+^ ((*) xInv <$> lsRight)
     rs' = ((*) xInv <$> rsLeft) ^+^ ((*) x <$> rsRight)
@@ -102,25 +102,25 @@ generateProof'
     -- Checks
     -----------------------------
 
-    aL' = foldl' addP Crypto.PointO (zipWith mulP lsLeft gsRight)
-    aR' = foldl' addP Crypto.PointO (zipWith mulP lsRight gsLeft)
+    aL' = sumExps lsLeft gsRight
+    aR' = sumExps lsRight gsLeft
 
-    bL' = foldl' addP Crypto.PointO (zipWith mulP rsLeft hsRight)
-    bR' = foldl' addP Crypto.PointO (zipWith mulP rsRight hsLeft)
+    bL' = sumExps rsLeft hsRight
+    bR' = sumExps rsRight hsLeft
 
     z = dot ls rs
     z' = dot ls' rs'
 
-    lGs = foldl' addP Crypto.PointO (zipWith mulP ls bGs)
-    rHs = foldl' addP Crypto.PointO (zipWith mulP rs bHs)
+    lGs = sumExps ls bGs
+    rHs = sumExps rs bHs
 
-    lGs' = foldl' addP Crypto.PointO (zipWith mulP ls' gs'')
-    rHs' = foldl' addP Crypto.PointO (zipWith mulP rs' hs'')
+    lGs' = sumExps ls' gs''
+    rHs' = sumExps rs' hs''
 
     checkLGs
       = lGs'
         ==
-        foldl' addP Crypto.PointO (zipWith mulP ls bGs)
+        sumExps ls bGs
         `addP`
         (fSquare x `mulP` aL')
         `addP`
@@ -129,7 +129,7 @@ generateProof'
     checkRHs
       = rHs'
         ==
-        foldl' addP Crypto.PointO (zipWith mulP rs bHs)
+        sumExps rs bHs
         `addP`
         (fSquare x `mulP` bR')
         `addP`
@@ -157,5 +157,3 @@ generateProof'
         lGs'
         `addP`
         rHs'
-
-

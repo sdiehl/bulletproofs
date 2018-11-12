@@ -137,10 +137,10 @@ commitBitVectors
   -> [f]
   -> m (Crypto.Point, Crypto.Point)
 commitBitVectors aBlinding sBlinding aL aR sL sR = do
-    let aLG = foldl' addP Crypto.PointO ( zipWith mulP aL gs )
-        aRH = foldl' addP Crypto.PointO ( zipWith mulP aR hs )
-        sLG = foldl' addP Crypto.PointO ( zipWith mulP sL gs )
-        sRH = foldl' addP Crypto.PointO ( zipWith mulP sR hs )
+    let aLG = sumExps aL gs
+        aRH = sumExps aR hs
+        sLG = sumExps sL gs
+        sRH = sumExps sR hs
         aBlindingH = mulP aBlinding h
         sBlindingH = mulP sBlinding h
 
@@ -191,10 +191,10 @@ computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
     `addP`
     Crypto.pointNegate curve (z `mulP` gsSum)             -- (- zG)
     `addP`
-    foldl' addP Crypto.PointO (zipWith mulP hExp hs')     -- (hExp Hs')
+    sumExps hExp hs'     -- (hExp Hs')
     `addP`
     foldl'
-      (\acc j -> acc `addP` foldl' addP Crypto.PointO (zipWith mulP (hExp' j) (sliceHs' j)))
+      (\acc j -> acc `addP` sumExps (hExp' j) (sliceHs' j))
       Crypto.PointO
       [1..m]
     `addP`
