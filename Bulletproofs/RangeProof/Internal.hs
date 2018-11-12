@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass #-}
 module Bulletproofs.RangeProof.Internal where
 
 import Protolude
@@ -37,14 +38,14 @@ data RangeProof f
     , productProof :: InnerProductProof f
     -- ^ Inner product argument to prove that a commitment P
     -- has vectors l, r ∈  Z^n for which P = l · G + r · H + ( l, r ) · U
-    } deriving (Show, Eq)
+    } deriving (Show, Eq, Generic, NFData)
 
 data RangeProofError
   = UpperBoundTooLarge Integer  -- ^ The upper bound of the range is too large
   | ValueNotInRange Integer     -- ^ Value is not within the range required
   | ValuesNotInRange [Integer]  -- ^ Values are not within the range required
   | NNotPowerOf2 Integer        -- ^ Dimension n is required to be a power of 2
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic, NFData)
 
 -----------------------------
 -- Polynomials
