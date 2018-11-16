@@ -22,7 +22,7 @@
 
 ## 0.4
 
-* Use double exponentiation to improve performance,
+* Use double exponentiation to improve performance.
 * Use Control.Exception.assert to make sure debugging assertions are not checked
   when compiled with optimisations.
 * Add benchmarks for rangeproofs.
