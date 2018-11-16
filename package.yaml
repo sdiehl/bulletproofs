@@ -75,3 +75,15 @@ tests:
     default-extensions:
       - OverloadedStrings
       - NoImplicitPrelude
+
+benchmarks:
+  rangeproof-benchmarks:
+    source-dirs: bench
+    main: Main.hs
+    dependencies:
+      - bulletproofs
+      - criterion >= 1.5.1.0
+      - QuickCheck
+      - tasty
+      - tasty-quickcheck
+      - tasty-hunit

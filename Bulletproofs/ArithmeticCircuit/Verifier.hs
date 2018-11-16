@@ -41,9 +41,9 @@ verifyProof vCommits proof@ArithCircuitProof{..} (padCircuit -> ArithCircuit{..}
 
     hs' = zipWith mulP (powerVector (recip y) n) hs
 
-    wLCommit = foldl' addP Crypto.PointO (zipWith mulP (zs `vectorMatrixProduct` wL) hs')
-    wRCommit = foldl' addP Crypto.PointO (zipWith mulP wRExp gs)
-    wOCommit = foldl' addP Crypto.PointO (zipWith mulP (zs `vectorMatrixProduct` wO) hs')
+    wLCommit = sumExps (zs `vectorMatrixProduct` wL) hs'
+    wRCommit = sumExps wRExp gs
+    wOCommit = sumExps (zs `vectorMatrixProduct` wO) hs'
     wRExp = powerVector (recip y) n `hadamardp` (zs `vectorMatrixProduct` wL)
 
     uChallenge = shamirU tBlinding mu t
@@ -54,13 +54,13 @@ verifyProof vCommits proof@ArithCircuitProof{..} (padCircuit -> ArithCircuit{..}
         lhs = commit t tBlinding
         rhs = (gExp `mulP` g)
             `addP` tCommitsExpSum
-            `addP` foldl' addP Crypto.PointO ( zipWith mulP vExp vCommits )
+            `addP` sumExps vExp vCommits
         gExp = fSquare x * (k + cQ)
         cQ = zs `dot` cs
         vExp = (*) (fSquare x) <$> (zs `vectorMatrixProduct` commitmentWeights)
         k = delta n y zwL zwR
         xs = 0 : x : 0 : (((^) x) <$> [3..6])
-        tCommitsExpSum = foldl' addP Crypto.PointO (zipWith mulP xs tCommits)
+        tCommitsExpSum = sumExps xs tCommits
 
     verifyLRCommitment
       = IPP.verifyProof
@@ -74,7 +74,7 @@ verifyProof vCommits proof@ArithCircuitProof{..} (padCircuit -> ArithCircuit{..}
         commitmentLR = (x `mulP` aiCommit)
                      `addP` (fSquare x `mulP` aoCommit)
                      `addP` ((x ^ 3) `mulP` sCommit)
-                     `addP` foldl' addP Crypto.PointO (zipWith mulP gExp gs)
-                     `addP` foldl' addP Crypto.PointO (zipWith mulP hExp hs')
+                     `addP` sumExps gExp gs
+                     `addP` sumExps hExp hs'
                      `addP` Crypto.pointNegate curve (mu `mulP` h)
                      `addP` (t `mulP` u)

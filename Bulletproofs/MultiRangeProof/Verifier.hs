@@ -63,7 +63,7 @@ verifyTPoly n vCommits proof@RangeProof{..} x y z
     m = fromIntegral $ length vCommits
     lhs = commit t tBlinding
     rhs =
-          foldl' addP Crypto.PointO ( zipWith mulP ((*) (fSquare z) <$> powerVector z m) vCommits )
+          sumExps ((*) (fSquare z) <$> powerVector z m) vCommits
           `addP`
           (delta n m y z `mulP` g)
           `addP`

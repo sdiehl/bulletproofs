@@ -2,3 +2,8 @@
 .stack-work/
 bulletproofs.cabal
 *~
+*.hi
+*.o
+*.prof
+*.prof.html
+Rangeproof

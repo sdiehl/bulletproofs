@@ -58,10 +58,21 @@ subP x y = Crypto.pointAdd curve x (Crypto.pointNegate curve y)
 mulP :: AsInteger f => f -> Crypto.Point -> Crypto.Point
 mulP x = Crypto.pointMul curve (asInteger x)
 
+-- | Double exponentiation (Shamir's trick): g0^x0 + g1^x1
+addTwoMulP :: AsInteger f => f -> Crypto.Point -> f -> Crypto.Point -> Crypto.Point
+addTwoMulP exp0 pt0 exp1 pt1 = Crypto.pointAddTwoMuls curve (asInteger exp0) pt0 (asInteger exp1) pt1
+
+-- | Raise every point to the corresponding exponent, sum up results
+sumExps :: AsInteger f => [f] -> [Crypto.Point] -> Crypto.Point
+sumExps (exp0:exp1:exps) (pt0:pt1:pts)
+  = addTwoMulP exp0 pt0 exp1 pt1 `addP` sumExps exps pts
+sumExps (exp:_) (pt:_) = mulP exp pt -- this also catches cases where either list is longer than the other
+sumExps _ _ = Crypto.PointO  -- this catches cases where either list is empty
+
 -- | Create a Pedersen commitment to a value given
 -- a value and a blinding factor
 commit :: AsInteger f => f -> f -> Crypto.Point
-commit x r = (x `mulP` g) `addP` (r `mulP` h)
+commit x r = addTwoMulP x g r h
 
 isLogBase2 :: Integer -> Bool
 isLogBase2 x

@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass #-}
 module Bulletproofs.RangeProof.Internal where
 
 import Protolude
@@ -37,14 +38,14 @@ data RangeProof f
     , productProof :: InnerProductProof f
     -- ^ Inner product argument to prove that a commitment P
     -- has vectors l, r ∈  Z^n for which P = l · G + r · H + ( l, r ) · U
-    } deriving (Show, Eq)
+    } deriving (Show, Eq, Generic, NFData)
 
 data RangeProofError
   = UpperBoundTooLarge Integer  -- ^ The upper bound of the range is too large
   | ValueNotInRange Integer     -- ^ Value is not within the range required
   | ValuesNotInRange [Integer]  -- ^ Values are not within the range required
   | NNotPowerOf2 Integer        -- ^ Dimension n is required to be a power of 2
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic, NFData)
 
 -----------------------------
 -- Polynomials
@@ -136,10 +137,10 @@ commitBitVectors
   -> [f]
   -> m (Crypto.Point, Crypto.Point)
 commitBitVectors aBlinding sBlinding aL aR sL sR = do
-    let aLG = foldl' addP Crypto.PointO ( zipWith mulP aL gs )
-        aRH = foldl' addP Crypto.PointO ( zipWith mulP aR hs )
-        sLG = foldl' addP Crypto.PointO ( zipWith mulP sL gs )
-        sRH = foldl' addP Crypto.PointO ( zipWith mulP sR hs )
+    let aLG = sumExps aL gs
+        aRH = sumExps aR hs
+        sLG = sumExps sL gs
+        sRH = sumExps sR hs
         aBlindingH = mulP aBlinding h
         sBlindingH = mulP sBlinding h
 
@@ -190,10 +191,10 @@ computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
     `addP`
     Crypto.pointNegate curve (z `mulP` gsSum)             -- (- zG)
     `addP`
-    foldl' addP Crypto.PointO (zipWith mulP hExp hs')     -- (hExp Hs')
+    sumExps hExp hs'     -- (hExp Hs')
     `addP`
     foldl'
-      (\acc j -> acc `addP` foldl' addP Crypto.PointO (zipWith mulP (hExp' j) (sliceHs' j)))
+      (\acc j -> acc `addP` sumExps (hExp' j) (sliceHs' j))
       Crypto.PointO
       [1..m]
     `addP`

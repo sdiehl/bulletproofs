@@ -4,7 +4,6 @@
 module Bulletproofs.ArithmeticCircuit.Internal where
 
 import Protolude hiding (head)
-import Control.Monad.Fail
 import Data.List (head)
 import qualified Data.List as List
 import qualified Data.Map as Map
@@ -111,8 +110,8 @@ commitBitVector :: (AsInteger f) => f -> [f] -> [f] -> Crypto.Point
 commitBitVector vBlinding vL vR = vLG `addP` vRH `addP` vBlindingH
   where
     vBlindingH = vBlinding `mulP` h
-    vLG = foldl' addP Crypto.PointO ( zipWith mulP vL gs )
-    vRH = foldl' addP Crypto.PointO ( zipWith mulP vR hs )
+    vLG = sumExps vL gs
+    vRH = sumExps vR hs
 
 shamirGxGxG :: (Show f, Num f) => Crypto.Point -> Crypto.Point -> Crypto.Point -> f
 shamirGxGxG p1 p2 p3
@@ -186,9 +185,12 @@ generateWv lConstraints m
   | lConstraints < m = panic "Number of constraints must be bigger than m"
   | otherwise = shuffleM (genIdenMatrix m ++ genZeroMatrix (lConstraints - m) m)
 
-generateGateWeights :: (Crypto.MonadRandom m, Num f, MonadFail m) => Integer -> Integer -> m (GateWeights f)
+generateGateWeights :: (Crypto.MonadRandom m, Num f) => Integer -> Integer -> m (GateWeights f)
 generateGateWeights lConstraints n = do
-  [wL, wR, wO] <- replicateM 3 ((\i -> insertAt (fromIntegral i) (oneVector n) (replicate (fromIntegral lConstraints - 1) (zeroVector n))) <$> generateMax (fromIntegral lConstraints))
+  let genVec = ((\i -> insertAt (fromIntegral i) (oneVector n) (replicate (fromIntegral lConstraints - 1) (zeroVector n))) <$> generateMax (fromIntegral lConstraints))
+  wL <- genVec
+  wR <- genVec
+  wO <- genVec
   pure $ GateWeights wL wR wO
   where
     zeroVector x = replicate (fromIntegral x) 0

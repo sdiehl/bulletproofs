@@ -3,7 +3,6 @@ module Bulletproofs.ArithmeticCircuit.Prover where
 
 import Protolude
 
-import Control.Monad.Fail
 import Crypto.Random.Types (MonadRandom(..))
 import Crypto.Number.Generate (generateMax)
 import qualified Crypto.PubKey.ECC.Prim as Crypto
@@ -18,14 +17,17 @@ import Bulletproofs.ArithmeticCircuit.Internal
 -- for an arithmetic circuit with a valid witness
 generateProof
   :: forall f m
-   . (MonadRandom m, MonadFail m, AsInteger f, Field f, Show f, Eq f)
+   . (MonadRandom m, AsInteger f, Field f, Show f, Eq f)
   => ArithCircuit f
   -> ArithWitness f
   -> m (ArithCircuitProof f)
 generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
   let GateWeights{..} = weights
-  let Assignment{..} = padAssignment assignment
-  [aiBlinding, aoBlinding, sBlinding] <- replicateM 3 ((fromInteger :: Integer -> f) <$> generateMax q)
+      Assignment{..} = padAssignment assignment
+      genBlinding = (fromInteger :: Integer -> f) <$> generateMax q
+  aiBlinding <- genBlinding
+  aoBlinding <- genBlinding
+  sBlinding <- genBlinding
   let n = fromIntegral $ length aL
       aiCommit = commitBitVector aiBlinding aL aR  -- commitment to aL, aR
       aoCommit = commitBitVector aoBlinding aO []  -- commitment to aO
@@ -43,7 +45,7 @@ generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
       zwO = zs `vectorMatrixProduct` wO
 
       -- Polynomials
-      [lPoly, rPoly] = computePolynomials n aL aR aO sL sR y zwL zwR zwO
+      (lPoly, rPoly) = computePolynomials n aL aR aO sL sR y zwL zwR zwO
       tPoly = multiplyPoly lPoly rPoly
 
       w = (aL `vectorMatrixProductT` wL)
@@ -59,7 +61,7 @@ generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
   let tCommits = zipWith commit tPoly tBlindings
 
   let x = shamirGs tCommits
-      evalTCommit = foldl' addP Crypto.PointO (zipWith mulP (powerVector x 7) tCommits)
+      evalTCommit = sumExps (powerVector x 7) tCommits
 
   let ls = evaluatePolynomial n lPoly x
       rs = evaluatePolynomial n rPoly x
@@ -80,8 +82,8 @@ generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
       commitmentLR = (x `mulP` aiCommit)
                    `addP` (fSquare x `mulP` aoCommit)
                    `addP` ((x ^ 3)`mulP` sCommit)
-                   `addP` foldl' addP Crypto.PointO (zipWith mulP gExp gs)
-                   `addP` foldl' addP Crypto.PointO (zipWith mulP hExp hs')
+                   `addP` sumExps gExp gs
+                   `addP` sumExps hExp hs'
                    `addP` Crypto.pointNegate curve (mu `mulP` h)
                    `addP` (t `mulP` u)
 
@@ -103,9 +105,9 @@ generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
   where
     qLen = fromIntegral $ length commitmentWeights
     computePolynomials n aL aR aO sL sR y zwL zwR zwO
-      = [ [l0, l1, l2, l3]
+      = ( [l0, l1, l2, l3]
         , [r0, r1, r2, r3]
-        ]
+        )
       where
         l0 = replicate (fromIntegral n) 0
         l1 = aL ^+^ (powerVector (recip y) n `hadamardp` zwR)
