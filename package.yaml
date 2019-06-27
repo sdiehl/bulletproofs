@@ -29,6 +29,7 @@ dependencies:
 - MonadRandom
 - QuickCheck
 - galois-field
+- pairing
 
 library:
   source-dirs: .

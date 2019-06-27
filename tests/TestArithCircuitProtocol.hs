@@ -1,4 +1,4 @@
-{-# LANGUAGE ViewPatterns, RecordWildCards  #-}
+{-# LANGUAGE ViewPatterns, RecordWildCards, TypeApplications  #-}
 
 module TestArithCircuitProtocol where
 
@@ -36,10 +36,12 @@ test_arithCircuitProof_arbitrary :: TestTree
 test_arithCircuitProof_arbitrary = localOption (QuickCheckTests 10) $
   testProperty "Arbitrary arithmetic circuit proof" $ go
   where
-    go :: Int -> Int -> [Fq] -> [Fq] -> Property
-    go (fromIntegral -> n) (fromIntegral -> m) commitBlinders cs
-      = n < 100 && m < n && length commitBlinders == fromIntegral m && length cs == fromIntegral m
-      ==> QCM.monadicIO $ do
+    go :: Property
+    go = forAll (arbitrary `suchThat` ((<) 100))
+        $ \n -> forAll (arbitrary `suchThat` (\m -> m > 0 && m < n))
+        $ \m -> forAll (vectorOf (fromIntegral m) (arbitrary @Fq))
+        $ \commitBlinders -> forAll (vectorOf (fromIntegral m) arbitrary)
+        $ \cs -> QCM.monadicIO $ do
       let lConstraints = m
 
       weights@GateWeights{..} <- QCM.run $ generateGateWeights lConstraints n
@@ -71,10 +73,10 @@ test_arithCircuitProof_hadamardp = localOption (QuickCheckTests 20) $
   testProperty "Arithmetic circuit proof. Hadamard product relation" go
   where
     n = 16
-    go :: [Fq] -> [Fq] -> Fq -> Fq -> Property
-    go aL aR r s = length aL == fromIntegral n && length aR == fromIntegral n ==>
-      QCM.monadicIO $ do
-
+    go :: Fq -> Fq -> Property
+    go r s = forAll (vectorOf n (arbitrary @Fq))
+        $ \aL -> forAll (vectorOf n arbitrary)
+        $ \aR -> QCM.monadicIO $ do
       let aO = aL `hadamardp` aR
 
       let v0 = sum aL
@@ -115,8 +117,9 @@ test_arithCircuitProof_no_mult_gates = localOption (QuickCheckTests 20) $
   testProperty "Arithmetic circuit proof. n = 0, m = 3, q = 1" go
   where
     m = 3
-    go :: [Fq] -> Property
-    go commitBlinders = length commitBlinders == m ==> QCM.monadicIO $ do
+    go :: Property
+    go = forAll (vectorOf (fromIntegral m) (arbitrary @Fq))
+         $ \commitBlinders -> QCM.monadicIO $ do
       let n = 0
       let wL = [[]]
           wR = [[]]
@@ -153,9 +156,9 @@ test_arithCircuitProof_no_input_values = localOption (QuickCheckTests 20) $
   testProperty "Arithmetic circuit proof. n = 1, m = 0, q = 3" go
   where
     m = 0
-    go :: [Fq] -> Property
-    go commitBlinders
-      = length commitBlinders == m ==> QCM.monadicIO $ do
+    go :: Property
+    go = forAll (vectorOf (fromIntegral m) (arbitrary @Fq))
+         $ \commitBlinders -> QCM.monadicIO $ do
       let n = 1
 
       let wL = [[0], [0], [1]]
@@ -191,9 +194,9 @@ test_arithCircuitProof_shuffle_circuit :: TestTree
 test_arithCircuitProof_shuffle_circuit = localOption (QuickCheckTests 20) $
   testProperty "Arithmetic circuit proof. n = 2, m = 4, q = 5" $ go
   where
-    go :: Fq -> [Fq] -> Property
-    go z commitBlinders =
-      length commitBlinders == 4 ==> QCM.monadicIO $ do
+    go :: Fq -> Property
+    go z = forAll (vectorOf 4 (arbitrary @Fq))
+        $ \commitBlinders -> QCM.monadicIO $ do
 
       let wL = [[0, 0]
                ,[1, 0]
