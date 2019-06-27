@@ -182,29 +182,6 @@ genIdenMatrix size = (\x -> (\y -> fromIntegral (fromEnum (x == y))) <$> [1..siz
 genZeroMatrix :: (Num f) => Integer -> Integer -> [[f]]
 genZeroMatrix (fromIntegral -> n) (fromIntegral -> m) = replicate n (replicate m 0)
 
-generateWv :: (Num f, MonadRandom m) => Integer -> Integer -> m [[f]]
-generateWv lConstraints m
-  | lConstraints < m = panic "Number of constraints must be bigger than m"
-  | otherwise = shuffleM (genIdenMatrix m ++ genZeroMatrix (lConstraints - m) m)
-
-generateGateWeights :: (Crypto.MonadRandom m, Num f) => Integer -> Integer -> m (GateWeights f)
-generateGateWeights lConstraints n = do
-  let genVec = ((\i -> insertAt (fromIntegral i) (oneVector n) (replicate (fromIntegral lConstraints - 1) (zeroVector n))) <$> generateMax (fromIntegral lConstraints))
-  wL <- genVec
-  wR <- genVec
-  wO <- genVec
-  pure $ GateWeights wL wR wO
-  where
-    zeroVector x = replicate (fromIntegral x) 0
-    oneVector x = replicate (fromIntegral x) 1
-
-generateRandomAssignment :: forall p m . (KnownNat p, Crypto.MonadRandom m) => Integer -> m (Assignment (PrimeField p))
-generateRandomAssignment n = do
-  aL <- replicateM (fromIntegral n) ((fromInteger :: Integer -> PrimeField p) <$> generateMax (2^n))
-  aR <- replicateM (fromIntegral n) ((fromInteger :: Integer -> PrimeField p) <$> generateMax (2^n))
-  let aO = aL `hadamardp` aR
-  pure $ Assignment aL aR aO
-
 computeInputValues :: (Fractional f, Eq f) => GateWeights f -> [[f]] -> Assignment f -> [f] -> [f]
 computeInputValues GateWeights{..} wV Assignment{..} cs
   = solveLinearSystem $ zipWith (\row s -> reverse $ s : row) wV solutions
@@ -264,10 +241,14 @@ solveLinearSystem = reverse . substituteMatrix . gaussianReduce
 -- Arbitrary instances --
 -------------------------
 
-instance forall f. (Arbitrary f, Num f) => Arbitrary (ArithCircuit f) where
+instance (Arbitrary (PrimeField p), KnownNat p) => Arbitrary (ArithCircuit (PrimeField p)) where
   arbitrary = do
     n <- choose (1, 100)
     m <- choose (1, n)
+    arithCircuitGen n m
+
+arithCircuitGen :: forall p. (Arbitrary (PrimeField p), KnownNat p) => Integer -> Integer -> Gen (ArithCircuit (PrimeField p))
+arithCircuitGen n m = do
     -- TODO: Can lConstraints be a different value?
     let lConstraints = m
 
@@ -279,7 +260,7 @@ instance forall f. (Arbitrary f, Num f) => Arbitrary (ArithCircuit f) where
     commitmentWeights <- wvGen lConstraints m
     pure $ ArithCircuit gateWeights commitmentWeights cs
       where
-        gateWeightsGen :: Integer -> Integer -> Gen (GateWeights f)
+        gateWeightsGen :: Integer -> Integer -> Gen (GateWeights (PrimeField p))
         gateWeightsGen lConstraints n = do
           let genVec = ((\i -> insertAt i (oneVector n) (replicate (fromIntegral lConstraints - 1) (zeroVector n))) <$> choose (0, fromIntegral lConstraints))
           wL <- genVec
@@ -287,7 +268,7 @@ instance forall f. (Arbitrary f, Num f) => Arbitrary (ArithCircuit f) where
           wO <- genVec
           pure $ GateWeights wL wR wO
 
-        wvGen :: forall f. (Num f) => Integer -> Integer -> Gen [[f]]
+        wvGen :: Integer -> Integer -> Gen [[PrimeField p]]
         wvGen lConstraints m
           | lConstraints < m = panic "Number of constraints must be bigger than m"
           | otherwise = shuffle (genIdenMatrix m ++ genZeroMatrix (lConstraints - m) m)
@@ -295,14 +276,18 @@ instance forall f. (Arbitrary f, Num f) => Arbitrary (ArithCircuit f) where
         oneVector x = replicate (fromIntegral x) 1
 
 
-instance (Arbitrary f, Num f) => Arbitrary (Assignment f) where
+instance (KnownNat p, Arbitrary (PrimeField p)) => Arbitrary (Assignment (PrimeField p)) where
   arbitrary = do
     n <- (arbitrary :: Gen Integer)
-    aL <- vectorOf (fromIntegral n) ((fromInteger :: Integer -> f) <$> choose (0, 2^n))
-    aR <- vectorOf (fromIntegral n) ((fromInteger :: Integer -> f) <$> choose (0, 2^n))
+    arithAssignmentGen n
+
+arithAssignmentGen :: (KnownNat p, Arbitrary (PrimeField p)) => Integer -> Gen (Assignment (PrimeField p))
+arithAssignmentGen n = do
+    aL <- vectorOf (fromIntegral n) (fromInteger <$> choose (0, 2^n))
+    aR <- vectorOf (fromIntegral n) (fromInteger <$> choose (0, 2^n))
+    traceShowM (length aL, length aR)
     let aO = aL `hadamardp` aR
     pure $ Assignment aL aR aO
-
 
 arithWitnessGen :: (KnownNat p, Arbitrary (PrimeField p)) => Assignment (PrimeField p) -> ArithCircuit (PrimeField p) -> Integer -> Gen (ArithWitness (PrimeField p))
 arithWitnessGen assignment arith@ArithCircuit{..} m = do
@@ -310,3 +295,4 @@ arithWitnessGen assignment arith@ArithCircuit{..} m = do
   let vs = computeInputValues weights commitmentWeights assignment cs
       commitments = zipWith commit vs commitBlinders
   pure $ ArithWitness assignment commitments commitBlinders
+

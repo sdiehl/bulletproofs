@@ -38,26 +38,12 @@ test_arithCircuitProof_arbitrary = localOption (QuickCheckTests 10) $
   where
     go :: Property
     go = forAll (arbitrary `suchThat` ((<) 100))
-        $ \n -> forAll (arbitrary `suchThat` (\m -> m > 0 && m < n))
-        $ \m -> forAll (vectorOf (fromIntegral m) (arbitrary @Fq))
-        $ \commitBlinders -> forAll (vectorOf (fromIntegral m) arbitrary)
-        $ \cs -> QCM.monadicIO $ do
-      let lConstraints = m
-
-      weights@GateWeights{..} <- QCM.run $ generateGateWeights lConstraints n
-      commitmentWeights <- QCM.run $ generateWv lConstraints m
-      Assignment{..} <- QCM.run $ generateRandomAssignment n
-
-
-      let gateWeights = GateWeights wL wR wO
-          gateInputs = Assignment aL aR aO
-          vs = computeInputValues weights commitmentWeights gateInputs cs
-          commitments = zipWith commit vs commitBlinders
-          arithCircuit = ArithCircuit gateWeights commitmentWeights cs
-          arithWitness = ArithWitness gateInputs commitments commitBlinders
-
+         $ \n -> forAll (arbitrary `suchThat` (\m -> m > 0 && m < n))
+         $ \m -> forAll (arithCircuitGen @(PF Fq) n m)
+         $ \arithCircuit@ArithCircuit{..} -> forAll (arithAssignmentGen n)
+         $ \assignment@Assignment{..} -> forAll (arithWitnessGen assignment arithCircuit m)
+         $ \arithWitness@ArithWitness{..} -> QCM.monadicIO $ do
       proof <- QCM.run $ generateProof arithCircuit arithWitness
-
       QCM.assert $ verifyProof commitments proof arithCircuit
 
 -- | Test hadamard product relation

@@ -27,6 +27,17 @@ import qualified Data.List as L
 
 -- Implementation using the elliptic curve secp256k12
 -- which has 128 bit security.
+-- Parameters as in Cryptonite:
+-- SEC_p256k1 = CurveFP  $ CurvePrime
+--     0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f
+--     (CurveCommon
+--         { ecc_a = 0x0000000000000000000000000000000000000000000000000000000000000000
+--         , ecc_b = 0x0000000000000000000000000000000000000000000000000000000000000007
+--         , ecc_g = Point 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798
+--                         0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
+--         , ecc_n = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
+--         , ecc_h = 1
+--         })
 curveName :: Crypto.CurveName
 curveName = Crypto.SEC_p256k1
 
