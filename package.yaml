@@ -27,6 +27,8 @@ dependencies:
 - containers
 - random-shuffle
 - MonadRandom
+- QuickCheck
+- galois-field
 
 library:
   source-dirs: .
@@ -55,8 +57,22 @@ library:
     - Bulletproofs.Utils
 
   default-extensions:
+    - LambdaCase
+    - RecordWildCards
     - OverloadedStrings
     - NoImplicitPrelude
+    - FlexibleInstances
+    - ExplicitForAll
+    - RankNTypes
+    - DataKinds
+    - KindSignatures
+    - GeneralizedNewtypeDeriving
+    - TypeApplications
+    - ExistentialQuantification
+    - ScopedTypeVariables
+    - DeriveGeneric
+    - BangPatterns
+    - FlexibleContexts
 
 tests:
   bulletproofs-test:

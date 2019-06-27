@@ -7,6 +7,7 @@ import Crypto.Random.Types (MonadRandom(..))
 import Crypto.Number.Generate (generateMax)
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
+import PrimeField (PrimeField(..), toInt)
 
 import Bulletproofs.Curve
 import Bulletproofs.Utils hiding (shamirZ)
@@ -16,15 +17,15 @@ import Bulletproofs.ArithmeticCircuit.Internal
 -- | Generate a zero-knowledge proof of computation
 -- for an arithmetic circuit with a valid witness
 generateProof
-  :: forall f m
-   . (MonadRandom m, AsInteger f, Field f, Show f, Eq f)
-  => ArithCircuit f
-  -> ArithWitness f
-  -> m (ArithCircuitProof f)
+  :: forall p m
+   . (MonadRandom m, KnownNat p)
+  => ArithCircuit (PrimeField p)
+  -> ArithWitness (PrimeField p)
+  -> m (ArithCircuitProof (PrimeField p))
 generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
   let GateWeights{..} = weights
       Assignment{..} = padAssignment assignment
-      genBlinding = (fromInteger :: Integer -> f) <$> generateMax q
+      genBlinding = (fromInteger :: Integer -> PrimeField p) <$> generateMax _q
   aiBlinding <- genBlinding
   aoBlinding <- genBlinding
   sBlinding <- genBlinding
@@ -57,7 +58,7 @@ generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
          + (zs `dot` w)
          + delta n y zwL zwR
 
-  tBlindings <- insertAt 2 0 . (:) 0 <$> replicateM 5 ((fromInteger :: Integer -> f) <$> generateMax q)
+  tBlindings <- insertAt 2 0 . (:) 0 <$> replicateM 5 ((fromInteger :: Integer -> PrimeField p) <$> generateMax _q)
   let tCommits = zipWith commit tPoly tBlindings
 
   let x = shamirGs tCommits
@@ -70,9 +71,9 @@ generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
       commitTimesWeigths = commitBlinders `vectorMatrixProductT` commitmentWeights
       zGamma = zs `dot` commitTimesWeigths
       tBlinding = sum (zipWith (\i blinding -> blinding * (x ^ i)) [0..] tBlindings)
-                + (fSquare x * zGamma)
+                + ((x ^ 2) * zGamma)
 
-      mu = aiBlinding * x + aoBlinding * fSquare x + sBlinding * (x ^ 3)
+      mu = aiBlinding * x + aoBlinding * (x ^ 2) + sBlinding * (x ^ 3)
 
   let uChallenge = shamirU tBlinding mu t
       u = uChallenge `mulP` g
@@ -80,7 +81,7 @@ generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
       gExp = (*) x <$> (powerVector (recip y) n `hadamardp` zwR)
       hExp = (((*) x <$> zwL) ^+^ zwO) ^-^ ys
       commitmentLR = (x `mulP` aiCommit)
-                   `addP` (fSquare x `mulP` aoCommit)
+                   `addP` ((x ^ 2) `mulP` aoCommit)
                    `addP` ((x ^ 3)`mulP` sCommit)
                    `addP` sumExps gExp gs
                    `addP` sumExps hExp hs'

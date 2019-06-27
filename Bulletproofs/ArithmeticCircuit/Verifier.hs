@@ -6,6 +6,7 @@ import Data.List (head)
 
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
+import PrimeField (PrimeField(..), toInt)
 
 import Bulletproofs.Curve
 import Bulletproofs.Utils hiding (shamirZ)
@@ -17,10 +18,10 @@ import Bulletproofs.ArithmeticCircuit.Internal
 -- | Verify that a zero-knowledge proof holds
 -- for an arithmetic circuit given committed input values
 verifyProof
-  :: (AsInteger f, Field f, Eq f, Show f)
+  :: (KnownNat p)
   => [Crypto.Point]
-  -> ArithCircuitProof f
-  -> ArithCircuit f
+  -> ArithCircuitProof (PrimeField p)
+  -> ArithCircuit (PrimeField p)
   -> Bool
 verifyProof vCommits proof@ArithCircuitProof{..} (padCircuit -> ArithCircuit{..})
   = verifyLRCommitment && verifyTPoly
@@ -55,9 +56,9 @@ verifyProof vCommits proof@ArithCircuitProof{..} (padCircuit -> ArithCircuit{..}
         rhs = (gExp `mulP` g)
             `addP` tCommitsExpSum
             `addP` sumExps vExp vCommits
-        gExp = fSquare x * (k + cQ)
+        gExp = (x ^ 2) * (k + cQ)
         cQ = zs `dot` cs
-        vExp = (*) (fSquare x) <$> (zs `vectorMatrixProduct` commitmentWeights)
+        vExp = (*) (x ^ 2) <$> (zs `vectorMatrixProduct` commitmentWeights)
         k = delta n y zwL zwR
         xs = 0 : x : 0 : (((^) x) <$> [3..6])
         tCommitsExpSum = sumExps xs tCommits
@@ -72,7 +73,7 @@ verifyProof vCommits proof@ArithCircuitProof{..} (padCircuit -> ArithCircuit{..}
         gExp = (*) x <$> (powerVector (recip y) n `hadamardp` zwR)
         hExp = (((*) x <$> zwL) ^+^ zwO) ^-^ ys
         commitmentLR = (x `mulP` aiCommit)
-                     `addP` (fSquare x `mulP` aoCommit)
+                     `addP` ((x ^ 2) `mulP` aoCommit)
                      `addP` ((x ^ 3) `mulP` sCommit)
                      `addP` sumExps gExp gs
                      `addP` sumExps hExp hs'

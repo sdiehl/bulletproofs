@@ -10,6 +10,7 @@ import Crypto.Number.Generate (generateMax)
 import Crypto.Random.Types (MonadRandom(..))
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
+import PrimeField (PrimeField(..), toInt)
 
 import Bulletproofs.Utils
 import Bulletproofs.Curve
@@ -73,16 +74,16 @@ data TPoly f
 -- | Encode the value v into a bit representation. Let aL be a vector
 -- of bits such that <aL, 2^n> = v (put more simply, the components of a L are the
 -- binary digits of v).
-encodeBit :: (AsInteger f, Num f) => Integer -> f -> [f]
-encodeBit n v = fillWithZeros n $ fromIntegral . digitToInt <$> showIntAtBase 2 intToDigit (asInteger v) ""
+encodeBit :: KnownNat p => Integer -> PrimeField p -> [PrimeField p]
+encodeBit n v = fillWithZeros n $ fromIntegral . digitToInt <$> showIntAtBase 2 intToDigit (toInt v) ""
 
 -- | Bits of v reversed.
 -- v = <a, 2^n> = a_0 * 2^0 + ... + a_n-1 * 2^(n-1)
-reversedEncodeBit :: (AsInteger f, Num f) => Integer -> f -> [f]
+reversedEncodeBit :: KnownNat p => Integer -> PrimeField p -> [PrimeField p]
 reversedEncodeBit n = reverse . encodeBit n
 
 -- TODO: Test it
-reversedEncodeBitMulti :: (AsInteger f, Num f) => Integer -> [f] -> [f]
+reversedEncodeBitMulti :: KnownNat p => Integer -> [PrimeField p] -> [PrimeField p]
 reversedEncodeBitMulti n = foldl' (\acc v -> acc ++ reversedEncodeBit n v) []
 
 -- | In order to prove that v is in range, each element of aL is either 0 or 1.
@@ -102,9 +103,9 @@ fillWithZeros n aL = zeros ++ aL
 -- | Obfuscate encoded bits with challenges y and z.
 -- z^2 * <aL, 2^n> + z * <aL − 1^n − aR, y^n> + <aL, aR · y^n> = (z^2) * v
 -- The property holds because <aL − 1^n − aR, y^n> = 0 and <aL · aR,  y^n> = 0
-obfuscateEncodedBits :: (Eq f, Field f) => Integer -> [f] -> [f] -> f -> f -> f
+obfuscateEncodedBits :: KnownNat p => Integer -> [PrimeField p] -> [PrimeField p] -> PrimeField p -> PrimeField p -> PrimeField p
 obfuscateEncodedBits n aL aR y z
-  = (fSquare z * dot aL (powerVector 2 n))
+  = ((z ^ 2) * dot aL (powerVector 2 n))
     + (z * dot ((aL ^-^ powerVector 1 n) ^-^ aR) yN)
     + dot (hadamardp aL aR) yN
   where
@@ -115,11 +116,11 @@ obfuscateEncodedBits n aL aR y z
 -- what’s important is that the aL , aR terms be kept inside
 -- (since they can’t be shared with the Verifier):
 -- <aL − z * 1^n , y^n ◦ (aR + z * 1^n) + z^2 * 2^n> = z 2 v + δ(y, z)
-obfuscateEncodedBitsSingle :: (Eq f, Field f) => Integer -> [f] -> [f] -> f -> f -> f
+obfuscateEncodedBitsSingle :: KnownNat p => Integer -> [PrimeField p] -> [PrimeField p] -> PrimeField p -> PrimeField p -> PrimeField p
 obfuscateEncodedBitsSingle n aL aR y z
   = dot
       (aL ^-^ z1n)
-      (hadamardp (powerVector y n) (aR ^+^ z1n) ^+^ ((*) (fSquare z) <$> powerVector 2 n))
+      (hadamardp (powerVector y n) (aR ^+^ z1n) ^+^ ((*) (z ^ 2) <$> powerVector 2 n))
   where
     z1n = (*) z <$> powerVector 1 n
 
@@ -128,13 +129,13 @@ obfuscateEncodedBitsSingle n aL aR y z
 -- Prover can send commitments to these vectors;
 -- these are properly blinded vector Pedersen commitments:
 commitBitVectors
-  :: (MonadRandom m, AsInteger f)
-  => f
-  -> f
-  -> [f]
-  -> [f]
-  -> [f]
-  -> [f]
+  :: (MonadRandom m)
+  => PrimeField p
+  -> PrimeField p
+  -> [PrimeField p]
+  -> [PrimeField p]
+  -> [PrimeField p]
+  -> [PrimeField p]
   -> m (Crypto.Point, Crypto.Point)
 commitBitVectors aBlinding sBlinding aL aR sL sR = do
     let aLG = sumExps aL gs
@@ -153,9 +154,9 @@ commitBitVectors aBlinding sBlinding aL aR sL sR = do
     pure (aCommit, sCommit)
 
 -- | (z − z^2) * <1^n, y^n> − z^3 * <1^n, 2^n>
-delta :: (Eq f, Field f) => Integer -> Integer -> f -> f -> f
+delta :: KnownNat p => Integer -> Integer -> PrimeField p -> PrimeField p -> PrimeField p
 delta n m y z
-  = ((z - fSquare z) * dot (powerVector 1 nm) (powerVector y nm))
+  = ((z - (z ^ 2)) * dot (powerVector 1 nm) (powerVector y nm))
   - foldl' (\acc j -> acc + ((z ^ (j + 2)) * dot (powerVector 1 n) (powerVector 2 n))) 0 [1..m]
   where
     nm = n * m
@@ -171,17 +172,17 @@ checkRanges n vs = and $ fmap (\v -> v >= 0 && v < 2 ^ n) vs
 -- | Compute commitment of linear vector polynomials l and r
 -- P = A + xS − zG + (z*y^n + z^2 * 2^n) * hs'
 computeLRCommitment
-  :: (AsInteger f, Eq f, Num f, Show f)
+  :: KnownNat p
   => Integer
   -> Integer
   -> Crypto.Point
   -> Crypto.Point
-  -> f
-  -> f
-  -> f
-  -> f
-  -> f
-  -> f
+  -> PrimeField p
+  -> PrimeField p
+  -> PrimeField p
+  -> PrimeField p
+  -> PrimeField p
+  -> PrimeField p
   -> [Crypto.Point]
   -> Crypto.Point
 computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
