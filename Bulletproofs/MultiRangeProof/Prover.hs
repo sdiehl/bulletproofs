@@ -25,9 +25,9 @@ import qualified Bulletproofs.InnerProductProof as IPP
 generateProof
   :: (KnownNat p, MonadRandom m)
   => Integer                -- ^ Upper bound of the range we want to prove
-  -> [(Integer, Integer)]
+  -> [(PrimeField p, PrimeField p)]
   -- ^ Values we want to prove in range and their blinding factors
-  -> ExceptT RangeProofError m (RangeProof (PrimeField p))
+  -> ExceptT (RangeProofError (PrimeField p)) m (RangeProof (PrimeField p))
 generateProof upperBound vsAndvBlindings = do
   unless (upperBound < _q) $ throwE $ UpperBoundTooLarge upperBound
 
@@ -56,7 +56,7 @@ generateProofUnsafe
   :: forall p m
    . (KnownNat p, MonadRandom m)
   => Integer    -- ^ Upper bound of the range we want to prove
-  -> [(Integer, Integer)]
+  -> [(PrimeField p, PrimeField p)]
   -- ^ Values we want to prove in range and their blinding factors
   -> m (RangeProof (PrimeField p))
 generateProofUnsafe upperBound vsAndvBlindings = do
@@ -64,11 +64,8 @@ generateProofUnsafe upperBound vsAndvBlindings = do
       m = fromIntegral $ length vsAndvBlindings
       nm = n * m
 
-      vsF :: [PrimeField p]
-      vsF = (fromInteger . fst) <$> vsAndvBlindings
-
-      vBlindingsF :: [PrimeField p]
-      vBlindingsF = (fromInteger . snd) <$> vsAndvBlindings
+      vsF = fst <$> vsAndvBlindings
+      vBlindingsF = snd <$> vsAndvBlindings
 
   let aL = reversedEncodeBitMulti n vsF
       aR = complementaryVector aL

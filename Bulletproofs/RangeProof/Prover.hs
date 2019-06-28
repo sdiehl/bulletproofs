@@ -15,9 +15,9 @@ import qualified Bulletproofs.MultiRangeProof.Prover as MRP
 generateProof
   :: (KnownNat p, MonadRandom m)
   => Integer                -- ^ Upper bound of the range we want to prove
-  -> (Integer, Integer)
+  -> (PrimeField p, PrimeField p)
   -- ^ Values we want to prove in range and their blinding factors
-  -> ExceptT RangeProofError m (RangeProof (PrimeField p))
+  -> ExceptT (RangeProofError (PrimeField p)) m (RangeProof (PrimeField p))
 generateProof upperBound (v, vBlinding) =
   MRP.generateProof upperBound [(v, vBlinding)]
 
@@ -25,7 +25,7 @@ generateProof upperBound (v, vBlinding) =
 generateProofUnsafe
   :: (KnownNat p, MonadRandom m)
   => Integer    -- ^ Upper bound of the range we want to prove
-  -> (Integer, Integer)
+  -> (PrimeField p, PrimeField p)
   -- ^ Values we want to prove in range and their blinding factors
   -> m (RangeProof (PrimeField p))
 generateProofUnsafe upperBound (v, vBlinding) =

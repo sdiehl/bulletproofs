@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveGeneric, DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass, ViewPatterns #-}
 module Bulletproofs.RangeProof.Internal where
 
 import Protolude
@@ -41,10 +41,10 @@ data RangeProof f
     -- has vectors l, r ∈  Z^n for which P = l · G + r · H + ( l, r ) · U
     } deriving (Show, Eq, Generic, NFData)
 
-data RangeProofError
+data RangeProofError f
   = UpperBoundTooLarge Integer  -- ^ The upper bound of the range is too large
-  | ValueNotInRange Integer     -- ^ Value is not within the range required
-  | ValuesNotInRange [Integer]  -- ^ Values are not within the range required
+  | ValueNotInRange f     -- ^ Value is not within the range required
+  | ValuesNotInRange [f]  -- ^ Values are not within the range required
   | NNotPowerOf2 Integer        -- ^ Dimension n is required to be a power of 2
   deriving (Show, Eq, Generic, NFData)
 
@@ -162,12 +162,12 @@ delta n m y z
     nm = n * m
 
 -- | Check that a value is in a specific range
-checkRange :: Integer -> Integer -> Bool
-checkRange n v = v >= 0 && v < 2 ^ n
+checkRange :: Integer -> PrimeField p -> Bool
+checkRange n (toInt -> v) = v >= 0 && v < 2 ^ n
 
 -- | Check that a value is in a specific range
-checkRanges :: Integer -> [Integer] -> Bool
-checkRanges n vs = and $ fmap (\v -> v >= 0 && v < 2 ^ n) vs
+checkRanges :: Integer -> [PrimeField p] -> Bool
+checkRanges n vs = and $ fmap (\(toInt -> v) -> v >= 0 && v < 2 ^ n) vs
 
 -- | Compute commitment of linear vector polynomials l and r
 -- P = A + xS − zG + (z*y^n + z^2 * 2^n) * hs'

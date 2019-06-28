@@ -113,12 +113,12 @@ prop_singleInnerProduct y z
 
   QCM.assert $ RP.obfuscateEncodedBitsSingle n aL aR y z == ((z ^ 2) * v) + RP.delta n 1 y z
 
-setupV :: MonadRandom m => Integer -> m ((Integer, Integer), Crypto.Point)
+setupV :: MonadRandom m => Integer -> m ((Fq, Fq), Crypto.Point)
 setupV n = do
-  v :: Fq <- fromInteger <$> generateMax (2^n)
+  v <- fromInteger <$> generateMax (2^n)
   vBlinding <- fromInteger <$> Crypto.scalarGenerate curve
   let vCommit = commit v vBlinding
-  pure ((toInt v, toInt vBlinding), vCommit)
+  pure ((v, vBlinding), vCommit)
 
 test_verifyTPolynomial :: TestTree
 test_verifyTPolynomial = localOption (QuickCheckTests 5) $
@@ -160,9 +160,9 @@ prop_valueNotInRange = QCM.monadicIO $ do
   n <- QCM.run $ (2 ^) <$> generateMax 8
   ((v, vBlinding), vCommit) <- QCM.run $ setupV n
   let upperBound = getUpperBound n
-      vNotInRange = v + upperBound
+      vNotInRange = fromInteger (toInt v + upperBound)
 
-  proofE <- QCM.run $ runExceptT $ MRP.generateProof @(PF Fq) upperBound [(vNotInRange, vBlinding)]
+  proofE <- QCM.run $ runExceptT $ MRP.generateProof upperBound [(vNotInRange, vBlinding)]
   case proofE of
     Left err ->
       QCM.assert $ RP.ValuesNotInRange [vNotInRange] == err
@@ -174,7 +174,7 @@ prop_invalidUpperBound = QCM.monadicIO $ do
   n <- QCM.run $ (2 ^) <$> generateMax 8
   ((v, vBlinding), vCommit) <- QCM.run $ setupV n
   let invalidUpperBound = _q + 1
-  proofE <- QCM.run $ runExceptT $ MRP.generateProof @(PF Fq) invalidUpperBound [(v, vBlinding)]
+  proofE <- QCM.run $ runExceptT $ MRP.generateProof invalidUpperBound [(v, vBlinding)]
   case proofE of
     Left err ->
       QCM.assert $ RP.UpperBoundTooLarge invalidUpperBound == err
@@ -196,7 +196,7 @@ test_invalidCommitment = localOption (QuickCheckTests 20) $
   testProperty "Check invalid commitment" $ QCM.monadicIO $ do
   n <- QCM.run $ (2 ^) <$> generateMax 8
   ((v, vBlinding), vCommit) <- QCM.run $ setupV n
-  let invalidVCommit = commit @(PF Fq) (fromInteger (v + 1)) (fromInteger vBlinding)
+  let invalidVCommit = commit (v + 1) vBlinding
       upperBound = getUpperBound n
   proofE <- QCM.run $ runExceptT $ MRP.generateProof upperBound [(v, vBlinding)]
   case proofE of
