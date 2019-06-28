@@ -188,7 +188,7 @@ prop_differentUpperBound (Positive upperBound') = expectFailure . QCM.monadicIO 
   proofE <- QCM.run $ runExceptT $ MRP.generateProof @(PF Fq) (getUpperBound n) [(v, vBlinding)]
   case proofE of
     Left err -> panic $ show err
-    Right (proof@RP.RangeProof{..} :: RP.RangeProof Fq) ->
+    Right (proof@RP.RangeProof{..}) ->
       QCM.assert $ MRP.verifyProof upperBound' [vCommit] proof
 
 test_invalidCommitment :: TestTree
@@ -198,10 +198,10 @@ test_invalidCommitment = localOption (QuickCheckTests 20) $
   ((v, vBlinding), vCommit) <- QCM.run $ setupV n
   let invalidVCommit = commit (v + 1) vBlinding
       upperBound = getUpperBound n
-  proofE <- QCM.run $ runExceptT $ MRP.generateProof upperBound [(v, vBlinding)]
+  proofE <- QCM.run $ runExceptT $ MRP.generateProof @(PF Fq) upperBound [(v, vBlinding)]
   case proofE of
     Left err -> panic $ show err
-    Right (proof@(RP.RangeProof{..} :: RP.RangeProof Fq)) ->
+    Right (proof@(RP.RangeProof{..})) ->
       QCM.assert $ not $ MRP.verifyProof upperBound [invalidVCommit] proof
 
 test_multiRangeProof_completeness :: TestTree
@@ -215,7 +215,7 @@ test_multiRangeProof_completeness = localOption (QuickCheckTests 5) $
     proofE <- QCM.run $ runExceptT $ MRP.generateProof @(PF Fq) (getUpperBound n) (fst <$> ctx)
     case proofE of
       Left err -> panic $ show err
-      Right (proof@RP.RangeProof{..} :: RP.RangeProof Fq) ->
+      Right (proof@RP.RangeProof{..}) ->
         QCM.assert $ MRP.verifyProof upperBound (snd <$> ctx) proof
 
 test_singleRangeProof_completeness :: TestTree
