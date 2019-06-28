@@ -100,7 +100,7 @@ Single range proof:
 ```haskell
 import qualified Bulletproofs.RangeProof as RP
 
-testSingleRangeProof :: (Integer, Integer) -> IO Bool
+testSingleRangeProof :: (Fq, Fq) -> IO Bool
 testSingleRangeProof (v, vBlinding) = do
   let vCommit = commit v vBlinding
       -- n needs to be a power of 2
@@ -113,7 +113,7 @@ testSingleRangeProof (v, vBlinding) = do
   -- Verifier
   case proofE of
     Left err -> panic $ show err
-    Right (proof@RangeProof{..})
+    Right (proof@RP.RangeProof{..})
       -> pure $ RP.verifyProof upperBound vCommit proof
 ```
 
@@ -123,7 +123,7 @@ Multi range proof:
 ```haskell
 import qualified Bulletproofs.MultiRangeProof as MRP
 
-testMultiRangeProof :: [(Integer, Integer)] -> IO Bool
+testMultiRangeProof :: [(Fq, Fq)] -> IO Bool
 testMultiRangeProof vsAndvBlindings = do
   let vCommits = fmap (uncurry commit) vsAndvBlindings
       -- n needs to be a power of 2
@@ -136,7 +136,7 @@ testMultiRangeProof vsAndvBlindings = do
   -- Verifier
   case proofE of
     Left err -> panic $ show err
-    Right (proof@RangeProof{..})
+    Right (proof@RP.RangeProof{..})
       -> pure $ MRP.verifyProof upperBound vCommits proof
 ```
 
@@ -205,7 +205,7 @@ testArithCircuitProof (aL, aR) arithCircuit = do
       v0 = sum aL
       v1 = sum aR
 
-  commitBlinders <- replicateM m Fq.random
+  commitBlinders <- replicateM m fqRandom
   let commitments = zipWith commit [v0, v1] commitBlinders
 
   let arithWitness = ArithWitness
