@@ -1,5 +1,7 @@
 module Bulletproofs.Curve (
-  q,
+  _q,
+  _a,
+  _b,
   g,
   h,
   gs,
@@ -23,6 +25,19 @@ import Math.NumberTheory.Moduli.Sqrt (sqrtModP)
 import Numeric
 import qualified Data.List as L
 
+-- Implementation using the elliptic curve secp256k12
+-- which has 128 bit security.
+-- Parameters as in Cryptonite:
+-- SEC_p256k1 = CurveFP  $ CurvePrime
+--     0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f
+--     (CurveCommon
+--         { ecc_a = 0x0000000000000000000000000000000000000000000000000000000000000000
+--         , ecc_b = 0x0000000000000000000000000000000000000000000000000000000000000007
+--         , ecc_g = Point 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798
+--                         0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
+--         , ecc_n = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
+--         , ecc_h = 1
+--         })
 curveName :: Crypto.CurveName
 curveName = Crypto.SEC_p256k1
 
@@ -30,8 +45,14 @@ curve :: Crypto.Curve
 curve = Crypto.getCurveByName curveName
 
 -- | Order of the curve
-q :: Integer
-q = Crypto.ecc_n . Crypto.common_curve $ curve
+_q :: Integer
+_q = Crypto.ecc_n . Crypto.common_curve $ curve
+
+_b :: Integer
+_b = Crypto.ecc_b . Crypto.common_curve $ curve
+
+_a :: Integer
+_a = Crypto.ecc_a . Crypto.common_curve $ curve
 
 -- | Generator of the curve
 g :: Crypto.Point
@@ -64,8 +85,8 @@ pointToBS Crypto.PointO      = ""
 pointToBS (Crypto.Point x y) = show x <> show y
 
 -- | Characteristic of the underlying finite field of the elliptic curve
-p :: Integer
-p = Crypto.ecc_p cp
+_p :: Integer
+_p = Crypto.ecc_p cp
   where
     cp = case curve of
       Crypto.CurveFP c -> c
@@ -82,6 +103,6 @@ generateH basePoint extra =
       then Crypto.Point x y
       else generateH basePoint (toS $ '1':extra)
   where
-    x = oracle (pointToBS basePoint <> toS extra) `mod` p
-    yM = sqrtModP (x ^ 3 + 7) p
+    x = oracle (pointToBS basePoint <> toS extra) `mod` _p
+    yM = sqrtModP (x ^ 3 + 7) _p
 

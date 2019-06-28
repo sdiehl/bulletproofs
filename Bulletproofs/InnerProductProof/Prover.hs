@@ -11,6 +11,7 @@ import qualified Data.List as L
 import qualified Data.Map as Map
 
 import qualified Crypto.PubKey.ECC.Types as Crypto
+import PrimeField (PrimeField(..), toInt)
 
 import Bulletproofs.Curve
 import Bulletproofs.Utils
@@ -20,25 +21,25 @@ import Bulletproofs.InnerProductProof.Internal
 -- | Generate proof that a witness l, r satisfies the inner product relation
 -- on public input (Gs, Hs, h)
 generateProof
-  :: (AsInteger f, Eq f, Field f)
+  :: KnownNat p
   => InnerProductBase    -- ^ Generators Gs, Hs, h
   -> Crypto.Point
   -- ^ Commitment P = A + xS − zG + (z*y^n + z^2 * 2^n) * hs' of vectors l and r
   -- whose inner product is t
-  -> InnerProductWitness f
+  -> InnerProductWitness (PrimeField p)
   -- ^ Vectors l and r that hide bit vectors aL and aR, respectively
-  -> InnerProductProof f
+  -> InnerProductProof (PrimeField p)
 generateProof productBase commitmentLR witness
   = generateProof' productBase commitmentLR witness [] []
 
 generateProof'
-  :: (AsInteger f, Eq f, Field f)
+  :: KnownNat p
   => InnerProductBase
   -> Crypto.Point
-  -> InnerProductWitness f
+  -> InnerProductWitness (PrimeField p)
   -> [Crypto.Point]
   -> [Crypto.Point]
-  -> InnerProductProof f
+  -> InnerProductProof (PrimeField p)
 generateProof'
   InnerProductBase{ bGs, bHs, bH }
   commitmentLR
@@ -92,9 +93,9 @@ generateProof'
     rs' = ((*) xInv <$> rsLeft) ^+^ ((*) x <$> rsRight)
 
     commitmentLR'
-      = (fSquare x `mulP` lCommit)
+      = ((x ^ 2) `mulP` lCommit)
         `addP`
-        (fSquare xInv `mulP` rCommit)
+        ((xInv ^ 2) `mulP` rCommit)
         `addP`
         commitmentLR
 
@@ -122,23 +123,23 @@ generateProof'
         ==
         sumExps ls bGs
         `addP`
-        (fSquare x `mulP` aL')
+        ((x ^ 2) `mulP` aL')
         `addP`
-        (fSquare xInv `mulP` aR')
+        ((xInv ^ 2) `mulP` aR')
 
     checkRHs
       = rHs'
         ==
         sumExps rs bHs
         `addP`
-        (fSquare x `mulP` bR')
+        ((x ^ 2) `mulP` bR')
         `addP`
-        (fSquare xInv `mulP` bL')
+        ((xInv ^ 2) `mulP` bL')
 
     checkLBs
       = dot ls' rs'
         ==
-        dot ls rs + fSquare x * cL + fSquare xInv * cR
+        dot ls rs + (x ^ 2) * cL + (xInv ^ 2) * cR
 
     checkC
       = commitmentLR

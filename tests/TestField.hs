@@ -16,9 +16,6 @@ import Bulletproofs.Curve
 
 import TestCommon
 
-instance Arbitrary Fq where
-  arbitrary = Fq.new <$> arbitrary
-
 prop_addMod :: Fq -> Fq -> Property
 prop_addMod x y
   = (x + y) `mulP` g === (x `mulP` g) `addP` (y `mulP` g)
@@ -26,7 +23,6 @@ prop_addMod x y
 prop_subMod :: Fq -> Fq -> Property
 prop_subMod x y
   = (x - y) `mulP` g === (x `mulP` g) `addP` Crypto.pointNegate curve (y `mulP` g)
-
 
 -------------------------------------------------------------------------------
 -- Laws of field operations

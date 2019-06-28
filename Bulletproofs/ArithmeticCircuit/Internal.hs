@@ -7,6 +7,8 @@ import Protolude hiding (head)
 import Data.List (head)
 import qualified Data.List as List
 import qualified Data.Map as Map
+import Test.QuickCheck
+import PrimeField (PrimeField(..), toInt)
 
 import System.Random.Shuffle (shuffleM)
 import qualified Crypto.Random.Types as Crypto (MonadRandom(..))
@@ -103,10 +105,10 @@ padAssignment Assignment{..}
     aRNew = padToNearestPowerOfTwo aR
     aONew = padToNearestPowerOfTwo aO
 
-delta :: (Eq f, Field f) => Integer -> f -> [f] -> [f] -> f
+delta :: (KnownNat p) => Integer -> PrimeField p -> [PrimeField p] -> [PrimeField p] -> PrimeField p
 delta n y zwL zwR= (powerVector (recip y) n `hadamardp` zwR) `dot` zwL
 
-commitBitVector :: (AsInteger f) => f -> [f] -> [f] -> Crypto.Point
+commitBitVector :: (KnownNat p) => PrimeField p -> [PrimeField p] -> [PrimeField p] -> Crypto.Point
 commitBitVector vBlinding vL vR = vLG `addP` vRH `addP` vBlindingH
   where
     vBlindingH = vBlinding `mulP` h
@@ -115,13 +117,13 @@ commitBitVector vBlinding vL vR = vLG `addP` vRH `addP` vBlindingH
 
 shamirGxGxG :: (Show f, Num f) => Crypto.Point -> Crypto.Point -> Crypto.Point -> f
 shamirGxGxG p1 p2 p3
-  = fromInteger $ oracle $ show q <> pointToBS p1 <> pointToBS p2 <> pointToBS p3
+  = fromInteger $ oracle $ show _q <> pointToBS p1 <> pointToBS p2 <> pointToBS p3
 
 shamirGs :: (Show f, Num f) => [Crypto.Point] -> f
-shamirGs ps = fromInteger $ oracle $ show q <> foldMap pointToBS ps
+shamirGs ps = fromInteger $ oracle $ show _q <> foldMap pointToBS ps
 
 shamirZ :: (Show f, Num f) => f -> f
-shamirZ z = fromInteger $ oracle $ show q <> show z
+shamirZ z = fromInteger $ oracle $ show _q <> show z
 
 ---------------------------------------------
 -- Polynomials
@@ -180,30 +182,7 @@ genIdenMatrix size = (\x -> (\y -> fromIntegral (fromEnum (x == y))) <$> [1..siz
 genZeroMatrix :: (Num f) => Integer -> Integer -> [[f]]
 genZeroMatrix (fromIntegral -> n) (fromIntegral -> m) = replicate n (replicate m 0)
 
-generateWv :: (Num f, MonadRandom m) => Integer -> Integer -> m [[f]]
-generateWv lConstraints m
-  | lConstraints < m = panic "Number of constraints must be bigger than m"
-  | otherwise = shuffleM (genIdenMatrix m ++ genZeroMatrix (lConstraints - m) m)
-
-generateGateWeights :: (Crypto.MonadRandom m, Num f) => Integer -> Integer -> m (GateWeights f)
-generateGateWeights lConstraints n = do
-  let genVec = ((\i -> insertAt (fromIntegral i) (oneVector n) (replicate (fromIntegral lConstraints - 1) (zeroVector n))) <$> generateMax (fromIntegral lConstraints))
-  wL <- genVec
-  wR <- genVec
-  wO <- genVec
-  pure $ GateWeights wL wR wO
-  where
-    zeroVector x = replicate (fromIntegral x) 0
-    oneVector x = replicate (fromIntegral x) 1
-
-generateRandomAssignment :: forall f m . (Num f, AsInteger f, Crypto.MonadRandom m) => Integer -> m (Assignment f)
-generateRandomAssignment n = do
-  aL <- replicateM (fromIntegral n) ((fromInteger :: Integer -> f) <$> generateMax (2^n))
-  aR <- replicateM (fromIntegral n) ((fromInteger :: Integer -> f) <$> generateMax (2^n))
-  let aO = aL `hadamardp` aR
-  pure $ Assignment aL aR aO
-
-computeInputValues :: (Field f, Eq f) => GateWeights f -> [[f]] -> Assignment f -> [f] -> [f]
+computeInputValues :: (KnownNat p) => GateWeights (PrimeField p) -> [[PrimeField p]] -> Assignment (PrimeField p) -> [PrimeField p] -> [PrimeField p]
 computeInputValues GateWeights{..} wV Assignment{..} cs
   = solveLinearSystem $ zipWith (\row s -> reverse $ s : row) wV solutions
   where
@@ -212,7 +191,7 @@ computeInputValues GateWeights{..} wV Assignment{..} cs
         ^+^ vectorMatrixProductT aO wO
         ^-^ cs
 
-gaussianReduce :: (Field f, Eq f) => [[f]] -> [[f]]
+gaussianReduce :: (KnownNat p) => [[PrimeField p]] -> [[PrimeField p]]
 gaussianReduce matrix = fixlastrow $ foldl reduceRow matrix [0..length matrix-1]
   where
     -- Swaps element at position a with element at position b.
@@ -247,7 +226,7 @@ gaussianReduce matrix = fixlastrow $ foldl reduceRow matrix [0..length matrix-1]
         nz = List.last (List.init row)
 
 -- Solve a matrix (must already be in REF form) by back substitution.
-substituteMatrix :: (Field f, Eq f) => [[f]] -> [f]
+substituteMatrix :: (KnownNat p) => [[PrimeField p]] -> [PrimeField p]
 substituteMatrix matrix = foldr next [List.last (List.last matrix)] (List.init matrix)
   where
     next row found = let
@@ -255,5 +234,72 @@ substituteMatrix matrix = foldr next [List.last (List.last matrix)] (List.init m
       solution = List.last row - sum (zipWith (*) found subpart)
       in solution : found
 
-solveLinearSystem :: (Field f, Eq f) => [[f]] -> [f]
+solveLinearSystem :: (KnownNat p) => [[PrimeField p]] -> [PrimeField p]
 solveLinearSystem = reverse . substituteMatrix . gaussianReduce
+
+-------------------------
+-- Arbitrary instances --
+-------------------------
+
+instance (KnownNat p) => Arbitrary (ArithCircuit (PrimeField p)) where
+  arbitrary = do
+    n <- choose (1, 100)
+    m <- choose (1, n)
+    arithCircuitGen n m
+
+arithCircuitGen :: forall p. (KnownNat p) => Integer -> Integer -> Gen (ArithCircuit (PrimeField p))
+arithCircuitGen n m = do
+    -- TODO: Can lConstraints be a different value?
+    let lConstraints = m
+
+    cs <- vectorOf (fromIntegral m) arbitrary
+
+    weights@GateWeights{..} <- gateWeightsGen lConstraints n
+    let gateWeights = GateWeights wL wR wO
+
+    commitmentWeights <- wvGen lConstraints m
+    pure $ ArithCircuit gateWeights commitmentWeights cs
+      where
+        gateWeightsGen :: Integer -> Integer -> Gen (GateWeights (PrimeField p))
+        gateWeightsGen lConstraints n = do
+          let genVec = ((\i -> insertAt i (oneVector n) (replicate (fromIntegral lConstraints - 1) (zeroVector n))) <$> choose (0, fromIntegral lConstraints))
+          wL <- genVec
+          wR <- genVec
+          wO <- genVec
+          pure $ GateWeights wL wR wO
+
+        wvGen :: Integer -> Integer -> Gen [[PrimeField p]]
+        wvGen lConstraints m
+          | lConstraints < m = panic "Number of constraints must be bigger than m"
+          | otherwise = shuffle (genIdenMatrix m ++ genZeroMatrix (lConstraints - m) m)
+        zeroVector x = replicate (fromIntegral x) 0
+        oneVector x = replicate (fromIntegral x) 1
+
+
+instance (KnownNat p) => Arbitrary (Assignment (PrimeField p)) where
+  arbitrary = do
+    n <- (arbitrary :: Gen Integer)
+    arithAssignmentGen n
+
+arithAssignmentGen :: (KnownNat p) => Integer -> Gen (Assignment (PrimeField p))
+arithAssignmentGen n = do
+    aL <- vectorOf (fromIntegral n) (fromInteger <$> choose (0, 2^n))
+    aR <- vectorOf (fromIntegral n) (fromInteger <$> choose (0, 2^n))
+    let aO = aL `hadamardp` aR
+    pure $ Assignment aL aR aO
+
+instance (KnownNat p) => Arbitrary (ArithWitness (PrimeField p)) where
+  arbitrary = do
+    n <- choose (1, 100)
+    m <- choose (1, n)
+    arithCircuit <- arithCircuitGen n m
+    assignment <- arithAssignmentGen n
+    arithWitnessGen assignment arithCircuit m
+
+arithWitnessGen :: (KnownNat p) => Assignment (PrimeField p) -> ArithCircuit (PrimeField p) -> Integer -> Gen (ArithWitness (PrimeField p))
+arithWitnessGen assignment arith@ArithCircuit{..} m = do
+  commitBlinders <- vectorOf (fromIntegral m) arbitrary
+  let vs = computeInputValues weights commitmentWeights assignment cs
+      commitments = zipWith commit vs commitBlinders
+  pure $ ArithWitness assignment commitments commitBlinders
+
