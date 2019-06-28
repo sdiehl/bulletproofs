@@ -26,3 +26,10 @@
 * Use Control.Exception.assert to make sure debugging assertions are not checked
   when compiled with optimisations.
 * Add benchmarks for rangeproofs.
+
+## 1.0
+
+* Use galois-field library as dependency
+* Remove custom definition of Fq
+* Remove Fractional constraints and use PrimeField instead
+* Update interface of rangeproofs to guarantee the use of prime fields
