@@ -182,7 +182,7 @@ genIdenMatrix size = (\x -> (\y -> fromIntegral (fromEnum (x == y))) <$> [1..siz
 genZeroMatrix :: (Num f) => Integer -> Integer -> [[f]]
 genZeroMatrix (fromIntegral -> n) (fromIntegral -> m) = replicate n (replicate m 0)
 
-computeInputValues :: (Fractional f, Eq f) => GateWeights f -> [[f]] -> Assignment f -> [f] -> [f]
+computeInputValues :: (KnownNat p) => GateWeights (PrimeField p) -> [[PrimeField p]] -> Assignment (PrimeField p) -> [PrimeField p] -> [PrimeField p]
 computeInputValues GateWeights{..} wV Assignment{..} cs
   = solveLinearSystem $ zipWith (\row s -> reverse $ s : row) wV solutions
   where
@@ -191,7 +191,7 @@ computeInputValues GateWeights{..} wV Assignment{..} cs
         ^+^ vectorMatrixProductT aO wO
         ^-^ cs
 
-gaussianReduce :: (Fractional f, Eq f) => [[f]] -> [[f]]
+gaussianReduce :: (KnownNat p) => [[PrimeField p]] -> [[PrimeField p]]
 gaussianReduce matrix = fixlastrow $ foldl reduceRow matrix [0..length matrix-1]
   where
     -- Swaps element at position a with element at position b.
@@ -226,7 +226,7 @@ gaussianReduce matrix = fixlastrow $ foldl reduceRow matrix [0..length matrix-1]
         nz = List.last (List.init row)
 
 -- Solve a matrix (must already be in REF form) by back substitution.
-substituteMatrix :: (Fractional f, Eq f) => [[f]] -> [f]
+substituteMatrix :: (KnownNat p) => [[PrimeField p]] -> [PrimeField p]
 substituteMatrix matrix = foldr next [List.last (List.last matrix)] (List.init matrix)
   where
     next row found = let
@@ -234,20 +234,20 @@ substituteMatrix matrix = foldr next [List.last (List.last matrix)] (List.init m
       solution = List.last row - sum (zipWith (*) found subpart)
       in solution : found
 
-solveLinearSystem :: (Fractional f, Eq f) => [[f]] -> [f]
+solveLinearSystem :: (KnownNat p) => [[PrimeField p]] -> [PrimeField p]
 solveLinearSystem = reverse . substituteMatrix . gaussianReduce
 
 -------------------------
 -- Arbitrary instances --
 -------------------------
 
-instance (Arbitrary (PrimeField p), KnownNat p) => Arbitrary (ArithCircuit (PrimeField p)) where
+instance (KnownNat p) => Arbitrary (ArithCircuit (PrimeField p)) where
   arbitrary = do
     n <- choose (1, 100)
     m <- choose (1, n)
     arithCircuitGen n m
 
-arithCircuitGen :: forall p. (Arbitrary (PrimeField p), KnownNat p) => Integer -> Integer -> Gen (ArithCircuit (PrimeField p))
+arithCircuitGen :: forall p. (KnownNat p) => Integer -> Integer -> Gen (ArithCircuit (PrimeField p))
 arithCircuitGen n m = do
     -- TODO: Can lConstraints be a different value?
     let lConstraints = m
@@ -276,20 +276,27 @@ arithCircuitGen n m = do
         oneVector x = replicate (fromIntegral x) 1
 
 
-instance (KnownNat p, Arbitrary (PrimeField p)) => Arbitrary (Assignment (PrimeField p)) where
+instance (KnownNat p) => Arbitrary (Assignment (PrimeField p)) where
   arbitrary = do
     n <- (arbitrary :: Gen Integer)
     arithAssignmentGen n
 
-arithAssignmentGen :: (KnownNat p, Arbitrary (PrimeField p)) => Integer -> Gen (Assignment (PrimeField p))
+arithAssignmentGen :: (KnownNat p) => Integer -> Gen (Assignment (PrimeField p))
 arithAssignmentGen n = do
     aL <- vectorOf (fromIntegral n) (fromInteger <$> choose (0, 2^n))
     aR <- vectorOf (fromIntegral n) (fromInteger <$> choose (0, 2^n))
-    traceShowM (length aL, length aR)
     let aO = aL `hadamardp` aR
     pure $ Assignment aL aR aO
 
-arithWitnessGen :: (KnownNat p, Arbitrary (PrimeField p)) => Assignment (PrimeField p) -> ArithCircuit (PrimeField p) -> Integer -> Gen (ArithWitness (PrimeField p))
+instance (KnownNat p) => Arbitrary (ArithWitness (PrimeField p)) where
+  arbitrary = do
+    n <- choose (1, 100)
+    m <- choose (1, n)
+    arithCircuit <- arithCircuitGen n m
+    assignment <- arithAssignmentGen n
+    arithWitnessGen assignment arithCircuit m
+
+arithWitnessGen :: (KnownNat p) => Assignment (PrimeField p) -> ArithCircuit (PrimeField p) -> Integer -> Gen (ArithWitness (PrimeField p))
 arithWitnessGen assignment arith@ArithCircuit{..} m = do
   commitBlinders <- vectorOf (fromIntegral m) arbitrary
   let vs = computeInputValues weights commitmentWeights assignment cs
