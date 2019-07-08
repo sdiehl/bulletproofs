@@ -5,7 +5,5 @@ packages:
 
 extra-deps:
   - criterion-1.5.2.0
-  - git: git@github.com:adjoint-io/galois-field.git
-    commit: 30665fdc2af450e2d519c81bca91d85c63057b6d
-  - git: git@github.com:adjoint-io/pairing.git
-    commit: b7fd4fed45e556eb379ae3435e14326e9f9b1496
+  - galois-field-0.2.0
+  - pairing-0.4.1
