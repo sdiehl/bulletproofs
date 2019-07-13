@@ -5,5 +5,5 @@ packages:
 
 extra-deps:
   - criterion-1.5.2.0
-  - galois-field-0.2.0
+  - galois-field-0.2.1
   - pairing-0.4.1
