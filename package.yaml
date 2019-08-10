@@ -28,8 +28,7 @@ dependencies:
 - random-shuffle
 - MonadRandom
 - QuickCheck
-- galois-field > 0.2
-- pairing > 0.4
+- galois-field == 0.4.0
 
 library:
   source-dirs: .
