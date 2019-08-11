@@ -15,6 +15,7 @@ import qualified Crypto.PubKey.ECC.Generate as Crypto
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
 import GaloisField (GaloisField(..))
+import PrimeField (toInt)
 
 import Bulletproofs.Curve
 import qualified Bulletproofs.RangeProof as RP
