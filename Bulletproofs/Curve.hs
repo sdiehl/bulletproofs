@@ -12,6 +12,7 @@ module Bulletproofs.Curve (
 ) where
 
 import Protolude hiding (hash)
+import Data.Maybe (fromJust)
 
 import Crypto.Hash
 import qualified Crypto.PubKey.ECC.Generate as Crypto
@@ -20,7 +21,8 @@ import qualified Crypto.PubKey.ECC.Types as Crypto
 
 import qualified Data.ByteArray as BA
 import Crypto.Number.Serialize (os2ip)
-import Math.NumberTheory.Moduli.Sqrt (sqrtModP)
+import Math.NumberTheory.Moduli.Sqrt (sqrtsModPrime)
+import Math.NumberTheory.UniqueFactorisation (isPrime)
 
 import Numeric
 import qualified Data.List as L
@@ -98,11 +100,10 @@ _p = Crypto.ecc_p cp
 generateH :: Crypto.Point -> [Char] -> Crypto.Point
 generateH basePoint extra =
   case yM of
-    Nothing -> generateH basePoint (toS $ '1':extra)
-    Just y -> if Crypto.isPointValid curve (Crypto.Point x y)
+    [] -> generateH basePoint (toS $ '1':extra)
+    (y:_) -> if Crypto.isPointValid curve (Crypto.Point x y)
       then Crypto.Point x y
       else generateH basePoint (toS $ '1':extra)
   where
     x = oracle (pointToBS basePoint <> toS extra) `mod` _p
-    yM = sqrtModP (x ^ 3 + 7) _p
-
+    yM = sqrtsModPrime (fromInteger (x ^ 3 + 7)) ((fromJust (isPrime _p)))

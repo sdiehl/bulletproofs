@@ -1,5 +1,5 @@
 name:                bulletproofs
-version:             1.0.0
+version:             1.0.1
 github:              "adjoint-io/bulletproofs"
 license:             Apache
 maintainer:          Adjoint Inc (info@adjoint.io)
@@ -23,7 +23,7 @@ dependencies:
 - text
 - cryptonite
 - memory
-- arithmoi
+- arithmoi >= 0.8
 - containers
 - random-shuffle
 - MonadRandom

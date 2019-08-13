@@ -1,5 +1,10 @@
 # Changelog for bulletproofs
 
+## 1.0.1
+
+* Fix arithmoi dependency.
+* Fix galois-field dependency.
+
 ## 1.0
 
 * Use galois-field library as dependency
