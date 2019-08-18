@@ -1,10 +1,10 @@
 resolver: lts-13.26
-
 packages:
 - .
-
 extra-deps:
-  - criterion-1.5.2.0
-  - galois-field-0.4.0
-  - poly-0.3.1.0
-  - semirings-0.4.2
+- criterion-1.5.2.0
+- git: git@github.com:adjoint-io/galois-field.git
+  commit: 42cb0498c109a059690d3bfb7420667461c0d082
+- git: git@github.com:adjoint-io/poly.git
+  commit: bdab8cd52ba43d8eb9badcecd05ff45c202e6a82
+- semirings-0.4.2
