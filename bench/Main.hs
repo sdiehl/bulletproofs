@@ -15,10 +15,10 @@ import qualified Bulletproofs.Fq as Fq
 upperBound :: Integer
 upperBound = 2 ^ (2 ^ 6)
 
-benchInput :: (Integer, Integer)
+benchInput :: (Fq.Fq, Fq.Fq)
 benchInput = (7238283, 827361)
 
-proof :: (Integer, Integer) -> IO (RP.RangeProof Fq.Fq)
+proof :: (Fq.Fq, Fq.Fq) -> IO (RP.RangeProof Fq.Fq)
 proof input = do
   Right proof <- runExceptT $ RP.generateProof upperBound input
   pure proof
