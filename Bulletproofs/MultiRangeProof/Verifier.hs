@@ -7,17 +7,13 @@ module Bulletproofs.MultiRangeProof.Verifier (
 ) where
 
 import Protolude
-import Prelude (zipWith3)
 
-import qualified Crypto.PubKey.ECC.Generate as Crypto
-import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
-import PrimeField (PrimeField(..), toInt)
+import Data.Field.Galois (Prime)
 
 import Bulletproofs.RangeProof.Internal
 import Bulletproofs.Curve
 import Bulletproofs.Utils
-
 import Bulletproofs.InnerProductProof as IPP hiding (verifyProof)
 import qualified Bulletproofs.InnerProductProof as IPP
 
@@ -26,7 +22,7 @@ verifyProof
   :: KnownNat p
   => Integer        -- ^ Range upper bound
   -> [Crypto.Point]   -- ^ Commitments of in-range values
-  -> RangeProof (PrimeField p)
+  -> RangeProof (Prime p)
   -- ^ Proof that a secret committed value lies in a certain interval
   -> Bool
 verifyProof upperBound vCommits proof@RangeProof{..}
@@ -52,11 +48,11 @@ verifyTPoly
   :: KnownNat p
   => Integer         -- ^ Dimension n of the vectors
   -> [Crypto.Point]   -- ^ Commitments of in-range values
-  -> RangeProof (PrimeField p)
+  -> RangeProof (Prime p)
   -- ^ Proof that a secret committed value lies in a certain interval
-  -> PrimeField p              -- ^ Challenge x
-  -> PrimeField p              -- ^ Challenge y
-  -> PrimeField p              -- ^ Challenge z
+  -> Prime p              -- ^ Challenge x
+  -> Prime p              -- ^ Challenge y
+  -> Prime p              -- ^ Challenge z
   -> Bool
 verifyTPoly n vCommits proof@RangeProof{..} x y z
   = lhs == rhs
@@ -77,11 +73,11 @@ verifyLRCommitment
   :: KnownNat p
   => Integer         -- ^ Dimension n of the vectors
   -> Integer
-  -> RangeProof (PrimeField p)
+  -> RangeProof (Prime p)
   -- ^ Proof that a secret committed value lies in a certain interval
-  -> PrimeField p              -- ^ Challenge x
-  -> PrimeField p              -- ^ Challenge y
-  -> PrimeField p              -- ^ Challenge z
+  -> Prime p              -- ^ Challenge x
+  -> Prime p              -- ^ Challenge y
+  -> Prime p              -- ^ Challenge z
   -> Bool
 verifyLRCommitment n m proof@RangeProof{..} x y z
   = IPP.verifyProof

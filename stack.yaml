@@ -5,6 +5,8 @@ packages:
 
 extra-deps:
   - criterion-1.5.2.0
-  - galois-field-0.4.0
-  - poly-0.3.1.0
-  - semirings-0.4.2
+  - semirings-0.5
+  - git: git@github.com:adjoint-io/galois-field.git
+    commit: cf2c5f1af8e62bc9063143d3c1c6805b5d33d94d
+  - git: git@github.com:bodigrim/poly.git
+    commit: c9a97f5ecc38cc546ace6beb568c1f31e7369c8c

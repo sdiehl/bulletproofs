@@ -6,12 +6,10 @@ import Protolude
 
 import Test.Tasty
 import Test.Tasty.QuickCheck
-import Test.Tasty.HUnit
 
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 
 import Bulletproofs.Utils
-import Bulletproofs.Fq as Fq
 import Bulletproofs.Curve
 
 import TestCommon
@@ -29,7 +27,7 @@ prop_subMod x y
 -------------------------------------------------------------------------------
 
 testFieldLaws
-  :: forall a . (Num a, Fractional a, Eq a, Arbitrary a, Show a)
+  :: forall a . (Fractional a, Eq a, Arbitrary a, Show a)
   => Proxy a
   -> TestName
   -> TestTree

@@ -28,13 +28,25 @@ dependencies:
 - random-shuffle
 - MonadRandom
 - QuickCheck
-- galois-field == 0.4.0
+- galois-field >= 0.4.0
+
+ghc-options:
+  -Wall
+  -Werror
+  -Wcompat
+  -Wincomplete-record-updates
+  -Wredundant-constraints
+  -Wno-unused-matches
+  -Wno-name-shadowing
+  -Wno-type-defaults
+  -Wno-orphans
+  -Wno-incomplete-uni-patterns
+  -Wno-incomplete-patterns
 
 library:
   source-dirs: .
   exposed-modules:
     - Bulletproofs.Curve
-    - Bulletproofs.Fq
     - Bulletproofs.RangeProof
     - Bulletproofs.RangeProof.Internal
     - Bulletproofs.RangeProof.Prover

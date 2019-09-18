@@ -1,4 +1,7 @@
+{-# LANGUAGE TypeFamilies #-}
 module Bulletproofs.Curve (
+  Fq,
+  PF,
   _q,
   _a,
   _b,
@@ -15,17 +18,14 @@ import Protolude hiding (hash)
 import Data.Maybe (fromJust)
 
 import Crypto.Hash
-import qualified Crypto.PubKey.ECC.Generate as Crypto
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
 
 import qualified Data.ByteArray as BA
 import Crypto.Number.Serialize (os2ip)
+import Data.Field.Galois (Prime)
 import Math.NumberTheory.Moduli.Sqrt (sqrtsModPrime)
 import Math.NumberTheory.UniqueFactorisation (isPrime)
-
-import Numeric
-import qualified Data.List as L
 
 -- Implementation using the elliptic curve secp256k12
 -- which has 128 bit security.
@@ -40,6 +40,16 @@ import qualified Data.List as L
 --         , ecc_n = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
 --         , ecc_h = 1
 --         })
+
+
+-- | Prime field @Fq@ with characteristic @_q@
+type Fq = Prime 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
+
+
+-- | Type family to extract the characteristic of the prime field
+type family PF a where
+  PF (Prime k) = k
+
 curveName :: Crypto.CurveName
 curveName = Crypto.SEC_p256k1
 

@@ -10,9 +10,8 @@ import qualified Data.List as L
 import qualified Data.Map as Map
 
 import qualified Crypto.PubKey.ECC.Types as Crypto
-import PrimeField (PrimeField(..), toInt)
+import Data.Field.Galois (Prime)
 
-import Bulletproofs.Curve
 import Bulletproofs.Utils
 
 import Bulletproofs.InnerProductProof.Internal
@@ -23,13 +22,13 @@ verifyProof
   => Integer            -- ^ Range upper bound
   -> InnerProductBase   -- ^ Generators Gs, Hs, h
   -> Crypto.Point       -- ^ Commitment P
-  -> InnerProductProof (PrimeField p)
+  -> InnerProductProof (Prime p)
   -- ^ Proof that a secret committed value lies in a certain interval
   -> Bool
 verifyProof n productBase@InnerProductBase{..} commitmentLR productProof@InnerProductProof{ l, r }
   = c == cProof
   where
-    (challenges, invChallenges, c) = mkChallenges productProof commitmentLR
+    (challenges, _invChallenges, c) = mkChallenges productProof commitmentLR
     otherExponents = mkOtherExponents n challenges
     cProof
       = (l `mulP` gsCommit)
@@ -43,9 +42,9 @@ verifyProof n productBase@InnerProductBase{..} commitmentLR productProof@InnerPr
 
 mkChallenges
   :: KnownNat p
-  => InnerProductProof (PrimeField p)
+  => InnerProductProof (Prime p)
   -> Crypto.Point
-  -> ([PrimeField p], [PrimeField p], Crypto.Point)
+  -> ([Prime p], [Prime p], Crypto.Point)
 mkChallenges InnerProductProof{ lCommits, rCommits } commitmentLR
   = foldl'
       (\(xs, xsInv, accC) (li, ri)
@@ -57,7 +56,7 @@ mkChallenges InnerProductProof{ lCommits, rCommits } commitmentLR
       ([], [], commitmentLR)
       (zip lCommits rCommits)
 
-mkOtherExponents :: forall p . KnownNat p => Integer -> [PrimeField p] -> [PrimeField p]
+mkOtherExponents :: forall p . KnownNat p => Integer -> [Prime p] -> [Prime p]
 mkOtherExponents n challenges
   = Map.elems $ foldl'
       f
@@ -67,7 +66,7 @@ mkOtherExponents n challenges
     n' = n `div` 2
     f acc i = foldl' (f' i) acc [0..logBase2 n-1]
 
-    f' :: Integer -> Map.Map Integer (PrimeField p) -> Integer -> Map.Map Integer (PrimeField p)
+    f' :: Integer -> Map.Map Integer (Prime p) -> Integer -> Map.Map Integer (Prime p)
     f' i acc' j
       = let i1 = (2^j) + i in
           if | i1 >= n -> acc'

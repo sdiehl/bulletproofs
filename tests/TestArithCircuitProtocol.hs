@@ -4,22 +4,12 @@ module TestArithCircuitProtocol where
 
 import Protolude
 
-import qualified Data.Map as Map
-import qualified Data.List as List
-
 import Test.Tasty
 import Test.Tasty.QuickCheck
-import Test.QuickCheck
 import qualified Test.QuickCheck.Monadic as QCM
 
-import Crypto.Number.Generate (generateMax, generateBetween)
-import Control.Monad.Random (MonadRandom)
-
-import qualified Bulletproofs.InnerProductProof as IPP
-import qualified Bulletproofs.Fq as Fq
 import Bulletproofs.Utils
 import Bulletproofs.Curve
-import Bulletproofs.Fq
 import Bulletproofs.ArithmeticCircuit
 import Bulletproofs.ArithmeticCircuit.Internal
 
@@ -106,7 +96,6 @@ test_arithCircuitProof_no_mult_gates = localOption (QuickCheckTests 20) $
     go :: Property
     go = forAll (vectorOf (fromIntegral m) (arbitrary @Fq))
          $ \commitBlinders -> QCM.monadicIO $ do
-      let n = 0
       let wL = [[]]
           wR = [[]]
           wO = [[]]
@@ -145,8 +134,6 @@ test_arithCircuitProof_no_input_values = localOption (QuickCheckTests 20) $
     go :: Property
     go = forAll (vectorOf (fromIntegral m) (arbitrary @Fq))
          $ \commitBlinders -> QCM.monadicIO $ do
-      let n = 1
-
       let wL = [[0], [0], [1]]
           wR = [[0], [1], [0]]
           wO = [[1], [0], [0]]

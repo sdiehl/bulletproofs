@@ -9,10 +9,7 @@ import Protolude
 
 import Crypto.Random.Types (MonadRandom(..))
 import Crypto.Number.Generate (generateMax)
-import qualified Crypto.PubKey.ECC.Generate as Crypto
-import qualified Crypto.PubKey.ECC.Prim as Crypto
-import qualified Crypto.PubKey.ECC.Types as Crypto
-import PrimeField (PrimeField(..), toInt)
+import Data.Field.Galois (Prime)
 
 import Bulletproofs.Curve
 import Bulletproofs.Utils
@@ -25,9 +22,9 @@ import qualified Bulletproofs.InnerProductProof as IPP
 generateProof
   :: (KnownNat p, MonadRandom m)
   => Integer                -- ^ Upper bound of the range we want to prove
-  -> [(PrimeField p, PrimeField p)]
+  -> [(Prime p, Prime p)]
   -- ^ Values we want to prove in range and their blinding factors
-  -> ExceptT (RangeProofError (PrimeField p)) m (RangeProof (PrimeField p))
+  -> ExceptT (RangeProofError (Prime p)) m (RangeProof (Prime p))
 generateProof upperBound vsAndvBlindings = do
   unless (upperBound < _q) $ throwE $ UpperBoundTooLarge upperBound
 
@@ -35,15 +32,13 @@ generateProof upperBound vsAndvBlindings = do
      Nothing -> throwE $ NNotPowerOf2 upperBound
      Just n -> do
        unless (checkRanges n vs) $ throwE $ ValuesNotInRange vs
-
        lift $ generateProofUnsafe upperBound vsAndvBlindingsExp2
 
   where
     doubleLogM :: Maybe Integer
     doubleLogM = do
       x <- logBase2M upperBound
-      logBase2M x
-      pure x
+      logBase2M x >> pure x
     vs = fst <$> vsAndvBlindings
     m = length vsAndvBlindings
     residue = replicate (2 ^ log2Ceil m - m) (0, 0)
@@ -56,9 +51,9 @@ generateProofUnsafe
   :: forall p m
    . (KnownNat p, MonadRandom m)
   => Integer    -- ^ Upper bound of the range we want to prove
-  -> [(PrimeField p, PrimeField p)]
+  -> [(Prime p, Prime p)]
   -- ^ Values we want to prove in range and their blinding factors
-  -> m (RangeProof (PrimeField p))
+  -> m (RangeProof (Prime p))
 generateProofUnsafe upperBound vsAndvBlindings = do
   let n = logBase2 upperBound
       m = fromIntegral $ length vsAndvBlindings
@@ -72,7 +67,7 @@ generateProofUnsafe upperBound vsAndvBlindings = do
 
   (sL, sR) <- chooseBlindingVectors nm
 
-  let genBlinding = (fromInteger :: Integer -> (PrimeField p)) <$> generateMax _q
+  let genBlinding = (fromInteger :: Integer -> (Prime p)) <$> generateMax _q
 
   aBlinding <- genBlinding
   sBlinding <- genBlinding
@@ -84,7 +79,7 @@ generateProofUnsafe upperBound vsAndvBlindings = do
       z = shamirZ aCommit sCommit y
 
   let lrPoly@LRPolys{..} = computeLRPolys n m aL aR sL sR y z
-      tPoly@TPoly{..} = computeTPoly lrPoly
+      TPoly{..} = computeTPoly lrPoly
 
   t1Blinding <- genBlinding
   t2Blinding <- genBlinding
@@ -142,13 +137,13 @@ computeLRPolys
   :: (KnownNat p)
   => Integer
   -> Integer
-  -> [PrimeField p]
-  -> [PrimeField p]
-  -> [PrimeField p]
-  -> [PrimeField p]
-  -> PrimeField p
-  -> PrimeField p
-  -> LRPolys (PrimeField p)
+  -> [Prime p]
+  -> [Prime p]
+  -> [Prime p]
+  -> [Prime p]
+  -> Prime p
+  -> Prime p
+  -> LRPolys (Prime p)
 computeLRPolys n m aL aR sL sR y z
   = LRPolys
         { l0 = aL ^-^ ((*) z <$> powerVector 1 nm)

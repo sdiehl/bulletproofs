@@ -6,7 +6,7 @@ module Bulletproofs.RangeProof.Prover (
 import Protolude
 
 import Crypto.Random.Types (MonadRandom(..))
-import PrimeField (PrimeField(..), toInt)
+import Data.Field.Galois (Prime)
 
 import Bulletproofs.RangeProof.Internal
 import qualified Bulletproofs.MultiRangeProof.Prover as MRP
@@ -15,9 +15,9 @@ import qualified Bulletproofs.MultiRangeProof.Prover as MRP
 generateProof
   :: (KnownNat p, MonadRandom m)
   => Integer                -- ^ Upper bound of the range we want to prove
-  -> (PrimeField p, PrimeField p)
+  -> (Prime p, Prime p)
   -- ^ Values we want to prove in range and their blinding factors
-  -> ExceptT (RangeProofError (PrimeField p)) m (RangeProof (PrimeField p))
+  -> ExceptT (RangeProofError (Prime p)) m (RangeProof (Prime p))
 generateProof upperBound (v, vBlinding) =
   MRP.generateProof upperBound [(v, vBlinding)]
 
@@ -25,9 +25,9 @@ generateProof upperBound (v, vBlinding) =
 generateProofUnsafe
   :: (KnownNat p, MonadRandom m)
   => Integer    -- ^ Upper bound of the range we want to prove
-  -> (PrimeField p, PrimeField p)
+  -> (Prime p, Prime p)
   -- ^ Values we want to prove in range and their blinding factors
-  -> m (RangeProof (PrimeField p))
+  -> m (RangeProof (Prime p))
 generateProofUnsafe upperBound (v, vBlinding) =
   MRP.generateProofUnsafe upperBound [(v, vBlinding)]
 

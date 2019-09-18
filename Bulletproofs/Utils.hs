@@ -6,9 +6,8 @@ import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
 import Crypto.Random (MonadRandom)
 import Crypto.Number.Generate (generateMax)
-import PrimeField (PrimeField, toInt)
+import Data.Field.Galois (PrimeField(..), Prime)
 
-import Bulletproofs.Fq as Fq hiding (asInteger)
 import Bulletproofs.Curve
 
 -- | Return a vector containing the first n powers of a
@@ -39,15 +38,15 @@ subP :: Crypto.Point -> Crypto.Point -> Crypto.Point
 subP x y = Crypto.pointAdd curve x (Crypto.pointNegate curve y)
 
 -- | Multiply a scalar and a point in an elliptic curve
-mulP :: PrimeField p -> Crypto.Point -> Crypto.Point
-mulP x = Crypto.pointMul curve (toInt x)
+mulP :: KnownNat p => Prime p -> Crypto.Point -> Crypto.Point
+mulP x = Crypto.pointMul curve (fromP x)
 
 -- | Double exponentiation (Shamir's trick): g0^x0 + g1^x1
-addTwoMulP :: PrimeField p -> Crypto.Point -> PrimeField p -> Crypto.Point -> Crypto.Point
-addTwoMulP exp0 pt0 exp1 pt1 = Crypto.pointAddTwoMuls curve (toInt exp0) pt0 (toInt exp1) pt1
+addTwoMulP :: KnownNat p => Prime p -> Crypto.Point -> Prime p -> Crypto.Point -> Crypto.Point
+addTwoMulP exp0 pt0 exp1 pt1 = Crypto.pointAddTwoMuls curve (fromP exp0) pt0 (fromP exp1) pt1
 
 -- | Raise every point to the corresponding exponent, sum up results
-sumExps :: [PrimeField p] -> [Crypto.Point] -> Crypto.Point
+sumExps :: KnownNat p => [Prime p] -> [Crypto.Point] -> Crypto.Point
 sumExps (exp0:exp1:exps) (pt0:pt1:pts)
   = addTwoMulP exp0 pt0 exp1 pt1 `addP` sumExps exps pts
 sumExps (exp:_) (pt:_) = mulP exp pt -- this also catches cases where either list is longer than the other
@@ -55,7 +54,7 @@ sumExps _ _ = Crypto.PointO  -- this catches cases where either list is empty
 
 -- | Create a Pedersen commitment to a value given
 -- a value and a blinding factor
-commit :: PrimeField p -> PrimeField p -> Crypto.Point
+commit :: KnownNat p => Prime p -> Prime p -> Crypto.Point
 commit x r = addTwoMulP x g r h
 
 isLogBase2 :: Integer -> Bool

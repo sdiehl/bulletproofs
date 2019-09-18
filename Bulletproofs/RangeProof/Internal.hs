@@ -6,11 +6,10 @@ import Protolude
 import Numeric (showIntAtBase)
 import Data.Char (intToDigit, digitToInt)
 
-import Crypto.Number.Generate (generateMax)
 import Crypto.Random.Types (MonadRandom(..))
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
-import PrimeField (PrimeField(..), toInt)
+import Data.Field.Galois (PrimeField(..), Prime)
 
 import Bulletproofs.Utils
 import Bulletproofs.Curve
@@ -74,16 +73,16 @@ data TPoly f
 -- | Encode the value v into a bit representation. Let aL be a vector
 -- of bits such that <aL, 2^n> = v (put more simply, the components of a L are the
 -- binary digits of v).
-encodeBit :: KnownNat p => Integer -> PrimeField p -> [PrimeField p]
-encodeBit n v = fillWithZeros n $ fromIntegral . digitToInt <$> showIntAtBase 2 intToDigit (toInt v) ""
+encodeBit :: KnownNat p => Integer -> Prime p -> [Prime p]
+encodeBit n v = fillWithZeros n $ fromIntegral . digitToInt <$> showIntAtBase 2 intToDigit (fromP v) ""
 
 -- | Bits of v reversed.
 -- v = <a, 2^n> = a_0 * 2^0 + ... + a_n-1 * 2^(n-1)
-reversedEncodeBit :: KnownNat p => Integer -> PrimeField p -> [PrimeField p]
+reversedEncodeBit :: KnownNat p => Integer -> Prime p -> [Prime p]
 reversedEncodeBit n = reverse . encodeBit n
 
 -- TODO: Test it
-reversedEncodeBitMulti :: KnownNat p => Integer -> [PrimeField p] -> [PrimeField p]
+reversedEncodeBitMulti :: KnownNat p => Integer -> [Prime p] -> [Prime p]
 reversedEncodeBitMulti n = foldl' (\acc v -> acc ++ reversedEncodeBit n v) []
 
 -- | In order to prove that v is in range, each element of aL is either 0 or 1.
@@ -103,7 +102,7 @@ fillWithZeros n aL = zeros ++ aL
 -- | Obfuscate encoded bits with challenges y and z.
 -- z^2 * <aL, 2^n> + z * <aL − 1^n − aR, y^n> + <aL, aR · y^n> = (z^2) * v
 -- The property holds because <aL − 1^n − aR, y^n> = 0 and <aL · aR,  y^n> = 0
-obfuscateEncodedBits :: KnownNat p => Integer -> [PrimeField p] -> [PrimeField p] -> PrimeField p -> PrimeField p -> PrimeField p
+obfuscateEncodedBits :: KnownNat p => Integer -> [Prime p] -> [Prime p] -> Prime p -> Prime p -> Prime p
 obfuscateEncodedBits n aL aR y z
   = ((z ^ 2) * dot aL (powerVector 2 n))
     + (z * dot ((aL ^-^ powerVector 1 n) ^-^ aR) yN)
@@ -116,7 +115,7 @@ obfuscateEncodedBits n aL aR y z
 -- what’s important is that the aL , aR terms be kept inside
 -- (since they can’t be shared with the Verifier):
 -- <aL − z * 1^n , y^n ◦ (aR + z * 1^n) + z^2 * 2^n> = z 2 v + δ(y, z)
-obfuscateEncodedBitsSingle :: KnownNat p => Integer -> [PrimeField p] -> [PrimeField p] -> PrimeField p -> PrimeField p -> PrimeField p
+obfuscateEncodedBitsSingle :: KnownNat p => Integer -> [Prime p] -> [Prime p] -> Prime p -> Prime p -> Prime p
 obfuscateEncodedBitsSingle n aL aR y z
   = dot
       (aL ^-^ z1n)
@@ -129,13 +128,13 @@ obfuscateEncodedBitsSingle n aL aR y z
 -- Prover can send commitments to these vectors;
 -- these are properly blinded vector Pedersen commitments:
 commitBitVectors
-  :: (MonadRandom m)
-  => PrimeField p
-  -> PrimeField p
-  -> [PrimeField p]
-  -> [PrimeField p]
-  -> [PrimeField p]
-  -> [PrimeField p]
+  :: (KnownNat p, MonadRandom m)
+  => Prime p
+  -> Prime p
+  -> [Prime p]
+  -> [Prime p]
+  -> [Prime p]
+  -> [Prime p]
   -> m (Crypto.Point, Crypto.Point)
 commitBitVectors aBlinding sBlinding aL aR sL sR = do
     let aLG = sumExps aL gs
@@ -154,7 +153,7 @@ commitBitVectors aBlinding sBlinding aL aR sL sR = do
     pure (aCommit, sCommit)
 
 -- | (z − z^2) * <1^n, y^n> − z^3 * <1^n, 2^n>
-delta :: KnownNat p => Integer -> Integer -> PrimeField p -> PrimeField p -> PrimeField p
+delta :: KnownNat p => Integer -> Integer -> Prime p -> Prime p -> Prime p
 delta n m y z
   = ((z - (z ^ 2)) * dot (powerVector 1 nm) (powerVector y nm))
   - foldl' (\acc j -> acc + ((z ^ (j + 2)) * dot (powerVector 1 n) (powerVector 2 n))) 0 [1..m]
@@ -162,12 +161,12 @@ delta n m y z
     nm = n * m
 
 -- | Check that a value is in a specific range
-checkRange :: Integer -> PrimeField p -> Bool
-checkRange n (toInt -> v) = v >= 0 && v < 2 ^ n
+checkRange :: KnownNat p => Integer -> Prime p -> Bool
+checkRange n (fromP -> v) = v >= 0 && v < 2 ^ n
 
 -- | Check that a value is in a specific range
-checkRanges :: Integer -> [PrimeField p] -> Bool
-checkRanges n vs = and $ fmap (\(toInt -> v) -> v >= 0 && v < 2 ^ n) vs
+checkRanges :: KnownNat p => Integer -> [Prime p] -> Bool
+checkRanges n vs = and $ fmap (\(fromP -> v) -> v >= 0 && v < 2 ^ n) vs
 
 -- | Compute commitment of linear vector polynomials l and r
 -- P = A + xS − zG + (z*y^n + z^2 * 2^n) * hs'
@@ -177,12 +176,12 @@ computeLRCommitment
   -> Integer
   -> Crypto.Point
   -> Crypto.Point
-  -> PrimeField p
-  -> PrimeField p
-  -> PrimeField p
-  -> PrimeField p
-  -> PrimeField p
-  -> PrimeField p
+  -> Prime p
+  -> Prime p
+  -> Prime p
+  -> Prime p
+  -> Prime p
+  -> Prime p
   -> [Crypto.Point]
   -> Crypto.Point
 computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'

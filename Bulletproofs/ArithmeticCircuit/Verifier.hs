@@ -6,11 +6,10 @@ import Data.List (head)
 
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
-import PrimeField (PrimeField(..), toInt)
+import Data.Field.Galois (Prime)
 
 import Bulletproofs.Curve
 import Bulletproofs.Utils hiding (shamirZ)
-import Bulletproofs.RangeProof.Internal hiding (delta)
 import qualified Bulletproofs.InnerProductProof as IPP
 
 import Bulletproofs.ArithmeticCircuit.Internal
@@ -20,8 +19,8 @@ import Bulletproofs.ArithmeticCircuit.Internal
 verifyProof
   :: (KnownNat p)
   => [Crypto.Point]
-  -> ArithCircuitProof (PrimeField p)
-  -> ArithCircuit (PrimeField p)
+  -> ArithCircuitProof (Prime p)
+  -> ArithCircuit (Prime p)
   -> Bool
 verifyProof vCommits proof@ArithCircuitProof{..} (padCircuit -> ArithCircuit{..})
   = verifyLRCommitment && verifyTPoly
@@ -41,11 +40,6 @@ verifyProof vCommits proof@ArithCircuitProof{..} (padCircuit -> ArithCircuit{..}
     zwO = zs `vectorMatrixProduct` wO
 
     hs' = zipWith mulP (powerVector (recip y) n) hs
-
-    wLCommit = sumExps (zs `vectorMatrixProduct` wL) hs'
-    wRCommit = sumExps wRExp gs
-    wOCommit = sumExps (zs `vectorMatrixProduct` wO) hs'
-    wRExp = powerVector (recip y) n `hadamardp` (zs `vectorMatrixProduct` wL)
 
     uChallenge = shamirU tBlinding mu t
     u = uChallenge `mulP` g

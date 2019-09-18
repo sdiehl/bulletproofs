@@ -12,26 +12,40 @@ packages:
   original:
     hackage: criterion-1.5.2.0
 - completed:
-    hackage: galois-field-0.4.0@sha256:7f8aed0c11f6afc720685c2ede6bdbea3ce8dbd738dacd8fbf722168863d4dd1,3190
+    hackage: semirings-0.5@sha256:d5f0420c38341675621c5c97882fbe9a22f19a01a4193ac31ff3ee186846527f,3882
     pantry-tree:
-      size: 1130
-      sha256: e68a2fb1731fc4cdf5f0ae4dd718f8bd2e128eb6285be3d602a209e5430812ba
+      size: 610
+      sha256: dcca3edd1d0215c68acc7c6d1a0bcb66ee260fce6300d3150949fc807890694d
   original:
-    hackage: galois-field-0.4.0
+    hackage: semirings-0.5
 - completed:
-    hackage: poly-0.3.1.0@sha256:3e015e84d304c4197a2cff4a78400ed619eb850922d566028edb6c7254f2095f,1875
+    cabal-file:
+      size: 3428
+      sha256: 88c551c06eb708578e96eb7eb919527897aa466daa389674ce376779d8b1a147
+    name: galois-field
+    version: 0.4.1
+    git: git@github.com:adjoint-io/galois-field.git
     pantry-tree:
-      size: 1466
-      sha256: ee6b1de208cdd7a621e3138fe3507f4a97d26ce3c47fe20021c1de75d3fddf29
+      size: 1784
+      sha256: 29d354eb20e2a3701447d65b1832380e72133f2dc8a8410c9f7c8857652e07ca
+    commit: cf2c5f1af8e62bc9063143d3c1c6805b5d33d94d
   original:
-    hackage: poly-0.3.1.0
+    git: git@github.com:adjoint-io/galois-field.git
+    commit: cf2c5f1af8e62bc9063143d3c1c6805b5d33d94d
 - completed:
-    hackage: semirings-0.4.2@sha256:7803a3bd8add49c375da59d456b59e32ea02a88ac1a1d71132420e4c976333f3,3750
+    cabal-file:
+      size: 1889
+      sha256: ec2d9049565040b71ecec63ec34c0f7e5e0d65c1c54fde7f61f3a2bf8087c2e4
+    name: poly
+    version: 0.3.1.0
+    git: git@github.com:bodigrim/poly.git
     pantry-tree:
-      size: 555
-      sha256: dcf5c467c4005b567d409c3fe74aa233a6a9313a3693716eeee9ddafbd953f87
+      size: 1610
+      sha256: 5d5a558972ddf428f5b953a440e0b74cf5770c1fb3e9594b42d80efd405cd63f
+    commit: c9a97f5ecc38cc546ace6beb568c1f31e7369c8c
   original:
-    hackage: semirings-0.4.2
+    git: git@github.com:bodigrim/poly.git
+    commit: c9a97f5ecc38cc546ace6beb568c1f31e7369c8c
 snapshots:
 - completed:
     size: 499889

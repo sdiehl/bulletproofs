@@ -7,15 +7,10 @@ module Bulletproofs.InnerProductProof.Prover (
 import Protolude
 
 import Control.Exception (assert)
-import qualified Data.List as L
-import qualified Data.Map as Map
-
 import qualified Crypto.PubKey.ECC.Types as Crypto
-import PrimeField (PrimeField(..), toInt)
+import Data.Field.Galois (Prime)
 
-import Bulletproofs.Curve
 import Bulletproofs.Utils
-
 import Bulletproofs.InnerProductProof.Internal
 
 -- | Generate proof that a witness l, r satisfies the inner product relation
@@ -26,9 +21,9 @@ generateProof
   -> Crypto.Point
   -- ^ Commitment P = A + xS − zG + (z*y^n + z^2 * 2^n) * hs' of vectors l and r
   -- whose inner product is t
-  -> InnerProductWitness (PrimeField p)
+  -> InnerProductWitness (Prime p)
   -- ^ Vectors l and r that hide bit vectors aL and aR, respectively
-  -> InnerProductProof (PrimeField p)
+  -> InnerProductProof (Prime p)
 generateProof productBase commitmentLR witness
   = generateProof' productBase commitmentLR witness [] []
 
@@ -36,10 +31,10 @@ generateProof'
   :: KnownNat p
   => InnerProductBase
   -> Crypto.Point
-  -> InnerProductWitness (PrimeField p)
+  -> InnerProductWitness (Prime p)
   -> [Crypto.Point]
   -> [Crypto.Point]
-  -> InnerProductProof (PrimeField p)
+  -> InnerProductProof (Prime p)
 generateProof'
   InnerProductBase{ bGs, bHs, bH }
   commitmentLR

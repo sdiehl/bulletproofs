@@ -6,29 +6,20 @@ import Protolude
 
 import Test.Tasty
 import Test.Tasty.QuickCheck
-import Test.QuickCheck
 import qualified Test.QuickCheck.Monadic as QCM
 
 import Crypto.Random.Types (MonadRandom(..))
 import Crypto.Number.Generate (generateMax, generateBetween)
-import qualified Crypto.PubKey.ECC.Generate as Crypto
 import qualified Crypto.PubKey.ECC.Prim as Crypto
 import qualified Crypto.PubKey.ECC.Types as Crypto
-import GaloisField (GaloisField(..))
-import PrimeField (toInt)
+import Data.Field.Galois (PrimeField(..))
 
 import Bulletproofs.Curve
 import qualified Bulletproofs.RangeProof as RP
 import qualified Bulletproofs.RangeProof.Internal as RP
-import qualified Bulletproofs.RangeProof.Verifier as RP
-
 import qualified Bulletproofs.MultiRangeProof as MRP
 import qualified Bulletproofs.MultiRangeProof.Verifier as MRP
-
 import Bulletproofs.Utils
-import Bulletproofs.Fq as Fq
-
-import TestField
 
 newtype Bin = Bin { unbin :: Int } deriving Show
 
@@ -161,7 +152,7 @@ prop_valueNotInRange = QCM.monadicIO $ do
   n <- QCM.run $ (2 ^) <$> generateMax 8
   ((v, vBlinding), vCommit) <- QCM.run $ setupV n
   let upperBound = getUpperBound n
-      vNotInRange = fromInteger (toInt v + upperBound)
+      vNotInRange = fromInteger (fromP v + upperBound)
 
   proofE <- QCM.run $ runExceptT $ MRP.generateProof upperBound [(vNotInRange, vBlinding)]
   case proofE of

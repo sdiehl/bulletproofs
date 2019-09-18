@@ -9,12 +9,9 @@ module Bulletproofs.RangeProof.Verifier (
 import Protolude
 
 import qualified Crypto.PubKey.ECC.Types as Crypto
-import PrimeField (PrimeField(..), toInt)
+import Data.Field.Galois (Prime)
 
 import Bulletproofs.RangeProof.Internal
-import Bulletproofs.Curve
-import Bulletproofs.Utils
-
 import qualified Bulletproofs.MultiRangeProof.Verifier as MRP
 
 -- | Verify that a commitment was computed from a value in a given range
@@ -22,7 +19,7 @@ verifyProof
   :: KnownNat p
   => Integer        -- ^ Range upper bound
   -> Crypto.Point   -- ^ Commitments of in-range values
-  -> RangeProof (PrimeField p)
+  -> RangeProof (Prime p)
   -- ^ Proof that a secret committed value lies in a certain interval
   -> Bool
 verifyProof upperBound vCommit proof@RangeProof{..}
@@ -35,11 +32,11 @@ verifyTPoly
   :: KnownNat p
   => Integer         -- ^ Dimension n of the vectors
   -> Crypto.Point    -- ^ Commitment of in-range value
-  -> RangeProof (PrimeField p)
+  -> RangeProof (Prime p)
   -- ^ Proof that a secret committed value lies in a certain interval
-  -> PrimeField p              -- ^ Challenge x
-  -> PrimeField p              -- ^ Challenge y
-  -> PrimeField p              -- ^ Challenge z
+  -> Prime p              -- ^ Challenge x
+  -> Prime p              -- ^ Challenge y
+  -> Prime p              -- ^ Challenge z
   -> Bool
 verifyTPoly n vCommit
   = MRP.verifyTPoly n [vCommit]
@@ -48,11 +45,11 @@ verifyTPoly n vCommit
 verifyLRCommitment
   :: KnownNat p
   => Integer         -- ^ Dimension n of the vectors
-  -> RangeProof (PrimeField p)
+  -> RangeProof (Prime p)
   -- ^ Proof that a secret committed value lies in a certain interval
-  -> PrimeField p              -- ^ Challenge x
-  -> PrimeField p              -- ^ Challenge y
-  -> PrimeField p              -- ^ Challenge z
+  -> Prime p              -- ^ Challenge x
+  -> Prime p              -- ^ Challenge y
+  -> Prime p              -- ^ Challenge z
   -> Bool
 verifyLRCommitment n
   = MRP.verifyLRCommitment n 1

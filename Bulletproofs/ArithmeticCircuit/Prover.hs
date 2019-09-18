@@ -6,8 +6,7 @@ import Protolude
 import Crypto.Random.Types (MonadRandom(..))
 import Crypto.Number.Generate (generateMax)
 import qualified Crypto.PubKey.ECC.Prim as Crypto
-import qualified Crypto.PubKey.ECC.Types as Crypto
-import PrimeField (PrimeField(..), toInt)
+import Data.Field.Galois (Prime)
 
 import Bulletproofs.Curve
 import Bulletproofs.Utils hiding (shamirZ)
@@ -19,13 +18,13 @@ import Bulletproofs.ArithmeticCircuit.Internal
 generateProof
   :: forall p m
    . (MonadRandom m, KnownNat p)
-  => ArithCircuit (PrimeField p)
-  -> ArithWitness (PrimeField p)
-  -> m (ArithCircuitProof (PrimeField p))
+  => ArithCircuit (Prime p)
+  -> ArithWitness (Prime p)
+  -> m (ArithCircuitProof (Prime p))
 generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
   let GateWeights{..} = weights
       Assignment{..} = padAssignment assignment
-      genBlinding = (fromInteger :: Integer -> PrimeField p) <$> generateMax _q
+      genBlinding = (fromInteger :: Integer -> Prime p) <$> generateMax _q
   aiBlinding <- genBlinding
   aoBlinding <- genBlinding
   sBlinding <- genBlinding
@@ -53,16 +52,16 @@ generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
         ^+^ (aR `vectorMatrixProductT` wR)
         ^+^ (aO `vectorMatrixProductT` wO)
 
-      t2 = (aL `dot` (aR `hadamardp` ys))
+      _t2 = (aL `dot` (aR `hadamardp` ys))
          - (aO `dot` ys)
          + (zs `dot` w)
          + delta n y zwL zwR
 
-  tBlindings <- insertAt 2 0 . (:) 0 <$> replicateM 5 ((fromInteger :: Integer -> PrimeField p) <$> generateMax _q)
+  tBlindings <- insertAt 2 0 . (:) 0 <$> replicateM 5 ((fromInteger :: Integer -> Prime p) <$> generateMax _q)
   let tCommits = zipWith commit tPoly tBlindings
 
   let x = shamirGs tCommits
-      evalTCommit = sumExps (powerVector x 7) tCommits
+      _evalTCommit = sumExps (powerVector x 7) tCommits
 
   let ls = evaluatePolynomial n lPoly x
       rs = evaluatePolynomial n rPoly x
