@@ -1,14 +1,13 @@
-{-# LANGUAGE RecordWildCards, ScopedTypeVariables, ViewPatterns #-}
+{-# LANGUAGE RecordWildCards, ScopedTypeVariables, ViewPatterns, TypeApplications #-}
 module Bulletproofs.ArithmeticCircuit.Prover where
 
 import Protolude
 
-import Crypto.Random.Types (MonadRandom(..))
-import Crypto.Number.Generate (generateMax)
-import qualified Crypto.PubKey.ECC.Prim as Crypto
-import Data.Field.Galois (Prime)
+import Control.Monad.Random (MonadRandom, getRandomR)
 
-import Bulletproofs.Curve
+import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, _r)
+import Data.Curve.Weierstrass
+
 import Bulletproofs.Utils hiding (shamirZ)
 import qualified Bulletproofs.InnerProductProof as IPP
 import Bulletproofs.ArithmeticCircuit.Internal
@@ -16,15 +15,14 @@ import Bulletproofs.ArithmeticCircuit.Internal
 -- | Generate a zero-knowledge proof of computation
 -- for an arithmetic circuit with a valid witness
 generateProof
-  :: forall p m
-   . (MonadRandom m, KnownNat p)
-  => ArithCircuit (Prime p)
-  -> ArithWitness (Prime p)
-  -> m (ArithCircuitProof (Prime p))
+  :: forall m . (MonadRandom m)
+  => ArithCircuit Fr
+  -> ArithWitness Fr
+  -> m (ArithCircuitProof Fr PA)
 generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
   let GateWeights{..} = weights
       Assignment{..} = padAssignment assignment
-      genBlinding = (fromInteger :: Integer -> Prime p) <$> generateMax _q
+      genBlinding = (fromInteger :: Integer -> Fr) <$> getRandomR (1, fromIntegral _r)
   aiBlinding <- genBlinding
   aoBlinding <- genBlinding
   sBlinding <- genBlinding
@@ -52,12 +50,12 @@ generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
         ^+^ (aR `vectorMatrixProductT` wR)
         ^+^ (aO `vectorMatrixProductT` wO)
 
-      _t2 = (aL `dot` (aR `hadamardp` ys))
+      _t2 = (aL `dot` (aR `hadamard` ys))
          - (aO `dot` ys)
          + (zs `dot` w)
          + delta n y zwL zwR
 
-  tBlindings <- insertAt 2 0 . (:) 0 <$> replicateM 5 ((fromInteger :: Integer -> Prime p) <$> generateMax _q)
+  tBlindings <- insertAt 2 0 . (:) 0 <$> replicateM 5 ((fromInteger @Fr) <$> getRandomR (1, fromIntegral _r))
   let tCommits = zipWith commit tPoly tBlindings
 
   let x = shamirGs tCommits
@@ -75,17 +73,17 @@ generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
       mu = aiBlinding * x + aoBlinding * (x ^ 2) + sBlinding * (x ^ 3)
 
   let uChallenge = shamirU tBlinding mu t
-      u = uChallenge `mulP` g
-      hs' = zipWith mulP (powerVector (recip y) n) hs
-      gExp = (*) x <$> (powerVector (recip y) n `hadamardp` zwR)
+      u = gen `mul` uChallenge
+      hs' = zipWith mul hs (powerVector (recip y) n)
+      gExp = (*) x <$> (powerVector (recip y) n `hadamard` zwR)
       hExp = (((*) x <$> zwL) ^+^ zwO) ^-^ ys
-      commitmentLR = (x `mulP` aiCommit)
-                   `addP` ((x ^ 2) `mulP` aoCommit)
-                   `addP` ((x ^ 3)`mulP` sCommit)
-                   `addP` sumExps gExp gs
-                   `addP` sumExps hExp hs'
-                   `addP` Crypto.pointNegate curve (mu `mulP` h)
-                   `addP` (t `mulP` u)
+      commitmentLR = (aiCommit `mul` x)
+                   `add` (aoCommit `mul` (x ^ 2))
+                   `add` (sCommit `mul` (x ^ 3))
+                   `add` sumExps gExp gs
+                   `add` sumExps hExp hs'
+                   `add` (inv (h `mul` mu))
+                   `add` (u `mul` t)
 
   let productProof = IPP.generateProof
                         IPP.InnerProductBase { bGs = gs, bHs = hs', bH = u }
@@ -110,12 +108,12 @@ generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
         )
       where
         l0 = replicate (fromIntegral n) 0
-        l1 = aL ^+^ (powerVector (recip y) n `hadamardp` zwR)
+        l1 = aL ^+^ (powerVector (recip y) n `hadamard` zwR)
         l2 = aO
         l3 = sL
 
         r0 = zwO ^-^ powerVector y n
-        r1 = (powerVector y n `hadamardp` aR) ^+^ zwL
+        r1 = (powerVector y n `hadamard` aR) ^+^ zwL
         r2 = replicate (fromIntegral n) 0
-        r3 = powerVector y n `hadamardp` sR
+        r3 = powerVector y n `hadamard` sR
 

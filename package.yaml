@@ -21,7 +21,7 @@ dependencies:
 - base >= 4.7 && < 5
 - protolude >= 0.2
 - text
-- cryptonite
+- bytestring
 - memory
 - arithmoi >= 0.8
 - containers
@@ -29,6 +29,9 @@ dependencies:
 - MonadRandom
 - QuickCheck
 - galois-field >= 0.4.0
+- elliptic-curve
+- SHA
+- MonadRandom
 
 ghc-options:
   -Wall
@@ -46,7 +49,6 @@ ghc-options:
 library:
   source-dirs: .
   exposed-modules:
-    - Bulletproofs.Curve
     - Bulletproofs.RangeProof
     - Bulletproofs.RangeProof.Internal
     - Bulletproofs.RangeProof.Prover

@@ -7,11 +7,10 @@ module Bulletproofs.MultiRangeProof.Prover (
 
 import Protolude
 
-import Crypto.Random.Types (MonadRandom(..))
-import Crypto.Number.Generate (generateMax)
-import Data.Field.Galois (Prime)
+import Control.Monad.Random (MonadRandom, getRandomR)
+import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, _r)
+import Data.Curve.Weierstrass hiding (char)
 
-import Bulletproofs.Curve
 import Bulletproofs.Utils
 import Bulletproofs.RangeProof.Internal
 
@@ -20,13 +19,13 @@ import qualified Bulletproofs.InnerProductProof as IPP
 
 -- | Prove that a list of values lies in a specific range
 generateProof
-  :: (KnownNat p, MonadRandom m)
+  :: MonadRandom m
   => Integer                -- ^ Upper bound of the range we want to prove
-  -> [(Prime p, Prime p)]
+  -> [(Fr, Fr)]
   -- ^ Values we want to prove in range and their blinding factors
-  -> ExceptT (RangeProofError (Prime p)) m (RangeProof (Prime p))
+  -> ExceptT (RangeProofError Fr) m (RangeProof Fr PA)
 generateProof upperBound vsAndvBlindings = do
-  unless (upperBound < _q) $ throwE $ UpperBoundTooLarge upperBound
+  unless (upperBound < fromIntegral _r) $ throwE $ UpperBoundTooLarge upperBound
 
   case doubleLogM of
      Nothing -> throwE $ NNotPowerOf2 upperBound
@@ -48,12 +47,12 @@ generateProof upperBound vsAndvBlindings = do
 
 -- | Generate range proof from valid inputs
 generateProofUnsafe
-  :: forall p m
-   . (KnownNat p, MonadRandom m)
+  :: forall m
+   . MonadRandom m
   => Integer    -- ^ Upper bound of the range we want to prove
-  -> [(Prime p, Prime p)]
+  -> [(Fr, Fr)]
   -- ^ Values we want to prove in range and their blinding factors
-  -> m (RangeProof (Prime p))
+  -> m (RangeProof Fr PA)
 generateProofUnsafe upperBound vsAndvBlindings = do
   let n = logBase2 upperBound
       m = fromIntegral $ length vsAndvBlindings
@@ -67,7 +66,7 @@ generateProofUnsafe upperBound vsAndvBlindings = do
 
   (sL, sR) <- chooseBlindingVectors nm
 
-  let genBlinding = (fromInteger :: Integer -> (Prime p)) <$> generateMax _q
+  let genBlinding = fromInteger <$> getRandomR (1, fromIntegral _r)
 
   aBlinding <- genBlinding
   sBlinding <- genBlinding
@@ -106,8 +105,8 @@ generateProofUnsafe upperBound vsAndvBlindings = do
       mu = aBlinding + (sBlinding * x)
 
   let uChallenge = shamirU tBlinding mu t
-      u = uChallenge `mulP` g
-      hs' = zipWith (\yi hi-> recip yi `mulP` hi) (powerVector y nm) hs
+      u = gen `mul` uChallenge
+      hs' = zipWith (\yi hi-> hi `mul` recip yi) (powerVector y nm) hs
       commitmentLR = computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
       productProof = IPP.generateProof
                         InnerProductBase { bGs = gs, bHs = hs', bH = u }
@@ -134,23 +133,22 @@ generateProofUnsafe upperBound vsAndvBlindings = do
 -- l(x) = (a L − z1 n ) + s L x
 -- r(x) = y^n ◦ (aR + z * 1^n + sR * x) + z^2 * 2^n
 computeLRPolys
-  :: (KnownNat p)
-  => Integer
+  :: Integer
   -> Integer
-  -> [Prime p]
-  -> [Prime p]
-  -> [Prime p]
-  -> [Prime p]
-  -> Prime p
-  -> Prime p
-  -> LRPolys (Prime p)
+  -> [Fr]
+  -> [Fr]
+  -> [Fr]
+  -> [Fr]
+  -> Fr
+  -> Fr
+  -> LRPolys Fr
 computeLRPolys n m aL aR sL sR y z
   = LRPolys
         { l0 = aL ^-^ ((*) z <$> powerVector 1 nm)
         , l1 = sL
-        , r0 = (powerVector y nm `hadamardp` (aR ^+^ z1nm))
+        , r0 = (powerVector y nm `hadamard` (aR ^+^ z1nm))
              ^+^ foldl' (\acc j -> iter j ^+^ acc) (replicate (fromIntegral nm) 0) [1..m]
-        , r1 = hadamardp (powerVector y nm) sR
+        , r1 = hadamard (powerVector y nm) sR
         }
   where
     z1nm = (*) z <$> powerVector 1 nm

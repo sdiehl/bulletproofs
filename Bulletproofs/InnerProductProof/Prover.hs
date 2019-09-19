@@ -7,8 +7,8 @@ module Bulletproofs.InnerProductProof.Prover (
 import Protolude
 
 import Control.Exception (assert)
-import qualified Crypto.PubKey.ECC.Types as Crypto
-import Data.Field.Galois (Prime)
+import Data.Curve.Weierstrass.SECP256K1 (PA, Fr)
+import Data.Curve.Weierstrass hiding (char)
 
 import Bulletproofs.Utils
 import Bulletproofs.InnerProductProof.Internal
@@ -16,25 +16,23 @@ import Bulletproofs.InnerProductProof.Internal
 -- | Generate proof that a witness l, r satisfies the inner product relation
 -- on public input (Gs, Hs, h)
 generateProof
-  :: KnownNat p
-  => InnerProductBase    -- ^ Generators Gs, Hs, h
-  -> Crypto.Point
+  :: InnerProductBase PA   -- ^ Generators Gs, Hs, h
+  -> PA
   -- ^ Commitment P = A + xS − zG + (z*y^n + z^2 * 2^n) * hs' of vectors l and r
   -- whose inner product is t
-  -> InnerProductWitness (Prime p)
+  -> InnerProductWitness Fr
   -- ^ Vectors l and r that hide bit vectors aL and aR, respectively
-  -> InnerProductProof (Prime p)
+  -> InnerProductProof Fr PA
 generateProof productBase commitmentLR witness
   = generateProof' productBase commitmentLR witness [] []
 
 generateProof'
-  :: KnownNat p
-  => InnerProductBase
-  -> Crypto.Point
-  -> InnerProductWitness (Prime p)
-  -> [Crypto.Point]
-  -> [Crypto.Point]
-  -> InnerProductProof (Prime p)
+  :: InnerProductBase PA
+  -> PA
+  -> InnerProductWitness Fr
+  -> [PA]
+  -> [PA]
+  -> InnerProductProof Fr PA
 generateProof'
   InnerProductBase{ bGs, bHs, bH }
   commitmentLR
@@ -64,16 +62,16 @@ generateProof'
     cR = dot lsRight rsLeft
 
     lCommit = sumExps lsLeft gsRight
-         `addP`
+         `add`
          sumExps rsRight hsLeft
-         `addP`
-         (cL `mulP` bH)
+         `add`
+         (bH `mul` cL)
 
     rCommit = sumExps lsRight gsLeft
-         `addP`
+         `add`
          sumExps rsLeft hsRight
-         `addP`
-         (cR `mulP` bH)
+         `add`
+         (bH `mul` cR)
 
     x = shamirX' commitmentLR lCommit rCommit
 
@@ -88,10 +86,10 @@ generateProof'
     rs' = ((*) xInv <$> rsLeft) ^+^ ((*) x <$> rsRight)
 
     commitmentLR'
-      = ((x ^ 2) `mulP` lCommit)
-        `addP`
-        ((xInv ^ 2) `mulP` rCommit)
-        `addP`
+      = (lCommit `mul` (x ^ 2))
+        `add`
+        (rCommit `mul` (xInv ^ 2))
+        `add`
         commitmentLR
 
     -----------------------------
@@ -117,19 +115,19 @@ generateProof'
       = lGs'
         ==
         sumExps ls bGs
-        `addP`
-        ((x ^ 2) `mulP` aL')
-        `addP`
-        ((xInv ^ 2) `mulP` aR')
+        `add`
+        (aL' `mul` (x ^ 2))
+        `add`
+        (aR' `mul` (xInv ^ 2))
 
     checkRHs
       = rHs'
         ==
         sumExps rs bHs
-        `addP`
-        ((x ^ 2) `mulP` bR')
-        `addP`
-        ((xInv ^ 2) `mulP` bL')
+        `add`
+        (bR' `mul` (x ^ 2))
+        `add`
+        (bL' `mul` (xInv ^ 2))
 
     checkLBs
       = dot ls' rs'
@@ -139,17 +137,17 @@ generateProof'
     checkC
       = commitmentLR
         ==
-        (z `mulP` bH)
-        `addP`
+        (bH `mul` z)
+        `add`
         lGs
-        `addP`
+        `add`
         rHs
 
     checkC'
       = commitmentLR'
         ==
-        (z' `mulP` bH)
-        `addP`
+        (bH `mul` z')
+        `add`
         lGs'
-        `addP`
+        `add`
         rHs'

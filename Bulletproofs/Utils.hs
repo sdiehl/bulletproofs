@@ -1,14 +1,54 @@
+{-# LANGUAGE TypeFamilies #-}
 module Bulletproofs.Utils where
 
-import Protolude
+import Protolude hiding (hash, fromStrict)
 
-import qualified Crypto.PubKey.ECC.Prim as Crypto
-import qualified Crypto.PubKey.ECC.Types as Crypto
-import Crypto.Random (MonadRandom)
-import Crypto.Number.Generate (generateMax)
-import Data.Field.Galois (PrimeField(..), Prime)
+import Data.Field.Galois (PrimeField(..), sr, Prime)
+import Data.Curve.Weierstrass.SECP256K1 (PA, SECP256K1, Fq, Fr, _r)
+import Data.Curve.Weierstrass hiding (char)
+import Data.Digest.Pure.SHA (integerDigest, sha256)
+import Data.ByteString.Lazy (fromStrict)
+import Control.Monad.Random (getRandomR, MonadRandom)
 
-import Bulletproofs.Curve
+type family PF a where
+  PF (Prime k) = k
+
+-- | H = aG where a is not known
+h :: PA
+h = generateH ""
+
+-- | Generate vector of generators in a deterministic way from the curve generator g
+-- by applying H(encode(g) || i) where H is a secure hash function
+gs :: [PA]
+gs = mul gen . (oracle . (<> pointToBS gen) . show) <$> [1..]
+
+-- | Generate vector of generators in a deterministic way from the curve generator h
+-- by applying H(encode(h) || i) where H is a secure hash function
+hs :: [PA]
+hs = mul gen . (oracle . (<> pointToBS h) . show) <$> [1..]
+
+-- | A random oracle. In the Fiat-Shamir heuristic, its input
+-- is specifically the transcript of the interaction up to that point.
+oracle :: PrimeField f => ByteString -> f
+oracle = fromInteger . integerDigest . sha256 . fromStrict
+
+pointToBS :: PA -> ByteString
+pointToBS O      = ""
+pointToBS (A x y) = show x <> show y
+
+-- | Iterative algorithm to generate H.
+-- The important thing about the H value is that nobody gets
+-- to know its discrete logarithm "k" such that H = kG
+generateH :: [Char] -> PA
+generateH extra =
+  case yM of
+    Nothing -> generateH (toS $ '1':extra)
+    Just y -> if def @'Weierstrass @'Affine @SECP256K1 @Fq @Fr (A x y)
+      then A x y
+      else generateH (toS $ '1':extra)
+  where
+    x = oracle (pointToBS gen <> toS extra)
+    yM = sr (x ^ 3 + 7)
 
 -- | Return a vector containing the first n powers of a
 powerVector :: (Eq f, Num f) => f -> Integer -> [f]
@@ -16,46 +56,37 @@ powerVector a x
   = (\i -> if i == 0 && a == 0 then 0 else a ^ i) <$> [0..x-1]
 
 -- | Hadamard product or entry wise multiplication of two vectors
-hadamardp :: Num a => [a] -> [a] -> [a]
-hadamardp a b | length a == length b = zipWith (*) a b
-              | otherwise = panic "Vector sizes must match"
+hadamard :: Num a => [a] -> [a] -> [a]
+hadamard a b | length a == length b = zipWith (*) a b
+             | otherwise = panic "Vector sizes must match"
 
+-- | Dot product
 dot :: Num a => [a] -> [a] -> a
-dot xs ys = sum $ hadamardp xs ys
+dot xs ys = sum $ hadamard xs ys
 
+-- | Entry wise sum
 (^+^) :: Num a => [a] -> [a] -> [a]
 (^+^) = zipWith (+)
 
+-- | Entry wise substraction
 (^-^) :: Num a => [a] -> [a] -> [a]
 (^-^) = zipWith (-)
 
--- | Add two points of the same curve
-addP :: Crypto.Point -> Crypto.Point -> Crypto.Point
-addP = Crypto.pointAdd curve
-
--- | Substract two points of the same curve
-subP :: Crypto.Point -> Crypto.Point -> Crypto.Point
-subP x y = Crypto.pointAdd curve x (Crypto.pointNegate curve y)
-
--- | Multiply a scalar and a point in an elliptic curve
-mulP :: KnownNat p => Prime p -> Crypto.Point -> Crypto.Point
-mulP x = Crypto.pointMul curve (fromP x)
-
 -- | Double exponentiation (Shamir's trick): g0^x0 + g1^x1
-addTwoMulP :: KnownNat p => Prime p -> Crypto.Point -> Prime p -> Crypto.Point -> Crypto.Point
-addTwoMulP exp0 pt0 exp1 pt1 = Crypto.pointAddTwoMuls curve (fromP exp0) pt0 (fromP exp1) pt1
+addTwoMulP :: Fr -> PA -> Fr -> PA -> PA
+addTwoMulP exp0 pt0 exp1 pt1 = (pt0 `mul` exp0) `add` (pt1 `mul` exp1)
 
 -- | Raise every point to the corresponding exponent, sum up results
-sumExps :: KnownNat p => [Prime p] -> [Crypto.Point] -> Crypto.Point
+sumExps :: [Fr] -> [PA] -> PA
 sumExps (exp0:exp1:exps) (pt0:pt1:pts)
-  = addTwoMulP exp0 pt0 exp1 pt1 `addP` sumExps exps pts
-sumExps (exp:_) (pt:_) = mulP exp pt -- this also catches cases where either list is longer than the other
-sumExps _ _ = Crypto.PointO  -- this catches cases where either list is empty
+  = addTwoMulP exp0 pt0 exp1 pt1 `add` sumExps exps pts
+sumExps (exp:_) (pt:_) = pt `mul` exp -- this also catches cases where either list is longer than the other
+sumExps _ _ = O  -- this catches cases where either list is empty
 
 -- | Create a Pedersen commitment to a value given
 -- a value and a blinding factor
-commit :: KnownNat p => Prime p -> Prime p -> Crypto.Point
-commit x r = addTwoMulP x g r h
+commit :: Fr -> Fr -> PA
+commit x r = addTwoMulP x gen r h
 
 isLogBase2 :: Integer -> Bool
 isLogBase2 x
@@ -103,52 +134,46 @@ log2Ceil x = floorLog + correction
                  else 0
 
 randomN :: MonadRandom m => Integer -> m Integer
-randomN n = generateMax (2^n)
+randomN n = getRandomR (1, 2^n)
 
 chooseBlindingVectors :: (Num f, MonadRandom m) => Integer -> m ([f], [f])
 chooseBlindingVectors n = do
-  sL <- replicateM (fromInteger n) (fromInteger <$> generateMax (2^n))
-  sR <- replicateM (fromInteger n) (fromInteger <$> generateMax (2^n))
+  sL <- replicateM (fromInteger n) (fromInteger <$> getRandomR (1, 2^n))
+  sR <- replicateM (fromInteger n) (fromInteger <$> getRandomR (1, 2^n))
   pure (sL, sR)
 
 --------------------------------------------------
 -- Fiat-Shamir transformations
 --------------------------------------------------
 
-shamirY :: Num f => Crypto.Point -> Crypto.Point -> f
+shamirY :: PrimeField f => PA -> PA -> f
 shamirY aCommit sCommit
-  = fromInteger $ oracle $
-      show _q <> pointToBS aCommit <> pointToBS sCommit
+  = oracle $
+      show _r <> pointToBS aCommit <> pointToBS sCommit
 
-shamirZ :: (Show f, Num f) => Crypto.Point -> Crypto.Point -> f -> f
+shamirZ :: (PrimeField f) => PA -> PA -> f -> f
 shamirZ aCommit sCommit y
-  = fromInteger $ oracle $
-      show _q <> pointToBS aCommit <> pointToBS sCommit <> show y
+  = oracle $
+      show _r <> pointToBS aCommit <> pointToBS sCommit <> show y
 
 shamirX
-  :: (Show f, Num f)
-  => Crypto.Point
-  -> Crypto.Point
-  -> Crypto.Point
-  -> Crypto.Point
+  :: (PrimeField f)
+  => PA
+  -> PA
+  -> PA
+  -> PA
   -> f
   -> f
   -> f
 shamirX aCommit sCommit t1Commit t2Commit y z
-  = fromInteger $ oracle $
-      show _q <> pointToBS aCommit <> pointToBS sCommit <> pointToBS t1Commit <> pointToBS t2Commit <> show y <> show z
+  = oracle $
+      show _r <> pointToBS aCommit <> pointToBS sCommit <> pointToBS t1Commit <> pointToBS t2Commit <> show y <> show z
 
-shamirX'
-  :: Num f
-  => Crypto.Point
-  -> Crypto.Point
-  -> Crypto.Point
-  -> f
+shamirX' :: PrimeField f => PA -> PA -> PA -> f
 shamirX' commitmentLR l' r'
-  = fromInteger $ oracle $
-      show _q <> pointToBS l' <> pointToBS r' <> pointToBS commitmentLR
+  = oracle $
+      show _r <> pointToBS l' <> pointToBS r' <> pointToBS commitmentLR
 
-shamirU :: (Show f, Num f) => f -> f -> f -> f
+shamirU :: (PrimeField f) => f -> f -> f -> f
 shamirU tBlinding mu t
-  = fromInteger $ oracle $
-      show _q <> show tBlinding <> show mu <> show t
+  = oracle $ show _r <> show tBlinding <> show mu <> show t

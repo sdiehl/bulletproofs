@@ -27,11 +27,11 @@ packages:
     git: git@github.com:adjoint-io/galois-field.git
     pantry-tree:
       size: 1784
-      sha256: 29d354eb20e2a3701447d65b1832380e72133f2dc8a8410c9f7c8857652e07ca
-    commit: cf2c5f1af8e62bc9063143d3c1c6805b5d33d94d
+      sha256: a30b67ed2ad051814fe7f651c8bf41ed18b56135515b67850cfddc74d55ec505
+    commit: 84cccaaae8e30de2d29a8d5c2fdc208ced80391c
   original:
     git: git@github.com:adjoint-io/galois-field.git
-    commit: cf2c5f1af8e62bc9063143d3c1c6805b5d33d94d
+    commit: 84cccaaae8e30de2d29a8d5c2fdc208ced80391c
 - completed:
     cabal-file:
       size: 1889
@@ -46,6 +46,20 @@ packages:
   original:
     git: git@github.com:bodigrim/poly.git
     commit: c9a97f5ecc38cc546ace6beb568c1f31e7369c8c
+- completed:
+    cabal-file:
+      size: 7082
+      sha256: 70a766071eceb43801071f09dbfaf75d41e1786ff715587dac97e1797352985b
+    name: elliptic-curve
+    version: 0.2.2
+    git: https://github.com/adjoint-io/elliptic-curve.git
+    pantry-tree:
+      size: 9817
+      sha256: c2c64c8fca48ab690fbb9af3d607ed06e2cb32877bc57d62d988c03af93a9725
+    commit: ac65f0d52272bd77213329702b85f2917b7e9cf4
+  original:
+    git: https://github.com/adjoint-io/elliptic-curve.git
+    commit: ac65f0d52272bd77213329702b85f2917b7e9cf4
 snapshots:
 - completed:
     size: 499889
