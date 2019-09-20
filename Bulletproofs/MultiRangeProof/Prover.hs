@@ -66,7 +66,7 @@ generateProofUnsafe upperBound vsAndvBlindings = do
 
   (sL, sR) <- chooseBlindingVectors nm
 
-  let genBlinding = fromInteger <$> getRandomR (1, fromIntegral _r)
+  let genBlinding = fromInteger <$> getRandomR (1, fromIntegral _r - 1)
 
   aBlinding <- genBlinding
   sBlinding <- genBlinding

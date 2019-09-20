@@ -22,7 +22,7 @@ generateProof
 generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
   let GateWeights{..} = weights
       Assignment{..} = padAssignment assignment
-      genBlinding = (fromInteger :: Integer -> Fr) <$> getRandomR (1, fromIntegral _r)
+      genBlinding = (fromInteger :: Integer -> Fr) <$> getRandomR (1, fromIntegral _r - 1)
   aiBlinding <- genBlinding
   aoBlinding <- genBlinding
   sBlinding <- genBlinding
@@ -55,7 +55,7 @@ generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
          + (zs `dot` w)
          + delta n y zwL zwR
 
-  tBlindings <- insertAt 2 0 . (:) 0 <$> replicateM 5 ((fromInteger @Fr) <$> getRandomR (1, fromIntegral _r))
+  tBlindings <- insertAt 2 0 . (:) 0 <$> replicateM 5 ((fromInteger @Fr) <$> getRandomR (1, fromIntegral _r - 1))
   let tCommits = zipWith commit tPoly tBlindings
 
   let x = shamirGs tCommits

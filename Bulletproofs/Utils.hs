@@ -134,12 +134,12 @@ log2Ceil x = floorLog + correction
                  else 0
 
 randomN :: MonadRandom m => Integer -> m Integer
-randomN n = getRandomR (1, 2^n)
+randomN n = getRandomR (1, 2^n - 1)
 
 chooseBlindingVectors :: (Num f, MonadRandom m) => Integer -> m ([f], [f])
 chooseBlindingVectors n = do
-  sL <- replicateM (fromInteger n) (fromInteger <$> getRandomR (1, 2^n))
-  sR <- replicateM (fromInteger n) (fromInteger <$> getRandomR (1, 2^n))
+  sL <- replicateM (fromInteger n) (fromInteger <$> getRandomR (1, 2^n - 1))
+  sR <- replicateM (fromInteger n) (fromInteger <$> getRandomR (1, 2^n - 1))
   pure (sL, sR)
 
 --------------------------------------------------

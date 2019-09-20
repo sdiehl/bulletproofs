@@ -7,20 +7,30 @@ import Protolude
 import Test.Tasty
 import Test.Tasty.QuickCheck
 
-import qualified Crypto.PubKey.ECC.Prim as Crypto
-
-import Bulletproofs.Utils
-import Bulletproofs.Curve
+import Data.Curve.Weierstrass.SECP256K1 (Fr, PA)
+import Data.Curve.Weierstrass
 
 import TestCommon
 
-prop_addMod :: Fq -> Fq -> Property
+prop_addMod :: Fr -> Fr -> Property
 prop_addMod x y
-  = (x + y) `mulP` g === (x `mulP` g) `addP` (y `mulP` g)
+  = left === right
+  where
+    left :: PA
+    left = gen `mul` (x + y)
 
-prop_subMod :: Fq -> Fq -> Property
+    right :: PA
+    right = (gen `mul` x) `add` (gen `mul` y)
+
+prop_subMod :: Fr -> Fr -> Property
 prop_subMod x y
-  = (x - y) `mulP` g === (x `mulP` g) `addP` Crypto.pointNegate curve (y `mulP` g)
+  = left === right
+  where
+    left :: PA
+    left = gen `mul` (x - y)
+
+    right :: PA
+    right = (gen `mul` x) `add` inv (gen `mul` y)
 
 -------------------------------------------------------------------------------
 -- Laws of field operations
@@ -58,4 +68,4 @@ testFieldLaws _ descr
 -------------------------------------------------------------------------------
 
 test_fieldLaws_Fq :: TestTree
-test_fieldLaws_Fq = testFieldLaws (Proxy :: Proxy Fq) "Fq"
+test_fieldLaws_Fq = testFieldLaws (Proxy :: Proxy Fr) "Fr"

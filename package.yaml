@@ -25,7 +25,6 @@ dependencies:
 - memory
 - arithmoi >= 0.8
 - containers
-- random-shuffle
 - MonadRandom
 - QuickCheck
 - galois-field >= 0.4.0
