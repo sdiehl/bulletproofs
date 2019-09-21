@@ -27,7 +27,7 @@ dependencies:
 - containers
 - MonadRandom
 - QuickCheck
-- galois-field >= 0.4.0
+- galois-field >= 0.4 && < 5
 - elliptic-curve
 - SHA
 - MonadRandom
