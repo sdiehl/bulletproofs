@@ -6,29 +6,17 @@ import Protolude
 
 import Test.Tasty
 import Test.Tasty.QuickCheck
-import Test.QuickCheck
 import qualified Test.QuickCheck.Monadic as QCM
 
-import Crypto.Random.Types (MonadRandom(..))
-import Crypto.Number.Generate (generateMax, generateBetween)
-import qualified Crypto.PubKey.ECC.Generate as Crypto
-import qualified Crypto.PubKey.ECC.Prim as Crypto
-import qualified Crypto.PubKey.ECC.Types as Crypto
-import GaloisField (GaloisField(..))
-import PrimeField (toInt)
+import Control.Monad.Random (MonadRandom, getRandomR)
+import Data.Field.Galois (PrimeField(..), rnd)
+import Data.Curve.Weierstrass.SECP256K1 (Fr, PA, _r)
 
-import Bulletproofs.Curve
 import qualified Bulletproofs.RangeProof as RP
 import qualified Bulletproofs.RangeProof.Internal as RP
-import qualified Bulletproofs.RangeProof.Verifier as RP
-
 import qualified Bulletproofs.MultiRangeProof as MRP
 import qualified Bulletproofs.MultiRangeProof.Verifier as MRP
-
 import Bulletproofs.Utils
-import Bulletproofs.Fq as Fq
-
-import TestField
 
 newtype Bin = Bin { unbin :: Int } deriving Show
 
@@ -44,19 +32,19 @@ prop_complementaryVector_dot ((unbin <$>) -> xs)
 
 prop_complementaryVector_hadamard :: [Bin] -> Property
 prop_complementaryVector_hadamard ((toInteger . unbin <$>) -> xs)
-  = hadamardp xs (RP.complementaryVector xs) === replicate (length xs) 0
+  = hadamard xs (RP.complementaryVector xs) === replicate (length xs) 0
 
 prop_dot_aL2n :: Property
 prop_dot_aL2n = QCM.monadicIO $ do
-  n <- QCM.run $ (2 ^) <$> generateMax 8
+  n <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 7)
   v <- QCM.run $ fromInteger <$> randomN n
-  QCM.assert $ RP.reversedEncodeBit @(PF Fq) n v `dot` powerVector 2 n == v
+  QCM.assert $ RP.reversedEncodeBit n v `dot` powerVector 2 n == v
 
 prop_challengeComplementaryVector :: Property
 prop_challengeComplementaryVector = QCM.monadicIO $ do
-  n <- QCM.run $ (2 ^) <$> generateMax 8
+  n <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 7)
   v <- QCM.run $ fromInteger <$> randomN n
-  let aL = RP.reversedEncodeBit @(PF Fq) n v
+  let aL = RP.reversedEncodeBit n v
       aR = RP.complementaryVector aL
   y <- QCM.run $ fromInteger <$> randomN n
   QCM.assert
@@ -68,17 +56,17 @@ prop_challengeComplementaryVector = QCM.monadicIO $ do
 
 prop_reversedEncodeBitAggr :: Int -> Property
 prop_reversedEncodeBitAggr x = QCM.monadicIO $ do
-  n <- QCM.run $ (2 ^) <$> generateMax 8
+  n <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 7)
   vs <- QCM.run $ ((<$>) fromInteger) <$> replicateM x (randomN n)
   let m = fromIntegral $ length vs
-      reversed = RP.reversedEncodeBitMulti @(PF Fq) n vs
+      reversed = RP.reversedEncodeBitMulti n vs
   QCM.assert $ vs == fmap (\j -> dot (slice n j reversed) (powerVector 2 n)) [1..m]
 
 prop_challengeComplementaryVectorAggr :: Int -> Property
 prop_challengeComplementaryVectorAggr x = QCM.monadicIO $ do
-  n <- QCM.run $ (2 ^) <$> generateMax 8
+  n <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 7)
   vs <- QCM.run $ ((<$>) fromInteger) <$> replicateM 3 (randomN n)
-  let aL = RP.reversedEncodeBitMulti @(PF Fq) n vs
+  let aL = RP.reversedEncodeBitMulti n vs
       aR = RP.complementaryVector aL
       m = length vs
   y <- QCM.run $ fromInteger <$> randomN n
@@ -88,12 +76,12 @@ prop_challengeComplementaryVectorAggr x = QCM.monadicIO $ do
     fmap (\j -> dot ((slice n j aL ^-^ powerVector 1 n) ^-^ slice n j aR) (powerVector y n)) [1..fromIntegral m]
 
 prop_obfuscateEncodedBits
-  :: Fq
-  -> Fq
+  :: Fr
+  -> Fr
   -> Property
 prop_obfuscateEncodedBits y z
   = QCM.monadicIO $ do
-  n <- QCM.run $ (2 ^) <$> generateMax 8
+  n <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 7)
   v <- QCM.run $ fromInteger <$> randomN n
   let aL = RP.reversedEncodeBit n v
       aR = RP.complementaryVector aL
@@ -101,12 +89,12 @@ prop_obfuscateEncodedBits y z
   QCM.assert $ RP.obfuscateEncodedBits n aL aR y z == (z ^ 2) * v
 
 prop_singleInnerProduct
-  :: Fq
-  -> Fq
+  :: Fr
+  -> Fr
   -> Property
 prop_singleInnerProduct y z
   = QCM.monadicIO $ do
-  n <- QCM.run $ (2 ^) <$> generateMax 8
+  n <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 7)
   v <- QCM.run $ fromInteger <$> randomN n
 
   let aL = RP.reversedEncodeBit n v
@@ -114,25 +102,25 @@ prop_singleInnerProduct y z
 
   QCM.assert $ RP.obfuscateEncodedBitsSingle n aL aR y z == ((z ^ 2) * v) + RP.delta n 1 y z
 
-setupV :: MonadRandom m => Integer -> m ((Fq, Fq), Crypto.Point)
+setupV :: MonadRandom m => Integer -> m ((Fr, Fr), PA)
 setupV n = do
-  v <- fromInteger <$> generateMax (2^n)
-  vBlinding <- fromInteger <$> Crypto.scalarGenerate curve
+  v <- fromInteger <$> getRandomR (0, 2^n - 1)
+  vBlinding <- rnd
   let vCommit = commit v vBlinding
   pure ((v, vBlinding), vCommit)
 
 test_verifyTPolynomial :: TestTree
 test_verifyTPolynomial = localOption (QuickCheckTests 5) $
   testProperty "Verify T polynomial" $ QCM.monadicIO $ do
-    n <- QCM.run $ (2 ^) <$> generateMax 8
-    m <- QCM.run $ (2 ^) <$> generateMax 3
+    n <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 7)
+    m <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 3)
     ctx <- QCM.run $ replicateM m (setupV n)
 
     proofE <- QCM.run $ runExceptT $ MRP.generateProof (getUpperBound n) (fst <$> ctx)
     case proofE of
       Left err -> panic $ show err
       Right (proof@RP.RangeProof{..}) -> do
-        let x, y, z :: Fq
+        let x, y, z :: Fr
             x = shamirX aCommit sCommit t1Commit t2Commit y z
             y = shamirY aCommit sCommit
             z = shamirZ aCommit sCommit y
@@ -141,15 +129,15 @@ test_verifyTPolynomial = localOption (QuickCheckTests 5) $
 test_verifyLRCommitments :: TestTree
 test_verifyLRCommitments = localOption (QuickCheckTests 5) $
   testProperty "Verify LR commitments" $ QCM.monadicIO $ do
-    n <- QCM.run $ (2 ^) <$> generateMax 8
-    m <- QCM.run $ (2 ^) <$> generateMax 3
+    n <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 7)
+    m <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 3)
     ctx <- QCM.run $ replicateM (fromIntegral m) (setupV n)
 
     proofE <- QCM.run $ runExceptT $ MRP.generateProof (getUpperBound n) (fst <$> ctx)
     case proofE of
       Left err -> panic $ show err
       Right (proof@RP.RangeProof{..}) -> do
-        let x, y, z :: Fq
+        let x, y, z :: Fr
             x = shamirX aCommit sCommit t1Commit t2Commit y z
             y = shamirY aCommit sCommit
             z = shamirZ aCommit sCommit y
@@ -158,10 +146,10 @@ test_verifyLRCommitments = localOption (QuickCheckTests 5) $
 
 prop_valueNotInRange :: Property
 prop_valueNotInRange = QCM.monadicIO $ do
-  n <- QCM.run $ (2 ^) <$> generateMax 8
+  n <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 7)
   ((v, vBlinding), vCommit) <- QCM.run $ setupV n
   let upperBound = getUpperBound n
-      vNotInRange = fromInteger (toInt v + upperBound)
+      vNotInRange = fromInteger (fromP v + upperBound)
 
   proofE <- QCM.run $ runExceptT $ MRP.generateProof upperBound [(vNotInRange, vBlinding)]
   case proofE of
@@ -172,9 +160,9 @@ prop_valueNotInRange = QCM.monadicIO $ do
 
 prop_invalidUpperBound :: Property
 prop_invalidUpperBound = QCM.monadicIO $ do
-  n <- QCM.run $ (2 ^) <$> generateMax 8
+  n <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 7)
   ((v, vBlinding), vCommit) <- QCM.run $ setupV n
-  let invalidUpperBound = _q + 1
+  let invalidUpperBound = fromIntegral $ _r + 1
   proofE <- QCM.run $ runExceptT $ MRP.generateProof invalidUpperBound [(v, vBlinding)]
   case proofE of
     Left err ->
@@ -184,9 +172,9 @@ prop_invalidUpperBound = QCM.monadicIO $ do
 
 prop_differentUpperBound :: Positive Integer -> Property
 prop_differentUpperBound (Positive upperBound') = expectFailure . QCM.monadicIO $ do
-  n <- QCM.run $ (2 ^) <$> generateMax 8
+  n <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 7)
   ((v, vBlinding), vCommit) <- QCM.run $ setupV n
-  proofE <- QCM.run $ runExceptT $ MRP.generateProof @(PF Fq) (getUpperBound n) [(v, vBlinding)]
+  proofE <- QCM.run $ runExceptT $ MRP.generateProof (getUpperBound n) [(v, vBlinding)]
   case proofE of
     Left err -> panic $ show err
     Right (proof@RP.RangeProof{..}) ->
@@ -195,11 +183,11 @@ prop_differentUpperBound (Positive upperBound') = expectFailure . QCM.monadicIO 
 test_invalidCommitment :: TestTree
 test_invalidCommitment = localOption (QuickCheckTests 20) $
   testProperty "Check invalid commitment" $ QCM.monadicIO $ do
-  n <- QCM.run $ (2 ^) <$> generateMax 8
+  n <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 7)
   ((v, vBlinding), vCommit) <- QCM.run $ setupV n
   let invalidVCommit = commit (v + 1) vBlinding
       upperBound = getUpperBound n
-  proofE <- QCM.run $ runExceptT $ MRP.generateProof @(PF Fq) upperBound [(v, vBlinding)]
+  proofE <- QCM.run $ runExceptT $ MRP.generateProof upperBound [(v, vBlinding)]
   case proofE of
     Left err -> panic $ show err
     Right (proof@(RP.RangeProof{..})) ->
@@ -208,12 +196,12 @@ test_invalidCommitment = localOption (QuickCheckTests 20) $
 test_multiRangeProof_completeness :: TestTree
 test_multiRangeProof_completeness = localOption (QuickCheckTests 5) $
   testProperty "Test multi range proof completeness" $ QCM.monadicIO $ do
-    n <- QCM.run $ (2 ^) <$> generateMax 8
-    m <- QCM.run $ generateBetween 1 10
+    n <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 7)
+    m <- QCM.run $ getRandomR (1 :: Integer, 10)
     ctx <- QCM.run $ replicateM (fromIntegral m) (setupV n)
     let upperBound = getUpperBound n
 
-    proofE <- QCM.run $ runExceptT $ MRP.generateProof @(PF Fq) (getUpperBound n) (fst <$> ctx)
+    proofE <- QCM.run $ runExceptT $ MRP.generateProof (getUpperBound n) (fst <$> ctx)
     case proofE of
       Left err -> panic $ show err
       Right (proof@RP.RangeProof{..}) ->
@@ -222,11 +210,11 @@ test_multiRangeProof_completeness = localOption (QuickCheckTests 5) $
 test_singleRangeProof_completeness :: TestTree
 test_singleRangeProof_completeness = localOption (QuickCheckTests 20) $
   testProperty "Test single range proof completeness" $ QCM.monadicIO $ do
-    n <- QCM.run $ (2 ^) <$> generateMax 8
+    n <- QCM.run $ (2 ^) <$> getRandomR (0 :: Integer, 7)
     ((v, vBlinding), vCommit) <- QCM.run $ setupV n
     let upperBound = getUpperBound n
 
-    proofE <- QCM.run $ runExceptT $ RP.generateProof @(PF Fq) (getUpperBound n) (v, vBlinding)
+    proofE <- QCM.run $ runExceptT $ RP.generateProof (getUpperBound n) (v, vBlinding)
     case proofE of
       Left err -> panic $ show err
       Right (proof@RP.RangeProof{..}) ->

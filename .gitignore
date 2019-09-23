@@ -7,3 +7,4 @@ bulletproofs.cabal
 *.prof
 *.prof.html
 Rangeproof
+TAGS

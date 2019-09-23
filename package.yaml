@@ -21,20 +21,33 @@ dependencies:
 - base >= 4.7 && < 5
 - protolude >= 0.2
 - text
-- cryptonite
+- bytestring
 - memory
 - arithmoi >= 0.8
 - containers
-- random-shuffle
 - MonadRandom
 - QuickCheck
 - galois-field >= 0.4 && < 5
+- elliptic-curve
+- SHA
+- MonadRandom
+
+ghc-options:
+  -Wall
+  -Werror
+  -Wcompat
+  -Wincomplete-record-updates
+  -Wredundant-constraints
+  -Wno-unused-matches
+  -Wno-name-shadowing
+  -Wno-type-defaults
+  -Wno-orphans
+  -Wno-incomplete-uni-patterns
+  -Wno-incomplete-patterns
 
 library:
   source-dirs: .
   exposed-modules:
-    - Bulletproofs.Curve
-    - Bulletproofs.Fq
     - Bulletproofs.RangeProof
     - Bulletproofs.RangeProof.Internal
     - Bulletproofs.RangeProof.Prover

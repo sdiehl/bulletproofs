@@ -4,22 +4,13 @@ module TestArithCircuitProtocol where
 
 import Protolude
 
-import qualified Data.Map as Map
-import qualified Data.List as List
-
 import Test.Tasty
 import Test.Tasty.QuickCheck
-import Test.QuickCheck
 import qualified Test.QuickCheck.Monadic as QCM
 
-import Crypto.Number.Generate (generateMax, generateBetween)
-import Control.Monad.Random (MonadRandom)
+import Data.Curve.Weierstrass.SECP256K1 (Fr)
 
-import qualified Bulletproofs.InnerProductProof as IPP
-import qualified Bulletproofs.Fq as Fq
 import Bulletproofs.Utils
-import Bulletproofs.Curve
-import Bulletproofs.Fq
 import Bulletproofs.ArithmeticCircuit
 import Bulletproofs.ArithmeticCircuit.Internal
 
@@ -39,7 +30,7 @@ test_arithCircuitProof_arbitrary = localOption (QuickCheckTests 10) $
     go :: Property
     go = forAll (arbitrary `suchThat` ((<) 100))
          $ \n -> forAll (arbitrary `suchThat` (\m -> m > 0 && m < n))
-         $ \m -> forAll (arithCircuitGen @(PF Fq) n m)
+         $ \m -> forAll (arithCircuitGen n m)
          $ \arithCircuit@ArithCircuit{..} -> forAll (arithAssignmentGen n)
          $ \assignment@Assignment{..} -> forAll (arithWitnessGen assignment arithCircuit m)
          $ \arithWitness@ArithWitness{..} -> QCM.monadicIO $ do
@@ -54,16 +45,16 @@ test_arithCircuitProof_arbitrary = localOption (QuickCheckTests 10) $
 --  16 multiplication constraints (implicit) (n = 16):
 --
 --  2 input values (m = 2)
-test_arithCircuitProof_hadamardp :: TestTree
-test_arithCircuitProof_hadamardp = localOption (QuickCheckTests 20) $
+test_arithCircuitProof_hadamard :: TestTree
+test_arithCircuitProof_hadamard = localOption (QuickCheckTests 20) $
   testProperty "Arithmetic circuit proof. Hadamard product relation" go
   where
     n = 16
-    go :: Fq -> Fq -> Property
-    go r s = forAll (vectorOf n (arbitrary @Fq))
+    go :: Fr -> Fr -> Property
+    go r s = forAll (vectorOf n (arbitrary @Fr))
         $ \aL -> forAll (vectorOf n arbitrary)
         $ \aR -> QCM.monadicIO $ do
-      let aO = aL `hadamardp` aR
+      let aO = aL `hadamard` aR
 
       let v0 = sum aL
           v1 = sum aR
@@ -104,9 +95,8 @@ test_arithCircuitProof_no_mult_gates = localOption (QuickCheckTests 20) $
   where
     m = 3
     go :: Property
-    go = forAll (vectorOf (fromIntegral m) (arbitrary @Fq))
+    go = forAll (vectorOf (fromIntegral m) (arbitrary @Fr))
          $ \commitBlinders -> QCM.monadicIO $ do
-      let n = 0
       let wL = [[]]
           wR = [[]]
           wO = [[]]
@@ -143,10 +133,8 @@ test_arithCircuitProof_no_input_values = localOption (QuickCheckTests 20) $
   where
     m = 0
     go :: Property
-    go = forAll (vectorOf (fromIntegral m) (arbitrary @Fq))
+    go = forAll (vectorOf (fromIntegral m) (arbitrary @Fr))
          $ \commitBlinders -> QCM.monadicIO $ do
-      let n = 1
-
       let wL = [[0], [0], [1]]
           wR = [[0], [1], [0]]
           wO = [[1], [0], [0]]
@@ -180,8 +168,8 @@ test_arithCircuitProof_shuffle_circuit :: TestTree
 test_arithCircuitProof_shuffle_circuit = localOption (QuickCheckTests 20) $
   testProperty "Arithmetic circuit proof. n = 2, m = 4, q = 5" $ go
   where
-    go :: Fq -> Property
-    go z = forAll (vectorOf 4 (arbitrary @Fq))
+    go :: Fr -> Property
+    go z = forAll (vectorOf 4 (arbitrary @Fr))
         $ \commitBlinders -> QCM.monadicIO $ do
 
       let wL = [[0, 0]
@@ -207,7 +195,7 @@ test_arithCircuitProof_shuffle_circuit = localOption (QuickCheckTests 20) $
           cs = [0, -z, -z, -z, -z]
           aL = [4 - z, 9 - z]
           aR = [9 - z, 4 - z]
-          aO = aL `hadamardp` aR
+          aO = aL `hadamard` aR
           vs = [4, 9, 9, 4]
           commitments = zipWith commit vs commitBlinders
           gateWeights = GateWeights wL wR wO

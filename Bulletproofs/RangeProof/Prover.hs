@@ -5,29 +5,29 @@ module Bulletproofs.RangeProof.Prover (
 
 import Protolude
 
-import Crypto.Random.Types (MonadRandom(..))
-import PrimeField (PrimeField(..), toInt)
+import Control.Monad.Random (MonadRandom)
+import Data.Curve.Weierstrass.SECP256K1 (PA, Fr)
 
 import Bulletproofs.RangeProof.Internal
 import qualified Bulletproofs.MultiRangeProof.Prover as MRP
 
 -- | Prove that a value lies in a specific range
 generateProof
-  :: (KnownNat p, MonadRandom m)
+  :: (MonadRandom m)
   => Integer                -- ^ Upper bound of the range we want to prove
-  -> (PrimeField p, PrimeField p)
+  -> (Fr, Fr)
   -- ^ Values we want to prove in range and their blinding factors
-  -> ExceptT (RangeProofError (PrimeField p)) m (RangeProof (PrimeField p))
+  -> ExceptT (RangeProofError Fr) m (RangeProof Fr PA)
 generateProof upperBound (v, vBlinding) =
   MRP.generateProof upperBound [(v, vBlinding)]
 
 -- | Generate range proof from valid inputs
 generateProofUnsafe
-  :: (KnownNat p, MonadRandom m)
+  :: (MonadRandom m)
   => Integer    -- ^ Upper bound of the range we want to prove
-  -> (PrimeField p, PrimeField p)
+  -> (Fr, Fr)
   -- ^ Values we want to prove in range and their blinding factors
-  -> m (RangeProof (PrimeField p))
+  -> m (RangeProof Fr PA)
 generateProofUnsafe upperBound (v, vBlinding) =
   MRP.generateProofUnsafe upperBound [(v, vBlinding)]
 

@@ -8,18 +8,11 @@ import Data.List (head)
 import qualified Data.List as List
 import qualified Data.Map as Map
 import Test.QuickCheck
-import PrimeField (PrimeField(..), toInt)
+import Data.Field.Galois (PrimeField)
+import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, _r)
+import Data.Curve.Weierstrass
 
-import System.Random.Shuffle (shuffleM)
-import qualified Crypto.Random.Types as Crypto (MonadRandom(..))
-import Crypto.Number.Generate (generateMax, generateBetween)
-import Control.Monad.Random (MonadRandom)
-import qualified Crypto.PubKey.ECC.Types as Crypto
-import qualified Crypto.PubKey.ECC.Prim as Crypto
-
-import Bulletproofs.Curve
 import Bulletproofs.Utils
-import Bulletproofs.RangeProof
 import qualified Bulletproofs.InnerProductProof as IPP
 
 data ArithCircuitProofError
@@ -27,7 +20,7 @@ data ArithCircuitProofError
   | NNotPowerOf2 Integer  -- ^ The number of gates is not a power of 2
   deriving (Show, Eq)
 
-data ArithCircuitProof f
+data ArithCircuitProof f p
   = ArithCircuitProof
     { tBlinding :: f
     -- ^ Blinding factor of the T1 and T2 commitments,
@@ -37,15 +30,15 @@ data ArithCircuitProof f
     , t :: f
     -- ^ Dot product of vectors l and r that prove knowledge of the value in range
     -- t = t(x) = l(x) · r(x)
-    , aiCommit :: Crypto.Point
+    , aiCommit :: p
     -- ^ Commitment to vectors aL and aR
-    , aoCommit :: Crypto.Point
+    , aoCommit :: p
     -- ^ Commitment to vectors aO
-    , sCommit :: Crypto.Point
+    , sCommit :: p
     -- ^ Commitment to new vectors sL, sR, created at random by the Prover
-    , tCommits :: [Crypto.Point]
+    , tCommits :: [p]
     -- ^ Commitments to t1, t3, t4, t5, t6
-    , productProof :: IPP.InnerProductProof f
+    , productProof :: IPP.InnerProductProof f p
     } deriving (Show, Eq, Generic, NFData)
 
 data ArithCircuit f
@@ -69,7 +62,7 @@ data GateWeights f
 data ArithWitness f
   = ArithWitness
   { assignment :: Assignment f -- ^ Vectors of left and right inputs and vector of outputs
-  , commitments :: [Crypto.Point] -- ^ Vector of commited input values ∈ F^m
+  , commitments :: [PA] -- ^ Vector of commited input values ∈ F^m
   , commitBlinders :: [f] -- ^ Vector of blinding factors for input values ∈ F^m
   } deriving (Show, Eq, Generic, NFData)
 
@@ -105,25 +98,25 @@ padAssignment Assignment{..}
     aRNew = padToNearestPowerOfTwo aR
     aONew = padToNearestPowerOfTwo aO
 
-delta :: (KnownNat p) => Integer -> PrimeField p -> [PrimeField p] -> [PrimeField p] -> PrimeField p
-delta n y zwL zwR= (powerVector (recip y) n `hadamardp` zwR) `dot` zwL
+delta :: Integer -> Fr -> [Fr] -> [Fr] -> Fr
+delta n y zwL zwR= (powerVector (recip y) n `hadamard` zwR) `dot` zwL
 
-commitBitVector :: (KnownNat p) => PrimeField p -> [PrimeField p] -> [PrimeField p] -> Crypto.Point
-commitBitVector vBlinding vL vR = vLG `addP` vRH `addP` vBlindingH
+commitBitVector :: Fr -> [Fr] -> [Fr] -> PA
+commitBitVector vBlinding vL vR = vLG `add` vRH `add` vBlindingH
   where
-    vBlindingH = vBlinding `mulP` h
+    vBlindingH = h `mul` vBlinding
     vLG = sumExps vL gs
     vRH = sumExps vR hs
 
-shamirGxGxG :: (Show f, Num f) => Crypto.Point -> Crypto.Point -> Crypto.Point -> f
+shamirGxGxG :: (PrimeField f) => PA -> PA -> PA -> f
 shamirGxGxG p1 p2 p3
-  = fromInteger $ oracle $ show _q <> pointToBS p1 <> pointToBS p2 <> pointToBS p3
+  = oracle $ show _r <> pointToBS p1 <> pointToBS p2 <> pointToBS p3
 
-shamirGs :: (Show f, Num f) => [Crypto.Point] -> f
-shamirGs ps = fromInteger $ oracle $ show _q <> foldMap pointToBS ps
+shamirGs :: (PrimeField f) => [PA] -> f
+shamirGs ps = oracle $ show _r <> foldMap pointToBS ps
 
-shamirZ :: (Show f, Num f) => f -> f
-shamirZ z = fromInteger $ oracle $ show _q <> show z
+shamirZ :: (PrimeField f) => f -> f
+shamirZ z = oracle $ show _r <> show z
 
 ---------------------------------------------
 -- Polynomials
@@ -144,7 +137,7 @@ multiplyPoly l r
               Just x -> Map.insert (i + j) (x + (li `dot` rj)) accR
               Nothing -> Map.insert (i + j) (li `dot` rj) accR
           ) accL (zip [0..] r))
-      (Map.empty :: Num n => Map.Map Int n)
+      (Map.empty :: Map.Map Int n)
       (zip [0..] l))
 
 
@@ -182,7 +175,7 @@ genIdenMatrix size = (\x -> (\y -> fromIntegral (fromEnum (x == y))) <$> [1..siz
 genZeroMatrix :: (Num f) => Integer -> Integer -> [[f]]
 genZeroMatrix (fromIntegral -> n) (fromIntegral -> m) = replicate n (replicate m 0)
 
-computeInputValues :: (KnownNat p) => GateWeights (PrimeField p) -> [[PrimeField p]] -> Assignment (PrimeField p) -> [PrimeField p] -> [PrimeField p]
+computeInputValues :: GateWeights (Fr) -> [[Fr]] -> Assignment (Fr) -> [Fr] -> [Fr]
 computeInputValues GateWeights{..} wV Assignment{..} cs
   = solveLinearSystem $ zipWith (\row s -> reverse $ s : row) wV solutions
   where
@@ -191,7 +184,7 @@ computeInputValues GateWeights{..} wV Assignment{..} cs
         ^+^ vectorMatrixProductT aO wO
         ^-^ cs
 
-gaussianReduce :: (KnownNat p) => [[PrimeField p]] -> [[PrimeField p]]
+gaussianReduce :: [[Fr]] -> [[Fr]]
 gaussianReduce matrix = fixlastrow $ foldl reduceRow matrix [0..length matrix-1]
   where
     -- Swaps element at position a with element at position b.
@@ -226,7 +219,7 @@ gaussianReduce matrix = fixlastrow $ foldl reduceRow matrix [0..length matrix-1]
         nz = List.last (List.init row)
 
 -- Solve a matrix (must already be in REF form) by back substitution.
-substituteMatrix :: (KnownNat p) => [[PrimeField p]] -> [PrimeField p]
+substituteMatrix :: [[Fr]] -> [Fr]
 substituteMatrix matrix = foldr next [List.last (List.last matrix)] (List.init matrix)
   where
     next row found = let
@@ -234,20 +227,20 @@ substituteMatrix matrix = foldr next [List.last (List.last matrix)] (List.init m
       solution = List.last row - sum (zipWith (*) found subpart)
       in solution : found
 
-solveLinearSystem :: (KnownNat p) => [[PrimeField p]] -> [PrimeField p]
+solveLinearSystem :: [[Fr]] -> [Fr]
 solveLinearSystem = reverse . substituteMatrix . gaussianReduce
 
 -------------------------
 -- Arbitrary instances --
 -------------------------
 
-instance (KnownNat p) => Arbitrary (ArithCircuit (PrimeField p)) where
+instance Arbitrary (ArithCircuit Fr) where
   arbitrary = do
     n <- choose (1, 100)
     m <- choose (1, n)
     arithCircuitGen n m
 
-arithCircuitGen :: forall p. (KnownNat p) => Integer -> Integer -> Gen (ArithCircuit (PrimeField p))
+arithCircuitGen :: Integer -> Integer -> Gen (ArithCircuit Fr)
 arithCircuitGen n m = do
     -- TODO: Can lConstraints be a different value?
     let lConstraints = m
@@ -260,7 +253,7 @@ arithCircuitGen n m = do
     commitmentWeights <- wvGen lConstraints m
     pure $ ArithCircuit gateWeights commitmentWeights cs
       where
-        gateWeightsGen :: Integer -> Integer -> Gen (GateWeights (PrimeField p))
+        gateWeightsGen :: Integer -> Integer -> Gen (GateWeights (Fr))
         gateWeightsGen lConstraints n = do
           let genVec = ((\i -> insertAt i (oneVector n) (replicate (fromIntegral lConstraints - 1) (zeroVector n))) <$> choose (0, fromIntegral lConstraints))
           wL <- genVec
@@ -268,7 +261,7 @@ arithCircuitGen n m = do
           wO <- genVec
           pure $ GateWeights wL wR wO
 
-        wvGen :: Integer -> Integer -> Gen [[PrimeField p]]
+        wvGen :: Integer -> Integer -> Gen [[Fr]]
         wvGen lConstraints m
           | lConstraints < m = panic "Number of constraints must be bigger than m"
           | otherwise = shuffle (genIdenMatrix m ++ genZeroMatrix (lConstraints - m) m)
@@ -276,19 +269,19 @@ arithCircuitGen n m = do
         oneVector x = replicate (fromIntegral x) 1
 
 
-instance (KnownNat p) => Arbitrary (Assignment (PrimeField p)) where
+instance Arbitrary (Assignment Fr) where
   arbitrary = do
     n <- (arbitrary :: Gen Integer)
     arithAssignmentGen n
 
-arithAssignmentGen :: (KnownNat p) => Integer -> Gen (Assignment (PrimeField p))
+arithAssignmentGen :: Integer -> Gen (Assignment Fr)
 arithAssignmentGen n = do
     aL <- vectorOf (fromIntegral n) (fromInteger <$> choose (0, 2^n))
     aR <- vectorOf (fromIntegral n) (fromInteger <$> choose (0, 2^n))
-    let aO = aL `hadamardp` aR
+    let aO = aL `hadamard` aR
     pure $ Assignment aL aR aO
 
-instance (KnownNat p) => Arbitrary (ArithWitness (PrimeField p)) where
+instance Arbitrary (ArithWitness Fr) where
   arbitrary = do
     n <- choose (1, 100)
     m <- choose (1, n)
@@ -296,7 +289,7 @@ instance (KnownNat p) => Arbitrary (ArithWitness (PrimeField p)) where
     assignment <- arithAssignmentGen n
     arithWitnessGen assignment arithCircuit m
 
-arithWitnessGen :: (KnownNat p) => Assignment (PrimeField p) -> ArithCircuit (PrimeField p) -> Integer -> Gen (ArithWitness (PrimeField p))
+arithWitnessGen :: Assignment Fr -> ArithCircuit Fr -> Integer -> Gen (ArithWitness Fr)
 arithWitnessGen assignment arith@ArithCircuit{..} m = do
   commitBlinders <- vectorOf (fromIntegral m) arbitrary
   let vs = computeInputValues weights commitmentWeights assignment cs

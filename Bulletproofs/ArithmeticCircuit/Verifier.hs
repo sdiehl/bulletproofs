@@ -4,13 +4,10 @@ module Bulletproofs.ArithmeticCircuit.Verifier where
 import Protolude hiding (head)
 import Data.List (head)
 
-import qualified Crypto.PubKey.ECC.Prim as Crypto
-import qualified Crypto.PubKey.ECC.Types as Crypto
-import PrimeField (PrimeField(..), toInt)
+import Data.Curve.Weierstrass.SECP256K1 (PA, Fr)
+import Data.Curve.Weierstrass
 
-import Bulletproofs.Curve
 import Bulletproofs.Utils hiding (shamirZ)
-import Bulletproofs.RangeProof.Internal hiding (delta)
 import qualified Bulletproofs.InnerProductProof as IPP
 
 import Bulletproofs.ArithmeticCircuit.Internal
@@ -18,10 +15,9 @@ import Bulletproofs.ArithmeticCircuit.Internal
 -- | Verify that a zero-knowledge proof holds
 -- for an arithmetic circuit given committed input values
 verifyProof
-  :: (KnownNat p)
-  => [Crypto.Point]
-  -> ArithCircuitProof (PrimeField p)
-  -> ArithCircuit (PrimeField p)
+  :: [PA]
+  -> ArithCircuitProof Fr PA
+  -> ArithCircuit Fr
   -> Bool
 verifyProof vCommits proof@ArithCircuitProof{..} (padCircuit -> ArithCircuit{..})
   = verifyLRCommitment && verifyTPoly
@@ -40,22 +36,17 @@ verifyProof vCommits proof@ArithCircuitProof{..} (padCircuit -> ArithCircuit{..}
     zwR = zs `vectorMatrixProduct` wR
     zwO = zs `vectorMatrixProduct` wO
 
-    hs' = zipWith mulP (powerVector (recip y) n) hs
-
-    wLCommit = sumExps (zs `vectorMatrixProduct` wL) hs'
-    wRCommit = sumExps wRExp gs
-    wOCommit = sumExps (zs `vectorMatrixProduct` wO) hs'
-    wRExp = powerVector (recip y) n `hadamardp` (zs `vectorMatrixProduct` wL)
+    hs' = zipWith mul hs (powerVector (recip y) n)
 
     uChallenge = shamirU tBlinding mu t
-    u = uChallenge `mulP` g
+    u = gen `mul` uChallenge
 
     verifyTPoly = lhs == rhs
       where
         lhs = commit t tBlinding
-        rhs = (gExp `mulP` g)
-            `addP` tCommitsExpSum
-            `addP` sumExps vExp vCommits
+        rhs = (gen `mul` gExp)
+            `add` tCommitsExpSum
+            `add` sumExps vExp vCommits
         gExp = (x ^ 2) * (k + cQ)
         cQ = zs `dot` cs
         vExp = (*) (x ^ 2) <$> (zs `vectorMatrixProduct` commitmentWeights)
@@ -70,12 +61,12 @@ verifyProof vCommits proof@ArithCircuitProof{..} (padCircuit -> ArithCircuit{..}
           commitmentLR
           productProof
       where
-        gExp = (*) x <$> (powerVector (recip y) n `hadamardp` zwR)
+        gExp = (*) x <$> (powerVector (recip y) n `hadamard` zwR)
         hExp = (((*) x <$> zwL) ^+^ zwO) ^-^ ys
-        commitmentLR = (x `mulP` aiCommit)
-                     `addP` ((x ^ 2) `mulP` aoCommit)
-                     `addP` ((x ^ 3) `mulP` sCommit)
-                     `addP` sumExps gExp gs
-                     `addP` sumExps hExp hs'
-                     `addP` Crypto.pointNegate curve (mu `mulP` h)
-                     `addP` (t `mulP` u)
+        commitmentLR = (aiCommit `mul` x)
+                     `add` (aoCommit `mul` (x ^ 2))
+                     `add` (sCommit `mul` (x ^ 3))
+                     `add` sumExps gExp gs
+                     `add` sumExps hExp hs'
+                     `add` (inv (h `mul` mu))
+                     `add` (u `mul` t)

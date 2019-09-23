@@ -7,14 +7,12 @@ module Bulletproofs.InnerProductProof.Internal (
 
 import Protolude
 
-import qualified Crypto.PubKey.ECC.Types as Crypto
-
-data InnerProductProof f
+data InnerProductProof f p
   = InnerProductProof
-    { lCommits :: [Crypto.Point]
+    { lCommits :: [p]
     -- ^ Vector of commitments of the elements in the original vector l
     -- whose size is the logarithm of base 2 of the size of vector l
-    , rCommits :: [Crypto.Point]
+    , rCommits :: [p]
     -- ^ Vector of commitments of the elements in the original vector r
     -- whose size is the logarithm of base 2 of the size of vector r
     , l :: f
@@ -35,11 +33,11 @@ data InnerProductWitness f
     -- in the recursive inner product algorithm
     } deriving (Show, Eq)
 
-data InnerProductBase
+data InnerProductBase p
   = InnerProductBase
-    { bGs :: [Crypto.Point]  -- ^ Independent generator Gs ∈ G^n
-    , bHs :: [Crypto.Point]  -- ^ Independent generator Hs ∈ G^n
-    , bH :: Crypto.Point
+    { bGs :: [p]  -- ^ Independent generator Gs ∈ G^n
+    , bHs :: [p]  -- ^ Independent generator Hs ∈ G^n
+    , bH :: p
     -- ^ Internally fixed group element H ∈  G
     -- for which there is no known discrete-log relation among Gs, Hs, bG
     } deriving (Show, Eq)
