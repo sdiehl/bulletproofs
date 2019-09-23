@@ -2,9 +2,9 @@ resolver: lts-13.26
 extra-deps:
   - criterion-1.5.2.0
   - semirings-0.5
-  - git: https://github.com:adjoint-io/galois-field.git
+  - git: https://github.com/adjoint-io/galois-field.git
     commit: 84cccaaae8e30de2d29a8d5c2fdc208ced80391c
-  - git: https://github.com:bodigrim/poly.git
+  - git: https://github.com/bodigrim/poly.git
     commit: c9a97f5ecc38cc546ace6beb568c1f31e7369c8c
   - git: https://github.com/adjoint-io/elliptic-curve.git
     commit: ac65f0d52272bd77213329702b85f2917b7e9cf4
