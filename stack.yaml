@@ -8,7 +8,3 @@ extra-deps:
     commit: c9a97f5ecc38cc546ace6beb568c1f31e7369c8c
   - git: https://github.com/adjoint-io/elliptic-curve.git
     commit: ac65f0d52272bd77213329702b85f2917b7e9cf4
-  - git: https://github.com/adjoint-io/galois-field.git
-    commit: 47e864bfc7249687ffce2512e61b1f003b50f62a
-  - git: https://github.com/adjoint-io/poly.git
-    commit: 1eb5b7a820a685de7c07576e028dee332e3382f8
