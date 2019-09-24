@@ -24,13 +24,13 @@ packages:
       sha256: 88c551c06eb708578e96eb7eb919527897aa466daa389674ce376779d8b1a147
     name: galois-field
     version: 0.4.1
-    git: git@github.com:adjoint-io/galois-field.git
+    git: https://github.com/adjoint-io/galois-field.git
     pantry-tree:
       size: 1784
       sha256: a30b67ed2ad051814fe7f651c8bf41ed18b56135515b67850cfddc74d55ec505
     commit: 84cccaaae8e30de2d29a8d5c2fdc208ced80391c
   original:
-    git: git@github.com:adjoint-io/galois-field.git
+    git: https://github.com/adjoint-io/galois-field.git
     commit: 84cccaaae8e30de2d29a8d5c2fdc208ced80391c
 - completed:
     cabal-file:
@@ -38,13 +38,13 @@ packages:
       sha256: ec2d9049565040b71ecec63ec34c0f7e5e0d65c1c54fde7f61f3a2bf8087c2e4
     name: poly
     version: 0.3.1.0
-    git: git@github.com:bodigrim/poly.git
+    git: https://github.com/bodigrim/poly.git
     pantry-tree:
       size: 1610
       sha256: 5d5a558972ddf428f5b953a440e0b74cf5770c1fb3e9594b42d80efd405cd63f
     commit: c9a97f5ecc38cc546ace6beb568c1f31e7369c8c
   original:
-    git: git@github.com:bodigrim/poly.git
+    git: https://github.com/bodigrim/poly.git
     commit: c9a97f5ecc38cc546ace6beb568c1f31e7369c8c
 - completed:
     cabal-file:

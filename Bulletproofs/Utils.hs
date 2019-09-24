@@ -4,8 +4,8 @@ module Bulletproofs.Utils where
 import Protolude hiding (hash, fromStrict)
 
 import Data.Field.Galois (PrimeField(..), sr, Prime)
-import Data.Curve.Weierstrass.SECP256K1 (PA, SECP256K1, Fq, Fr, _r)
-import Data.Curve.Weierstrass hiding (char)
+import Data.Curve.Weierstrass.SECP256K1 (PA, SECP256K1, Fq, Fr, _r, mul)
+import Data.Curve.Weierstrass
 import Data.Digest.Pure.SHA (integerDigest, sha256)
 import Data.ByteString.Lazy (fromStrict)
 import Control.Monad.Random (getRandomR, MonadRandom)
@@ -74,12 +74,12 @@ dot xs ys = sum $ hadamard xs ys
 
 -- | Double exponentiation (Shamir's trick): g0^x0 + g1^x1
 addTwoMulP :: Fr -> PA -> Fr -> PA -> PA
-addTwoMulP exp0 pt0 exp1 pt1 = (pt0 `mul` exp0) `add` (pt1 `mul` exp1)
+addTwoMulP exp0 pt0 exp1 pt1 = (pt0 `mul` exp0) <> (pt1 `mul` exp1)
 
 -- | Raise every point to the corresponding exponent, sum up results
 sumExps :: [Fr] -> [PA] -> PA
 sumExps (exp0:exp1:exps) (pt0:pt1:pts)
-  = addTwoMulP exp0 pt0 exp1 pt1 `add` sumExps exps pts
+  = addTwoMulP exp0 pt0 exp1 pt1 <> sumExps exps pts
 sumExps (exp:_) (pt:_) = pt `mul` exp -- this also catches cases where either list is longer than the other
 sumExps _ _ = O  -- this catches cases where either list is empty
 

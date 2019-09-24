@@ -5,8 +5,7 @@ import Protolude
 
 import Control.Monad.Random (MonadRandom, getRandomR)
 
-import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, _r)
-import Data.Curve.Weierstrass
+import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, _r, mul, gen, inv)
 
 import Bulletproofs.Utils hiding (shamirZ)
 import qualified Bulletproofs.InnerProductProof as IPP
@@ -78,12 +77,12 @@ generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
       gExp = (*) x <$> (powerVector (recip y) n `hadamard` zwR)
       hExp = (((*) x <$> zwL) ^+^ zwO) ^-^ ys
       commitmentLR = (aiCommit `mul` x)
-                   `add` (aoCommit `mul` (x ^ 2))
-                   `add` (sCommit `mul` (x ^ 3))
-                   `add` sumExps gExp gs
-                   `add` sumExps hExp hs'
-                   `add` (inv (h `mul` mu))
-                   `add` (u `mul` t)
+                   <> (aoCommit `mul` (x ^ 2))
+                   <> (sCommit `mul` (x ^ 3))
+                   <> sumExps gExp gs
+                   <> sumExps hExp hs'
+                   <> (inv (h `mul` mu))
+                   <> (u `mul` t)
 
   let productProof = IPP.generateProof
                         IPP.InnerProductBase { bGs = gs, bHs = hs', bH = u }
