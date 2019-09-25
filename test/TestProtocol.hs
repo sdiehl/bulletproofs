@@ -1,4 +1,4 @@
-{-# LANGUAGE ViewPatterns, RecordWildCards, TypeApplications, ScopedTypeVariables  #-}
+{-# LANGUAGE ViewPatterns, RecordWildCards, ScopedTypeVariables  #-}
 
 module TestProtocol where
 

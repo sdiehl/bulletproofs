@@ -12,12 +12,19 @@ packages:
   original:
     hackage: criterion-1.5.2.0
 - completed:
-    hackage: semirings-0.5@sha256:d5f0420c38341675621c5c97882fbe9a22f19a01a4193ac31ff3ee186846527f,3882
+    hackage: semirings-0.5.1@sha256:597e4070dcb75c3e347566114e140ba343843f80f3e16a456bb2e9e9d1d09430,3743
     pantry-tree:
       size: 610
-      sha256: dcca3edd1d0215c68acc7c6d1a0bcb66ee260fce6300d3150949fc807890694d
+      sha256: cc4e01176f1a56c97dc923416a6939dcdc004584cccf8a2b1c67bd156b31179a
   original:
-    hackage: semirings-0.5
+    hackage: semirings-0.5.1
+- completed:
+    hackage: poly-0.3.2.0@sha256:2cba686238c5074d551a56375f441b18745fbc465cdc3e0acf1701ae928f3ae9,1918
+    pantry-tree:
+      size: 1451
+      sha256: 0a08b17044344cfa9923aefddad623987d12ed2d25738f5acb46f2ec71f8610d
+  original:
+    hackage: poly-0.3.2.0
 - completed:
     cabal-file:
       size: 3428
@@ -32,20 +39,6 @@ packages:
   original:
     git: https://github.com/adjoint-io/galois-field.git
     commit: 84cccaaae8e30de2d29a8d5c2fdc208ced80391c
-- completed:
-    cabal-file:
-      size: 1889
-      sha256: ec2d9049565040b71ecec63ec34c0f7e5e0d65c1c54fde7f61f3a2bf8087c2e4
-    name: poly
-    version: 0.3.1.0
-    git: https://github.com/bodigrim/poly.git
-    pantry-tree:
-      size: 1610
-      sha256: 5d5a558972ddf428f5b953a440e0b74cf5770c1fb3e9594b42d80efd405cd63f
-    commit: c9a97f5ecc38cc546ace6beb568c1f31e7369c8c
-  original:
-    git: https://github.com/bodigrim/poly.git
-    commit: c9a97f5ecc38cc546ace6beb568c1f31e7369c8c
 - completed:
     cabal-file:
       size: 7082

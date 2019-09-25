@@ -1,14 +1,16 @@
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DataKinds #-}
 module Bulletproofs.Utils where
 
 import Protolude hiding (hash, fromStrict)
 
+import Control.Monad.Random (getRandomR, MonadRandom)
 import Data.Field.Galois (PrimeField(..), sr, Prime)
-import Data.Curve.Weierstrass.SECP256K1 (PA, SECP256K1, Fq, Fr, _r, mul)
-import Data.Curve.Weierstrass
+import Data.Curve.Weierstrass.SECP256K1 (PA, SECP256K1, Fq, Fr, _r, gen, def
+                                        ,mul, Form(..), Coordinates(..))
+import Data.Curve.Weierstrass (Point(..))
 import Data.Digest.Pure.SHA (integerDigest, sha256)
 import Data.ByteString.Lazy (fromStrict)
-import Control.Monad.Random (getRandomR, MonadRandom)
 
 type family PF a where
   PF (Prime k) = k
@@ -146,34 +148,33 @@ chooseBlindingVectors n = do
 -- Fiat-Shamir transformations
 --------------------------------------------------
 
-shamirY :: PrimeField f => PA -> PA -> f
+shamirY :: PA -> PA -> Fr
 shamirY aCommit sCommit
   = oracle $
       show _r <> pointToBS aCommit <> pointToBS sCommit
 
-shamirZ :: (PrimeField f) => PA -> PA -> f -> f
+shamirZ :: PA -> PA -> Fr -> Fr
 shamirZ aCommit sCommit y
   = oracle $
       show _r <> pointToBS aCommit <> pointToBS sCommit <> show y
 
 shamirX
-  :: (PrimeField f)
-  => PA
+  :: PA
   -> PA
   -> PA
   -> PA
-  -> f
-  -> f
-  -> f
+  -> Fr
+  -> Fr
+  -> Fr
 shamirX aCommit sCommit t1Commit t2Commit y z
   = oracle $
       show _r <> pointToBS aCommit <> pointToBS sCommit <> pointToBS t1Commit <> pointToBS t2Commit <> show y <> show z
 
-shamirX' :: PrimeField f => PA -> PA -> PA -> f
+shamirX' :: PA -> PA -> PA -> Fr
 shamirX' commitmentLR l' r'
   = oracle $
       show _r <> pointToBS l' <> pointToBS r' <> pointToBS commitmentLR
 
-shamirU :: (PrimeField f) => f -> f -> f -> f
+shamirU :: Fr -> Fr -> Fr -> Fr
 shamirU tBlinding mu t
   = oracle $ show _r <> show tBlinding <> show mu <> show t

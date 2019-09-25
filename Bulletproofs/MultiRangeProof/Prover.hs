@@ -12,7 +12,6 @@ import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, _r, mul, gen)
 
 import Bulletproofs.Utils
 import Bulletproofs.RangeProof.Internal
-
 import Bulletproofs.InnerProductProof as IPP hiding (generateProof)
 import qualified Bulletproofs.InnerProductProof as IPP
 
