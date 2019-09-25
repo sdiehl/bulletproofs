@@ -139,7 +139,7 @@ testMultiRangeProof upperBound vsAndvBlindings = do
 ```
 
 
-Note that _n_ needs to be a power of 2.
+Note that the upper bound _u_ must be such that `u = 2 ^ n`, where _n_ is also a power of 2.
 This implementation uses the elliptic curve secp256k1, a Koblitz curve, which
 has 128 bit security.
 See [Range proofs examples](./example/Example/RangeProof.hs) for further details.
