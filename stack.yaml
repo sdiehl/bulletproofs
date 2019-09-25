@@ -6,4 +6,6 @@ extra-deps:
   - git: https://github.com/adjoint-io/galois-field.git
     commit: 84cccaaae8e30de2d29a8d5c2fdc208ced80391c
   - git: https://github.com/adjoint-io/elliptic-curve.git
-    commit: ac65f0d52272bd77213329702b85f2917b7e9cf4
+    commit: af279477fd92a937d02f2a2430c21e1546bad879
+  - git: https://github.com/adjoint-io/galois-field.git
+    commit: 9d12a14d7841c50ea64d22ad9a525bb2ddea13f7
