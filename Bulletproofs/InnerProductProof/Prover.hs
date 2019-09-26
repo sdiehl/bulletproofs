@@ -7,8 +7,7 @@ module Bulletproofs.InnerProductProof.Prover (
 import Protolude
 
 import Control.Exception (assert)
-import Data.Curve.Weierstrass.SECP256K1 (PA, Fr)
-import Data.Curve.Weierstrass hiding (char)
+import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, mul)
 
 import Bulletproofs.Utils
 import Bulletproofs.InnerProductProof.Internal
@@ -62,15 +61,15 @@ generateProof'
     cR = dot lsRight rsLeft
 
     lCommit = sumExps lsLeft gsRight
-         `add`
+         <>
          sumExps rsRight hsLeft
-         `add`
+         <>
          (bH `mul` cL)
 
     rCommit = sumExps lsRight gsLeft
-         `add`
+         <>
          sumExps rsLeft hsRight
-         `add`
+         <>
          (bH `mul` cR)
 
     x = shamirX' commitmentLR lCommit rCommit
@@ -87,9 +86,9 @@ generateProof'
 
     commitmentLR'
       = (lCommit `mul` (x ^ 2))
-        `add`
+        <>
         (rCommit `mul` (xInv ^ 2))
-        `add`
+        <>
         commitmentLR
 
     -----------------------------
@@ -115,18 +114,18 @@ generateProof'
       = lGs'
         ==
         sumExps ls bGs
-        `add`
+        <>
         (aL' `mul` (x ^ 2))
-        `add`
+        <>
         (aR' `mul` (xInv ^ 2))
 
     checkRHs
       = rHs'
         ==
         sumExps rs bHs
-        `add`
+        <>
         (bR' `mul` (x ^ 2))
-        `add`
+        <>
         (bL' `mul` (xInv ^ 2))
 
     checkLBs
@@ -138,16 +137,16 @@ generateProof'
       = commitmentLR
         ==
         (bH `mul` z)
-        `add`
+        <>
         lGs
-        `add`
+        <>
         rHs
 
     checkC'
       = commitmentLR'
         ==
         (bH `mul` z')
-        `add`
+        <>
         lGs'
-        `add`
+        <>
         rHs'

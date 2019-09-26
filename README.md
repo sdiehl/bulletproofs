@@ -98,14 +98,13 @@ Single range proof:
 -------------------
 
 ```haskell
+import Data.Curve.Weierstrass.SECP256K1 (Fr)
 import qualified Bulletproofs.RangeProof as RP
+import Bulletproofs.Utils (commit)
 
-testSingleRangeProof :: (Fq, Fq) -> IO Bool
-testSingleRangeProof (v, vBlinding) = do
+testSingleRangeProof :: Integer -> (Fr, Fr) -> IO Bool
+testSingleRangeProof upperBound (v, vBlinding) = do
   let vCommit = commit v vBlinding
-      -- n needs to be a power of 2
-      n = 2 ^ 8
-      upperBound = 2 ^ n
 
   -- Prover
   proofE <- runExceptT $ RP.generateProof upperBound (v, vBlinding)
@@ -113,7 +112,7 @@ testSingleRangeProof (v, vBlinding) = do
   -- Verifier
   case proofE of
     Left err -> panic $ show err
-    Right (proof@RP.RangeProof{..})
+    Right proof@RP.RangeProof{..}
       -> pure $ RP.verifyProof upperBound vCommit proof
 ```
 
@@ -121,14 +120,13 @@ Multi range proof:
 ------------------
 
 ```haskell
+import Data.Curve.Weierstrass.SECP256K1 (Fr)
 import qualified Bulletproofs.MultiRangeProof as MRP
+import Bulletproofs.Utils (commit)
 
-testMultiRangeProof :: [(Fq, Fq)] -> IO Bool
-testMultiRangeProof vsAndvBlindings = do
+testMultiRangeProof :: Integer -> [(Fr, Fr)] -> IO Bool
+testMultiRangeProof upperBound vsAndvBlindings = do
   let vCommits = fmap (uncurry commit) vsAndvBlindings
-      -- n needs to be a power of 2
-      n = 2 ^ 8
-      upperBound = 2 ^ n
 
   -- Prover
   proofE <- runExceptT $ MRP.generateProof upperBound vsAndvBlindings
@@ -136,15 +134,15 @@ testMultiRangeProof vsAndvBlindings = do
   -- Verifier
   case proofE of
     Left err -> panic $ show err
-    Right (proof@RP.RangeProof{..})
+    Right proof@RP.RangeProof{..}
       -> pure $ MRP.verifyProof upperBound vCommits proof
 ```
 
 
-The dimension _n_ needs to be a power of 2.
-This implementation offers support for SECp256k1, a Koblitz curve.
-Further information about this curve can be found in the Uplink docs:
-[SECp256k1 curve](https://www.adjoint.io/docs/cryptography.html#id1 "SECp256k1 curve")
+Note that the upper bound _u_ must be such that `u = 2 ^ n`, where _n_ is also a power of 2.
+This implementation uses the elliptic curve secp256k1, a Koblitz curve, which
+has 128 bit security.
+See [Range proofs examples](./example/Example/RangeProof.hs) for further details.
 
 
 Zero-knowledge proof for Arithmetic Circuits
@@ -162,7 +160,10 @@ In the protocol, the Prover proves that the hadamard product of _a<sub>L</sub>_ 
 The input values _v_ used to generate the proof are then committed and shared with the Verifier.
 
 ```haskell
-import qualified Bulletproofs.ArithmeticCircuit
+import Data.Curve.Weierstrass.SECP256K1 (Fr)
+import Data.Field.Galois (rnd)
+import Bulletproofs.ArithmeticCircuit
+import Bulletproofs.Utils (hadamard, commit)
 
 --  Example:
 --  2 linear constraints (q = 2):
@@ -177,7 +178,7 @@ import qualified Bulletproofs.ArithmeticCircuit
 --
 --  2 input values (m = 2)
 
-arithCircuitExample :: ArithCircuit Fq
+arithCircuitExample :: ArithCircuit Fr
 arithCircuitExample = ArithCircuit
   { weights = GateWeights
     { wL = [[1, 1, 1, 1]
@@ -192,20 +193,18 @@ arithCircuitExample = ArithCircuit
   , cs = [0, 0]
   }
 
-testArithCircuitProof :: ([Fq], [Fq]) -> ArithCircuit Fq -> IO Bool
+testArithCircuitProof :: ([Fr], [Fr]) -> ArithCircuit Fr -> IO Bool
 testArithCircuitProof (aL, aR) arithCircuit = do
-  let n = 4
-      m = 2
-      q = 2
+  let m = 2
 
   -- Multiplication constraints
-  let aO = aL `hadamardp` aR
+  let aO = aL `hadamard` aR
 
   -- Linear constraints
       v0 = sum aL
       v1 = sum aR
 
-  commitBlinders <- replicateM m fqRandom
+  commitBlinders <- replicateM m rnd
   let commitments = zipWith commit [v0, v1] commitBlinders
 
   let arithWitness = ArithWitness
@@ -218,6 +217,7 @@ testArithCircuitProof (aL, aR) arithCircuit = do
 
   pure $ verifyProof commitments proof arithCircuit
 ```
+See [Aritmetic circuit example](./example/Example/ArithmeticCircuit.hs) for further details.
 
 **References**:
 

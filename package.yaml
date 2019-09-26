@@ -27,10 +27,22 @@ dependencies:
 - containers
 - MonadRandom
 - QuickCheck
-- galois-field >= 0.4 && < 5
+- galois-field >= 1 && < 2
 - elliptic-curve
 - SHA
-- MonadRandom
+
+default-extensions:
+  - LambdaCase
+  - RecordWildCards
+  - OverloadedStrings
+  - NoImplicitPrelude
+  - FlexibleInstances
+  - ExplicitForAll
+  - TypeApplications
+  - ScopedTypeVariables
+  - DeriveGeneric
+  - BangPatterns
+  - FlexibleContexts
 
 ghc-options:
   -Wall
@@ -69,28 +81,10 @@ library:
 
     - Bulletproofs.Utils
 
-  default-extensions:
-    - LambdaCase
-    - RecordWildCards
-    - OverloadedStrings
-    - NoImplicitPrelude
-    - FlexibleInstances
-    - ExplicitForAll
-    - RankNTypes
-    - DataKinds
-    - KindSignatures
-    - GeneralizedNewtypeDeriving
-    - TypeApplications
-    - ExistentialQuantification
-    - ScopedTypeVariables
-    - DeriveGeneric
-    - BangPatterns
-    - FlexibleContexts
-
 tests:
   bulletproofs-test:
     main:                TestDriver.hs
-    source-dirs:         tests
+    source-dirs:         test
     dependencies:
       - base
       - cryptonite
@@ -101,9 +95,6 @@ tests:
       - tasty-quickcheck
       - QuickCheck
       - bulletproofs
-    default-extensions:
-      - OverloadedStrings
-      - NoImplicitPrelude
 
 benchmarks:
   rangeproof-benchmarks:
@@ -116,3 +107,12 @@ benchmarks:
       - tasty
       - tasty-quickcheck
       - tasty-hunit
+
+executables:
+  bulletproofs-example:
+    main: Main.hs
+    source-dirs: example
+    ghc-options:
+      - -O2
+    dependencies:
+      - bulletproofs

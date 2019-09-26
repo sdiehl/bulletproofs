@@ -4,8 +4,7 @@ module Bulletproofs.ArithmeticCircuit.Verifier where
 import Protolude hiding (head)
 import Data.List (head)
 
-import Data.Curve.Weierstrass.SECP256K1 (PA, Fr)
-import Data.Curve.Weierstrass
+import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, mul, inv, gen)
 
 import Bulletproofs.Utils hiding (shamirZ)
 import qualified Bulletproofs.InnerProductProof as IPP
@@ -45,8 +44,8 @@ verifyProof vCommits proof@ArithCircuitProof{..} (padCircuit -> ArithCircuit{..}
       where
         lhs = commit t tBlinding
         rhs = (gen `mul` gExp)
-            `add` tCommitsExpSum
-            `add` sumExps vExp vCommits
+            <> tCommitsExpSum
+            <> sumExps vExp vCommits
         gExp = (x ^ 2) * (k + cQ)
         cQ = zs `dot` cs
         vExp = (*) (x ^ 2) <$> (zs `vectorMatrixProduct` commitmentWeights)
@@ -64,9 +63,9 @@ verifyProof vCommits proof@ArithCircuitProof{..} (padCircuit -> ArithCircuit{..}
         gExp = (*) x <$> (powerVector (recip y) n `hadamard` zwR)
         hExp = (((*) x <$> zwL) ^+^ zwO) ^-^ ys
         commitmentLR = (aiCommit `mul` x)
-                     `add` (aoCommit `mul` (x ^ 2))
-                     `add` (sCommit `mul` (x ^ 3))
-                     `add` sumExps gExp gs
-                     `add` sumExps hExp hs'
-                     `add` (inv (h `mul` mu))
-                     `add` (u `mul` t)
+                     <> (aoCommit `mul` (x ^ 2))
+                     <> (sCommit `mul` (x ^ 3))
+                     <> sumExps gExp gs
+                     <> sumExps hExp hs'
+                     <> (inv (h `mul` mu))
+                     <> (u `mul` t)

@@ -8,9 +8,7 @@ import Data.List (head)
 import qualified Data.List as List
 import qualified Data.Map as Map
 import Test.QuickCheck
-import Data.Field.Galois (PrimeField)
-import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, _r)
-import Data.Curve.Weierstrass
+import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, _r, mul)
 
 import Bulletproofs.Utils
 import qualified Bulletproofs.InnerProductProof as IPP
@@ -102,20 +100,20 @@ delta :: Integer -> Fr -> [Fr] -> [Fr] -> Fr
 delta n y zwL zwR= (powerVector (recip y) n `hadamard` zwR) `dot` zwL
 
 commitBitVector :: Fr -> [Fr] -> [Fr] -> PA
-commitBitVector vBlinding vL vR = vLG `add` vRH `add` vBlindingH
+commitBitVector vBlinding vL vR = vLG <> vRH <> vBlindingH
   where
     vBlindingH = h `mul` vBlinding
     vLG = sumExps vL gs
     vRH = sumExps vR hs
 
-shamirGxGxG :: (PrimeField f) => PA -> PA -> PA -> f
+shamirGxGxG :: PA -> PA -> PA -> Fr
 shamirGxGxG p1 p2 p3
   = oracle $ show _r <> pointToBS p1 <> pointToBS p2 <> pointToBS p3
 
-shamirGs :: (PrimeField f) => [PA] -> f
+shamirGs :: [PA] -> Fr
 shamirGs ps = oracle $ show _r <> foldMap pointToBS ps
 
-shamirZ :: (PrimeField f) => f -> f
+shamirZ :: Fr -> Fr
 shamirZ z = oracle $ show _r <> show z
 
 ---------------------------------------------
