@@ -16,7 +16,7 @@ import Bulletproofs.ArithmeticCircuit.Internal
 generateProof
   :: forall m . (MonadRandom m)
   => ArithCircuit Fr
-  -> ArithWitness Fr
+  -> ArithWitness Fr PA
   -> m (ArithCircuitProof Fr PA)
 generateProof (padCircuit -> ArithCircuit{..}) ArithWitness{..} = do
   let GateWeights{..} = weights

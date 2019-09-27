@@ -57,10 +57,10 @@ data GateWeights f
     , wO :: [[f]] -- ^ WO ∈ F^(Q x n)
     } deriving (Show, Eq, Generic, NFData)
 
-data ArithWitness f
+data ArithWitness f p
   = ArithWitness
   { assignment :: Assignment f -- ^ Vectors of left and right inputs and vector of outputs
-  , commitments :: [PA] -- ^ Vector of commited input values ∈ F^m
+  , commitments :: [p] -- ^ Vector of commited input values ∈ F^m
   , commitBlinders :: [f] -- ^ Vector of blinding factors for input values ∈ F^m
   } deriving (Show, Eq, Generic, NFData)
 
@@ -279,7 +279,7 @@ arithAssignmentGen n = do
     let aO = aL `hadamard` aR
     pure $ Assignment aL aR aO
 
-instance Arbitrary (ArithWitness Fr) where
+instance Arbitrary (ArithWitness Fr PA) where
   arbitrary = do
     n <- choose (1, 100)
     m <- choose (1, n)
@@ -287,7 +287,7 @@ instance Arbitrary (ArithWitness Fr) where
     assignment <- arithAssignmentGen n
     arithWitnessGen assignment arithCircuit m
 
-arithWitnessGen :: Assignment Fr -> ArithCircuit Fr -> Integer -> Gen (ArithWitness Fr)
+arithWitnessGen :: Assignment Fr -> ArithCircuit Fr -> Integer -> Gen (ArithWitness Fr PA)
 arithWitnessGen assignment arith@ArithCircuit{..} m = do
   commitBlinders <- vectorOf (fromIntegral m) arbitrary
   let vs = computeInputValues weights commitmentWeights assignment cs

@@ -97,7 +97,7 @@ tests:
       - bulletproofs
 
 benchmarks:
-  rangeproof-benchmarks:
+  bulletproofs-benchmarks:
     source-dirs: bench
     main: Main.hs
     dependencies:
