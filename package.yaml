@@ -83,7 +83,7 @@ library:
 
 tests:
   bulletproofs-test:
-    main:                TestDriver.hs
+    main:                Main.hs
     source-dirs:         test
     dependencies:
       - base

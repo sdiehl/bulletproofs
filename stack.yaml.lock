@@ -5,13 +5,6 @@
 
 packages:
 - completed:
-    hackage: criterion-1.5.2.0@sha256:7ba73119322c7f481e93214853d208f1f9331e45d8b3b070da5a1d21c440826c,5324
-    pantry-tree:
-      size: 2213
-      sha256: 99737e889407fac08849d30554cc2fba49f2aa8e8683004563e092de18d8f008
-  original:
-    hackage: criterion-1.5.2.0
-- completed:
     hackage: semirings-0.5.1@sha256:597e4070dcb75c3e347566114e140ba343843f80f3e16a456bb2e9e9d1d09430,3743
     pantry-tree:
       size: 610
@@ -27,32 +20,32 @@ packages:
     hackage: poly-0.3.2.0
 - completed:
     cabal-file:
-      size: 7082
-      sha256: 70a766071eceb43801071f09dbfaf75d41e1786ff715587dac97e1797352985b
+      size: 7087
+      sha256: deafbe6832c9482bfd523a0312d60b8f4e85a560fa3553782b1eb0e5e10fee4d
     name: elliptic-curve
-    version: 0.2.2
+    version: 0.3.0
     git: https://github.com/adjoint-io/elliptic-curve.git
     pantry-tree:
-      size: 9817
-      sha256: 7880bd8d76b681d468f193cd88e0efa89837487be97543d58b00a15d8cca3e2d
-    commit: af279477fd92a937d02f2a2430c21e1546bad879
+      size: 9876
+      sha256: 26eb3e8b7affee1ca290328ab9fd03d2c01302e61f24270045d364f5d13088c8
+    commit: 118d3af0e8d01f21408312b8b5e059e50a20b4d8
   original:
     git: https://github.com/adjoint-io/elliptic-curve.git
-    commit: af279477fd92a937d02f2a2430c21e1546bad879
+    commit: 118d3af0e8d01f21408312b8b5e059e50a20b4d8
 - completed:
     cabal-file:
-      size: 3428
-      sha256: 88c551c06eb708578e96eb7eb919527897aa466daa389674ce376779d8b1a147
+      size: 3470
+      sha256: d44007898c07a6c913a38f78e7246c7785ae3052ca55ad713783345d06a28419
     name: galois-field
-    version: 0.4.1
+    version: 1.0.0
     git: https://github.com/adjoint-io/galois-field.git
     pantry-tree:
       size: 1783
-      sha256: 70d7dec3ad354d910e57db503bb6e7d4bf6dafb9368516759825b99e151cfa6a
-    commit: 9d12a14d7841c50ea64d22ad9a525bb2ddea13f7
+      sha256: ce94632e8a79a52febe5d04d5405efc8a759855fb5946f4b7187adefc6a2a4aa
+    commit: ea6a4f59fe84c24ccbf3cc91da0310385c2aa7b6
   original:
     git: https://github.com/adjoint-io/galois-field.git
-    commit: 9d12a14d7841c50ea64d22ad9a525bb2ddea13f7
+    commit: ea6a4f59fe84c24ccbf3cc91da0310385c2aa7b6
 snapshots:
 - completed:
     size: 499889

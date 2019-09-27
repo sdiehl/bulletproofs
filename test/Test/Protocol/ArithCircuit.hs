@@ -1,6 +1,6 @@
 {-# LANGUAGE ViewPatterns, RecordWildCards, TypeApplications  #-}
 
-module TestArithCircuitProtocol where
+module Test.Protocol.ArithCircuit where
 
 import Protolude
 

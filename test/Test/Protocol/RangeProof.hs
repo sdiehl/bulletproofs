@@ -1,6 +1,6 @@
 {-# LANGUAGE ViewPatterns, RecordWildCards, ScopedTypeVariables  #-}
 
-module TestProtocol where
+module Test.Protocol.RangeProof where
 
 import Protolude
 
