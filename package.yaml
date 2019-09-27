@@ -28,7 +28,7 @@ dependencies:
 - MonadRandom
 - QuickCheck
 - galois-field >= 1 && < 2
-- elliptic-curve
+- elliptic-curve >= 0.3 && < 0.4
 - SHA
 
 default-extensions:
