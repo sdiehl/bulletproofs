@@ -8,9 +8,7 @@ import Data.List (head)
 import qualified Data.List as List
 import qualified Data.Map as Map
 import Test.QuickCheck
-import Data.Field.Galois (PrimeField)
-import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, _r)
-import Data.Curve.Weierstrass
+import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, _r, mul)
 
 import Bulletproofs.Utils
 import qualified Bulletproofs.InnerProductProof as IPP
@@ -59,10 +57,10 @@ data GateWeights f
     , wO :: [[f]] -- ^ WO ∈ F^(Q x n)
     } deriving (Show, Eq, Generic, NFData)
 
-data ArithWitness f
+data ArithWitness f p
   = ArithWitness
   { assignment :: Assignment f -- ^ Vectors of left and right inputs and vector of outputs
-  , commitments :: [PA] -- ^ Vector of commited input values ∈ F^m
+  , commitments :: [p] -- ^ Vector of commited input values ∈ F^m
   , commitBlinders :: [f] -- ^ Vector of blinding factors for input values ∈ F^m
   } deriving (Show, Eq, Generic, NFData)
 
@@ -102,20 +100,20 @@ delta :: Integer -> Fr -> [Fr] -> [Fr] -> Fr
 delta n y zwL zwR= (powerVector (recip y) n `hadamard` zwR) `dot` zwL
 
 commitBitVector :: Fr -> [Fr] -> [Fr] -> PA
-commitBitVector vBlinding vL vR = vLG `add` vRH `add` vBlindingH
+commitBitVector vBlinding vL vR = vLG <> vRH <> vBlindingH
   where
     vBlindingH = h `mul` vBlinding
     vLG = sumExps vL gs
     vRH = sumExps vR hs
 
-shamirGxGxG :: (PrimeField f) => PA -> PA -> PA -> f
+shamirGxGxG :: PA -> PA -> PA -> Fr
 shamirGxGxG p1 p2 p3
   = oracle $ show _r <> pointToBS p1 <> pointToBS p2 <> pointToBS p3
 
-shamirGs :: (PrimeField f) => [PA] -> f
+shamirGs :: [PA] -> Fr
 shamirGs ps = oracle $ show _r <> foldMap pointToBS ps
 
-shamirZ :: (PrimeField f) => f -> f
+shamirZ :: Fr -> Fr
 shamirZ z = oracle $ show _r <> show z
 
 ---------------------------------------------
@@ -281,7 +279,7 @@ arithAssignmentGen n = do
     let aO = aL `hadamard` aR
     pure $ Assignment aL aR aO
 
-instance Arbitrary (ArithWitness Fr) where
+instance Arbitrary (ArithWitness Fr PA) where
   arbitrary = do
     n <- choose (1, 100)
     m <- choose (1, n)
@@ -289,7 +287,7 @@ instance Arbitrary (ArithWitness Fr) where
     assignment <- arithAssignmentGen n
     arithWitnessGen assignment arithCircuit m
 
-arithWitnessGen :: Assignment Fr -> ArithCircuit Fr -> Integer -> Gen (ArithWitness Fr)
+arithWitnessGen :: Assignment Fr -> ArithCircuit Fr -> Integer -> Gen (ArithWitness Fr PA)
 arithWitnessGen assignment arith@ArithCircuit{..} m = do
   commitBlinders <- vectorOf (fromIntegral m) arbitrary
   let vs = computeInputValues weights commitmentWeights assignment cs

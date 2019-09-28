@@ -1,4 +1,4 @@
-module TestCommon
+module Test.Common
   ( commutes
   , associates
   , isIdentity

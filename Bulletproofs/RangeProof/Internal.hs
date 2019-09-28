@@ -8,8 +8,7 @@ import Data.Char (intToDigit, digitToInt)
 
 import Control.Monad.Random (MonadRandom)
 import Data.Field.Galois (PrimeField(..))
-import Data.Curve.Weierstrass.SECP256K1 (PA, Fr)
-import Data.Curve.Weierstrass hiding (char)
+import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, mul, inv, gen)
 import Bulletproofs.Utils
 import Bulletproofs.InnerProductProof.Internal
 
@@ -79,7 +78,6 @@ encodeBit n v = fillWithZeros n $ fromIntegral . digitToInt <$> showIntAtBase 2 
 reversedEncodeBit :: Integer -> Fr -> [Fr]
 reversedEncodeBit n = reverse . encodeBit n
 
--- TODO: Test it
 reversedEncodeBitMulti :: Integer -> [Fr] -> [Fr]
 reversedEncodeBitMulti n = foldl' (\acc v -> acc ++ reversedEncodeBit n v) []
 
@@ -143,10 +141,10 @@ commitBitVectors aBlinding sBlinding aL aR sL sR = do
         sBlindingH = mul h sBlinding
 
     -- Commitment to aL and aR
-    let aCommit = aBlindingH `add` aLG `add` aRH
+    let aCommit = aBlindingH <> aLG <> aRH
 
     -- Commitment to sL and sR
-    let sCommit = sBlindingH `add` sLG `add` sRH
+    let sCommit = sBlindingH <> sLG <> sRH
 
     pure (aCommit, sCommit)
 
@@ -183,23 +181,23 @@ computeLRCommitment
   -> PA
 computeLRCommitment n m aCommit sCommit t tBlinding mu x y z hs'
   = aCommit                                               -- A
-    `add`
+    <>
     (sCommit `mul` x)                                    -- xS
-    `add`
+    <>
     (inv (gsSum `mul` z))             -- (- zG)
-    `add`
+    <>
     sumExps hExp hs'     -- (hExp Hs')
-    `add`
+    <>
     foldl'
-      (\acc j -> acc `add` sumExps (hExp' j) (sliceHs' j))
-      O
+      (\acc j -> acc <> sumExps (hExp' j) (sliceHs' j))
+      mempty
       [1..m]
-    `add`
+    <>
     (inv (h `mul` mu))
-    `add`
+    <>
     (u `mul` t)
     where
-      gsSum = foldl' add O (take (fromIntegral nm) gs)
+      gsSum = foldl' (<>) mempty (take (fromIntegral nm) gs)
       hExp = (*) z <$> powerVector y nm
       hExp' j = (*) (z ^ (j+1)) <$> powerVector 2 n
       sliceHs' j = slice n j hs'

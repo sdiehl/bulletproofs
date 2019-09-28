@@ -1,17 +1,14 @@
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DataKinds #-}
 module Bulletproofs.Utils where
 
 import Protolude hiding (hash, fromStrict)
 
-import Data.Field.Galois (PrimeField(..), sr, Prime)
-import Data.Curve.Weierstrass.SECP256K1 (PA, SECP256K1, Fq, Fr, _r)
-import Data.Curve.Weierstrass hiding (char)
+import Control.Monad.Random (getRandomR, MonadRandom)
+import Data.Field.Galois (PrimeField(..), sr)
+import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, Point(..), _r, def, mul, gen)
 import Data.Digest.Pure.SHA (integerDigest, sha256)
 import Data.ByteString.Lazy (fromStrict)
-import Control.Monad.Random (getRandomR, MonadRandom)
-
-type family PF a where
-  PF (Prime k) = k
 
 -- | H = aG where a is not known
 h :: PA
@@ -20,12 +17,12 @@ h = generateH ""
 -- | Generate vector of generators in a deterministic way from the curve generator g
 -- by applying H(encode(g) || i) where H is a secure hash function
 gs :: [PA]
-gs = mul gen . (oracle . (<> pointToBS gen) . show) <$> [1..]
+gs = mul gen . oracle . (<> pointToBS gen) . show <$> [1..]
 
 -- | Generate vector of generators in a deterministic way from the curve generator h
 -- by applying H(encode(h) || i) where H is a secure hash function
 hs :: [PA]
-hs = mul gen . (oracle . (<> pointToBS h) . show) <$> [1..]
+hs = mul gen . oracle . (<> pointToBS h) . show <$> [1..]
 
 -- | A random oracle. In the Fiat-Shamir heuristic, its input
 -- is specifically the transcript of the interaction up to that point.
@@ -33,8 +30,7 @@ oracle :: PrimeField f => ByteString -> f
 oracle = fromInteger . integerDigest . sha256 . fromStrict
 
 pointToBS :: PA -> ByteString
-pointToBS O      = ""
-pointToBS (A x y) = show x <> show y
+pointToBS = show
 
 -- | Iterative algorithm to generate H.
 -- The important thing about the H value is that nobody gets
@@ -43,7 +39,7 @@ generateH :: [Char] -> PA
 generateH extra =
   case yM of
     Nothing -> generateH (toS $ '1':extra)
-    Just y -> if def @'Weierstrass @'Affine @SECP256K1 @Fq @Fr (A x y)
+    Just y -> if def (A x y :: PA)
       then A x y
       else generateH (toS $ '1':extra)
   where
@@ -68,20 +64,20 @@ dot xs ys = sum $ hadamard xs ys
 (^+^) :: Num a => [a] -> [a] -> [a]
 (^+^) = zipWith (+)
 
--- | Entry wise substraction
+-- | Entry wise subtraction
 (^-^) :: Num a => [a] -> [a] -> [a]
 (^-^) = zipWith (-)
 
 -- | Double exponentiation (Shamir's trick): g0^x0 + g1^x1
 addTwoMulP :: Fr -> PA -> Fr -> PA -> PA
-addTwoMulP exp0 pt0 exp1 pt1 = (pt0 `mul` exp0) `add` (pt1 `mul` exp1)
+addTwoMulP exp0 pt0 exp1 pt1 = (pt0 `mul` exp0) <> (pt1 `mul` exp1)
 
 -- | Raise every point to the corresponding exponent, sum up results
 sumExps :: [Fr] -> [PA] -> PA
 sumExps (exp0:exp1:exps) (pt0:pt1:pts)
-  = addTwoMulP exp0 pt0 exp1 pt1 `add` sumExps exps pts
+  = addTwoMulP exp0 pt0 exp1 pt1 <> sumExps exps pts
 sumExps (exp:_) (pt:_) = pt `mul` exp -- this also catches cases where either list is longer than the other
-sumExps _ _ = O  -- this catches cases where either list is empty
+sumExps _ _ = mempty  -- this catches cases where either list is empty
 
 -- | Create a Pedersen commitment to a value given
 -- a value and a blinding factor
@@ -146,34 +142,33 @@ chooseBlindingVectors n = do
 -- Fiat-Shamir transformations
 --------------------------------------------------
 
-shamirY :: PrimeField f => PA -> PA -> f
+shamirY :: PA -> PA -> Fr
 shamirY aCommit sCommit
   = oracle $
       show _r <> pointToBS aCommit <> pointToBS sCommit
 
-shamirZ :: (PrimeField f) => PA -> PA -> f -> f
+shamirZ :: PA -> PA -> Fr -> Fr
 shamirZ aCommit sCommit y
   = oracle $
       show _r <> pointToBS aCommit <> pointToBS sCommit <> show y
 
 shamirX
-  :: (PrimeField f)
-  => PA
+  :: PA
   -> PA
   -> PA
   -> PA
-  -> f
-  -> f
-  -> f
+  -> Fr
+  -> Fr
+  -> Fr
 shamirX aCommit sCommit t1Commit t2Commit y z
   = oracle $
       show _r <> pointToBS aCommit <> pointToBS sCommit <> pointToBS t1Commit <> pointToBS t2Commit <> show y <> show z
 
-shamirX' :: PrimeField f => PA -> PA -> PA -> f
+shamirX' :: PA -> PA -> PA -> Fr
 shamirX' commitmentLR l' r'
   = oracle $
       show _r <> pointToBS l' <> pointToBS r' <> pointToBS commitmentLR
 
-shamirU :: (PrimeField f) => f -> f -> f -> f
+shamirU :: Fr -> Fr -> Fr -> Fr
 shamirU tBlinding mu t
   = oracle $ show _r <> show tBlinding <> show mu <> show t

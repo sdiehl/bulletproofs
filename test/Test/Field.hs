@@ -1,6 +1,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module TestField where
+module Test.Field where
 
 import Protolude
 
@@ -10,7 +10,7 @@ import Test.Tasty.QuickCheck
 import Data.Curve.Weierstrass.SECP256K1 (Fr, PA)
 import Data.Curve.Weierstrass
 
-import TestCommon
+import Test.Common
 
 prop_addMod :: Fr -> Fr -> Property
 prop_addMod x y

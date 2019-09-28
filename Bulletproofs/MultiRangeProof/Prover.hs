@@ -8,12 +8,10 @@ module Bulletproofs.MultiRangeProof.Prover (
 import Protolude
 
 import Control.Monad.Random (MonadRandom, getRandomR)
-import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, _r)
-import Data.Curve.Weierstrass hiding (char)
+import Data.Curve.Weierstrass.SECP256K1 (PA, Fr, _r, mul, gen)
 
 import Bulletproofs.Utils
 import Bulletproofs.RangeProof.Internal
-
 import Bulletproofs.InnerProductProof as IPP hiding (generateProof)
 import qualified Bulletproofs.InnerProductProof as IPP
 
