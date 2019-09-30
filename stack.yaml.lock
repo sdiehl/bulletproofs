@@ -5,12 +5,19 @@
 
 packages:
 - completed:
-    hackage: semirings-0.5.1@sha256:597e4070dcb75c3e347566114e140ba343843f80f3e16a456bb2e9e9d1d09430,3743
+    hackage: galois-field-1.0.0@sha256:d44007898c07a6c913a38f78e7246c7785ae3052ca55ad713783345d06a28419,3470
     pantry-tree:
-      size: 610
-      sha256: cc4e01176f1a56c97dc923416a6939dcdc004584cccf8a2b1c67bd156b31179a
+      size: 1444
+      sha256: 1b265e1c3062a06a48a535c1681a954c26bee5959a42e97fc0e4fd8b5a90849f
   original:
-    hackage: semirings-0.5.1
+    hackage: galois-field-1.0.0
+- completed:
+    hackage: elliptic-curve-0.3.0@sha256:7d314ff56011de62370bdd1b840866d1e5ce061972e54be673f5768cbf8d3d42,7072
+    pantry-tree:
+      size: 9500
+      sha256: 650191792bfc8b119e8a0ab1103383ddfa395ed692573519c27cc3d198089cb5
+  original:
+    hackage: elliptic-curve-0.3.0
 - completed:
     hackage: poly-0.3.2.0@sha256:2cba686238c5074d551a56375f441b18745fbc465cdc3e0acf1701ae928f3ae9,1918
     pantry-tree:
@@ -19,33 +26,12 @@ packages:
   original:
     hackage: poly-0.3.2.0
 - completed:
-    cabal-file:
-      size: 7087
-      sha256: deafbe6832c9482bfd523a0312d60b8f4e85a560fa3553782b1eb0e5e10fee4d
-    name: elliptic-curve
-    version: 0.3.0
-    git: https://github.com/adjoint-io/elliptic-curve.git
+    hackage: semirings-0.5.1@sha256:597e4070dcb75c3e347566114e140ba343843f80f3e16a456bb2e9e9d1d09430,3743
     pantry-tree:
-      size: 9876
-      sha256: 26eb3e8b7affee1ca290328ab9fd03d2c01302e61f24270045d364f5d13088c8
-    commit: 118d3af0e8d01f21408312b8b5e059e50a20b4d8
+      size: 610
+      sha256: cc4e01176f1a56c97dc923416a6939dcdc004584cccf8a2b1c67bd156b31179a
   original:
-    git: https://github.com/adjoint-io/elliptic-curve.git
-    commit: 118d3af0e8d01f21408312b8b5e059e50a20b4d8
-- completed:
-    cabal-file:
-      size: 3470
-      sha256: d44007898c07a6c913a38f78e7246c7785ae3052ca55ad713783345d06a28419
-    name: galois-field
-    version: 1.0.0
-    git: https://github.com/adjoint-io/galois-field.git
-    pantry-tree:
-      size: 1783
-      sha256: ce94632e8a79a52febe5d04d5405efc8a759855fb5946f4b7187adefc6a2a4aa
-    commit: ea6a4f59fe84c24ccbf3cc91da0310385c2aa7b6
-  original:
-    git: https://github.com/adjoint-io/galois-field.git
-    commit: ea6a4f59fe84c24ccbf3cc91da0310385c2aa7b6
+    hackage: semirings-0.5.1
 snapshots:
 - completed:
     size: 499889
