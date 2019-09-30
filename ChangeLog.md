@@ -1,6 +1,6 @@
 # Changelog for bulletproofs
 
-## 2.0
+## 1.1
 
 * Use elliptic-curve library as dependency
 * Update to galois-field-1.0
