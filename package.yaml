@@ -2,21 +2,13 @@ name:                bulletproofs
 version:             1.1.0
 github:              "adjoint-io/bulletproofs"
 license:             Apache
+synopsis:            Bulletproofs are short zero-knowledge proofs without a trusted setup.
 description:         Bulletproofs are short zero-knowledge arguments of knowledge that do not require a trusted setup.
 maintainer:          Adjoint Inc (info@adjoint.io)
 category:            Cryptography
 extra-source-files:
 - README.md
 - ChangeLog.md
-
-# Metadata used when publishing your package
-# synopsis:            Short description of your package
-# category:            Web
-
-# To avoid duplicated efforts in documentation and dealing with the
-# complications of embedding Haddock markup inside cabal files, it is
-# common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/adjoint-io/bulletproofs#readme>
 
 dependencies:
 - base >= 4.7 && < 5
