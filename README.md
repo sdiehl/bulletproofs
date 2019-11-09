@@ -235,6 +235,11 @@ Arithmetic Circuits in the Discrete Log Setting". University College London and 
 - <> :Inner product
 - **a**: Vector
 
+Disclaimer
+==========
+
+This is experimental code meant for research-grade projects only. Please do not
+use this code in production until it has matured significantly.
 
 License
 -------
