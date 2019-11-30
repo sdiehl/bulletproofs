@@ -21,8 +21,7 @@ overall communication complexity of the argument to only 2log<sub>2</sub>(n) whe
 of the two vectors of commitments.
 
 
-Range proofs
-============
+## Range proofs
 
 Bulletproofs present a protocol for conducting short and aggregatable range proofs.
 They encode a proof of the range of a committed number in an inner product, using polynomials.
@@ -69,8 +68,7 @@ See [Prover.hs](https://github.com/adjoint-io/bulletproofs/blob/master/Bulletpro
 The interaction described is made non-interactive using the Fiat-Shamir Transform wherein all the random
 challenges made by V are replaced with a hash of the transcript up until that point.
 
-Inner-product range proof
-=========================
+## Inner-product range proof
 
 The size of the proof is further reduced by leveraging the compact O(log<sub>n</sub>) inner product proof.
 
@@ -82,8 +80,7 @@ Then, instead of sharing **l** and **r**, which has a communication cost of 2n e
 argument transmits only 2 [log<sub>2</sub>] + 2 elements. In total, the prover sends only 2 [log<sub>2</sub>(n)] + 4
 group elements and 5 elements in _Z_<sub>p</sub>
 
-Aggregating Logarithmic Proofs
-==============================
+## Aggregating Logarithmic Proofs
 
 We can construct a single proof of range of multiple values, while only incurring an additional space cost of 2 log<sub>2</sub>(m) for
 _m_ additional values _v_, as opposed to a multiplicative factor of _m_ when creating _m_ independent range proofs.
@@ -92,12 +89,9 @@ The aggregate range proof makes use of the inner product argument. It uses 2 [lo
 
 See [Multi range proof example](https://github.com/adjoint-io/bulletproofs/tree/master#multi-range-proof)
 
+## Usage
 
-Usage
-=====
-
-Single range proof:
--------------------
+**Single range proof**
 
 ```haskell
 import Data.Curve.Weierstrass.SECP256K1 (Fr)
@@ -118,8 +112,7 @@ testSingleRangeProof upperBound (v, vBlinding) = do
       -> pure $ RP.verifyProof upperBound vCommit proof
 ```
 
-Multi range proof:
-------------------
+**Multi range proof**
 
 ```haskell
 import Data.Curve.Weierstrass.SECP256K1 (Fr)
@@ -146,9 +139,7 @@ This implementation uses the elliptic curve secp256k1, a Koblitz curve, which
 has 128 bit security.
 See [Range proofs examples](./example/Example/RangeProof.hs) for further details.
 
-
-Zero-knowledge proof for Arithmetic Circuits
-============================================
+## Zero-knowledge proofs for Arithmetic Circuits
 
 An arithmetic circuit over a field and variables (a<sub>1</sub>, ..., a<sub>n</sub>) is a directed acyclic graph whose vertices are called gates.
 
@@ -237,14 +228,12 @@ Arithmetic Circuits in the Discrete Log Setting". University College London and 
 - <> :Inner product
 - **a**: Vector
 
-Disclaimer
-==========
+## Disclaimer
 
 This is experimental code meant for research-grade projects only. Please do not
 use this code in production until it has matured significantly.
 
-License
--------
+## License
 
 ```
 Copyright 2018-2019 Adjoint Inc
