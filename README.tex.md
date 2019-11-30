@@ -103,13 +103,13 @@ testSingleRangeProof upperBound (v, vBlinding) = do
   let vCommit = commit v vBlinding
 
   -- Prover
-  proofE <- runExceptT $ RP.generateProof upperBound (v, vBlinding)
+  proofE <- runExceptT (RP.generateProof upperBound (v, vBlinding))
 
   -- Verifier
   case proofE of
-    Left err -> panic $ show err
+    Left err -> panic (show err)
     Right proof@RP.RangeProof{..}
-      -> pure $ RP.verifyProof upperBound vCommit proof
+      -> pure (RP.verifyProof upperBound vCommit proof)
 ```
 
 **Multi range proof**
@@ -124,13 +124,13 @@ testMultiRangeProof upperBound vsAndvBlindings = do
   let vCommits = fmap (uncurry commit) vsAndvBlindings
 
   -- Prover
-  proofE <- runExceptT $ MRP.generateProof upperBound vsAndvBlindings
+  proofE <- runExceptT (MRP.generateProof upperBound vsAndvBlindings)
 
   -- Verifier
   case proofE of
-    Left err -> panic $ show err
+    Left err -> panic (show err)
     Right proof@RP.RangeProof{..}
-      -> pure $ MRP.verifyProof upperBound vCommits proof
+      -> pure (MRP.verifyProof upperBound vCommits proof)
 ```
 
 
@@ -208,7 +208,7 @@ testArithCircuitProof (aL, aR) arithCircuit = do
 
   proof <- generateProof arithCircuit arithWitness
 
-  pure $ verifyProof commitments proof arithCircuit
+  pure (verifyProof commitments proof arithCircuit)
 ```
 See [Aritmetic circuit example](./example/Example/ArithmeticCircuit.hs) for further details.
 
