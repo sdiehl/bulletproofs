@@ -48,21 +48,21 @@ and require that $\textbf{a}_L \circ \textbf{a}_R = \textbf{0}$ holds.
   the coefficients $t_1$, of a polynomial $t$ constructed from the existing
   values in the protocol.
 
-$\textbf{l} = l(x) = \textbf{a}_L - z \textbf{1}^n + \textbf{s}_L  x \in \mathbb{Z}_p^n$
+  $\textbf{l} = l(x) = \textbf{a}_L - z \textbf{1}^n + \textbf{s}_L  x \in \mathbb{Z}_p^n$
 
-$\textbf{r} = r(x) = \textbf{y}^n \circ (\textbf{a}_R) + z  \textbf{1}^n + \textbf{s}_R x) + z^2 \textbf{2}^n \in \mathbb{Z}_p^n$
+  $\textbf{r} = r(x) = \textbf{y}^n \circ (\textbf{a}_R) + z  \textbf{1}^n + \textbf{s}_R x) + z^2 \textbf{2}^n \in \mathbb{Z}_p^n$
 
-$t = \textbf{l} \cdot \textbf{r} \in \mathbb{Z}_p$
+  $t = \textbf{l} \cdot \textbf{r} \in \mathbb{Z}_p$
 
-$T_i = g t_i + h \tau_i \in \mathbb{G}$, &nbsp;&nbsp;&nbsp;&nbsp; $i \in \{1, 2\}$
+  $T_i = g t_i + h \tau_i \in \mathbb{G}$, &nbsp;&nbsp;&nbsp;&nbsp; $i \in \{1, 2\}$
 
 - $V \rightarrow P : x$ - Verifier challenges Prover with value $x$.
 
 - $P \rightarrow V : \tau, \mu, t, \textbf{l}, \textbf{r}$ - Prover sends several commitments that the verifier will then check.
 
-$\tau_x = \tau_2 x^2 + \tau_1 x + z^2 \gamma \in \mathbb{Z}_p$
+  $\tau_x = \tau_2 x^2 + \tau_1 x + z^2 \gamma \in \mathbb{Z}_p$
 
-$\mu = \alpha + \rho x \in \mathbb{Z}_p$
+  $\mu = \alpha + \rho x \in \mathbb{Z}_p$
 
 See [Prover.hs](https://github.com/adjoint-io/bulletproofs/blob/master/Bulletproofs/RangeProof/Prover.hs "Prover.hs") for implementation details.
 
