@@ -39,7 +39,9 @@ and require that <img src="/tex/9ca3a8cc8ef0c73eb5f30bc2a79c10bf.svg?invert_in_d
 
 - <img src="/tex/b4208d8b4738940db657353162d75988.svg?invert_in_darkmode&sanitize=true" align=middle width=96.00990794999998pt height=22.465723500000017pt/> - where <img src="/tex/53d147e7f3fe6e47ee05b88b166bd3f6.svg?invert_in_darkmode&sanitize=true" align=middle width=12.32879834999999pt height=22.465723500000017pt/> and <img src="/tex/e257acd1ccbe7fcb654708f1a866bfe9.svg?invert_in_darkmode&sanitize=true" align=middle width=11.027402099999989pt height=22.465723500000017pt/> are blinded Pedersen commitments to <img src="/tex/780fe58ca23d4620755100bcd6df5857.svg?invert_in_darkmode&sanitize=true" align=middle width=18.20773514999999pt height=14.611878600000017pt/> and <img src="/tex/43c0eea9d6fd13b6dcc00c115f09f827.svg?invert_in_darkmode&sanitize=true" align=middle width=19.15122824999999pt height=14.611878600000017pt/>.
 
-  <img src="/tex/682f94ba2740d7ac0151285bb5c0e2d5.svg?invert_in_darkmode&sanitize=true" align=middle width=221.92594214999994pt height=22.831056599999986pt/>
+  <img src="/tex/be6c8b6818f1d0914f8f01d139793595.svg?invert_in_darkmode&sanitize=true" align=middle width=221.92594214999994pt height=22.831056599999986pt/>
+<br/>
+
   <img src="/tex/1cc942c32fa7a265ec264b6b89cb7a5e.svg?invert_in_darkmode&sanitize=true" align=middle width=215.08120259999995pt height=22.831056599999986pt/>
 
 - <img src="/tex/60a45cf4b3b952bb99961cea76f438ec.svg?invert_in_darkmode&sanitize=true" align=middle width=89.67053534999998pt height=22.465723500000017pt/> - Verifier sends challenges <img src="/tex/deceeaf6940a8c7a5a02373728002b0f.svg?invert_in_darkmode&sanitize=true" align=middle width=8.649225749999989pt height=14.15524440000002pt/> and <img src="/tex/f93ce33e511096ed626b4719d50f17d2.svg?invert_in_darkmode&sanitize=true" align=middle width=8.367621899999993pt height=14.15524440000002pt/> to fix <img src="/tex/53d147e7f3fe6e47ee05b88b166bd3f6.svg?invert_in_darkmode&sanitize=true" align=middle width=12.32879834999999pt height=22.465723500000017pt/> and <img src="/tex/e257acd1ccbe7fcb654708f1a866bfe9.svg?invert_in_darkmode&sanitize=true" align=middle width=11.027402099999989pt height=22.465723500000017pt/>.
@@ -49,10 +51,13 @@ and require that <img src="/tex/9ca3a8cc8ef0c73eb5f30bc2a79c10bf.svg?invert_in_d
   values in the protocol.
 
   <img src="/tex/3b476246fe46073d297bf73ac65431d4.svg?invert_in_darkmode&sanitize=true" align=middle width=228.34261889999993pt height=24.65753399999998pt/>
+<br/>
 
   <img src="/tex/3f647f042871be1fa7d4c2dd3a39c860.svg?invert_in_darkmode&sanitize=true" align=middle width=343.26980655pt height=26.76175259999998pt/>
+<br/>
 
   <img src="/tex/8776955e6030428869cce9bc42d05f80.svg?invert_in_darkmode&sanitize=true" align=middle width=90.58874879999999pt height=22.831056599999986pt/>
+<br/>
 
   <img src="/tex/a279966ad1c6df42c3dfa8291334fbe7.svg?invert_in_darkmode&sanitize=true" align=middle width=131.93364524999998pt height=22.831056599999986pt/>, &nbsp;&nbsp;&nbsp;&nbsp; <img src="/tex/131fbdb12ac9849e6ca36f10a618834b.svg?invert_in_darkmode&sanitize=true" align=middle width=65.9370855pt height=24.65753399999998pt/>
 
@@ -61,6 +66,7 @@ and require that <img src="/tex/9ca3a8cc8ef0c73eb5f30bc2a79c10bf.svg?invert_in_d
 - <img src="/tex/f62b5cfd714aaeeb533f9ef8c3aa945f.svg?invert_in_darkmode&sanitize=true" align=middle width=131.58244935pt height=22.831056599999986pt/> - Prover sends several commitments that the verifier will then check.
 
   <img src="/tex/d3e7839976018ff10b0004522caa8c03.svg?invert_in_darkmode&sanitize=true" align=middle width=195.8404503pt height=26.76175259999998pt/>
+<br/>
 
   <img src="/tex/21c10ff9f2eb2b517eb136bd2fb72927.svg?invert_in_darkmode&sanitize=true" align=middle width=118.2106728pt height=22.648391699999998pt/>
 
