@@ -39,11 +39,9 @@ and require that $\textbf{a}_L \circ \textbf{a}_R = \textbf{0}$ holds.
 
 - $P \rightarrow V : A, S$ - where $A$ and $S$ are blinded Pedersen commitments to $\textbf{a}_L$ and $\textbf{a}_R$.
 
-  $A = h \cdot \alpha + \textbf{g} \cdot \textbf{a}_L + \textbf{h} \cdot
-  \textbf{a}_R \in \mathbb{G}$
-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp; $A = h \cdot \alpha + \textbf{g} \cdot \textbf{a}_L + \textbf{h} \cdot \textbf{a}_R \in \mathbb{G}$
 
-  $S = h \cdot \rho + \textbf{g} \cdot \textbf{s}_L + \textbf{h} \cdot \textbf{s}_R \in \mathbb{G}$
+&nbsp;&nbsp;&nbsp;&nbsp; $S = h \cdot \rho + \textbf{g} \cdot \textbf{s}_L + \textbf{h} \cdot \textbf{s}_R \in \mathbb{G}$
 
 - $V \rightarrow P : y, z$ - Verifier sends challenges $y$ and $z$ to fix $A$ and $S$.
 
@@ -51,25 +49,21 @@ and require that $\textbf{a}_L \circ \textbf{a}_R = \textbf{0}$ holds.
   the coefficients $t_1$, of a polynomial $t$ constructed from the existing
   values in the protocol.
 
-  $\textbf{l} = l(x) = \textbf{a}_L - z \textbf{1}^n + \textbf{s}_L  x \in \mathbb{Z}_p^n$
-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp; $\textbf{l} = l(x) = \textbf{a}_L - z \textbf{1}^n + \textbf{s}_L  x \in \mathbb{Z}_p^n$
 
-  $\textbf{r} = r(x) = \textbf{y}^n \circ (\textbf{a}_R) + z  \textbf{1}^n + \textbf{s}_R x) + z^2 \textbf{2}^n \in \mathbb{Z}_p^n$
-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp; $\textbf{r} = r(x) = \textbf{y}^n \circ (\textbf{a}_R) + z  \textbf{1}^n + \textbf{s}_R x) + z^2 \textbf{2}^n \in \mathbb{Z}_p^n$
 
-  $t = \textbf{l} \cdot \textbf{r} \in \mathbb{Z}_p$
-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp; $t = \textbf{l} \cdot \textbf{r} \in \mathbb{Z}_p$
 
-  $T_i = g t_i + h \tau_i \in \mathbb{G}$, &nbsp;&nbsp;&nbsp;&nbsp; $i \in \{1, 2\}$
+&nbsp;&nbsp;&nbsp;&nbsp;  $T_i = g t_i + h \tau_i \in \mathbb{G}$, &nbsp;&nbsp;&nbsp;&nbsp; $i \in \{1, 2\}$
 
 - $V \rightarrow P : x$ - Verifier challenges Prover with value $x$.
 
 - $P \rightarrow V : \tau, \mu, t, \textbf{l}, \textbf{r}$ - Prover sends several commitments that the verifier will then check.
 
-  $\tau_x = \tau_2 x^2 + \tau_1 x + z^2 \gamma \in \mathbb{Z}_p$
-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp; $\tau_x = \tau_2 x^2 + \tau_1 x + z^2 \gamma \in \mathbb{Z}_p$
 
-  $\mu = \alpha + \rho x \in \mathbb{Z}_p$
+&nbsp;&nbsp;&nbsp;&nbsp; $\mu = \alpha + \rho x \in \mathbb{Z}_p$
 
 See [Prover.hs](https://github.com/adjoint-io/bulletproofs/blob/master/Bulletproofs/RangeProof/Prover.hs "Prover.hs") for implementation details.
 
