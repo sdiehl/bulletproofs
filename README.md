@@ -48,21 +48,21 @@ and require that <img src="/tex/9ca3a8cc8ef0c73eb5f30bc2a79c10bf.svg?invert_in_d
   the coefficients <img src="/tex/4ad941990ade99427ec9730e46ddcdd4.svg?invert_in_darkmode&sanitize=true" align=middle width=12.48864374999999pt height=20.221802699999984pt/>, of a polynomial <img src="/tex/4f4f4e395762a3af4575de74c019ebb5.svg?invert_in_darkmode&sanitize=true" align=middle width=5.936097749999991pt height=20.221802699999984pt/> constructed from the existing
   values in the protocol.
 
-<img src="/tex/3b476246fe46073d297bf73ac65431d4.svg?invert_in_darkmode&sanitize=true" align=middle width=228.34261889999993pt height=24.65753399999998pt/>
+  <img src="/tex/3b476246fe46073d297bf73ac65431d4.svg?invert_in_darkmode&sanitize=true" align=middle width=228.34261889999993pt height=24.65753399999998pt/>
 
-<img src="/tex/3f647f042871be1fa7d4c2dd3a39c860.svg?invert_in_darkmode&sanitize=true" align=middle width=343.26980655pt height=26.76175259999998pt/>
+  <img src="/tex/3f647f042871be1fa7d4c2dd3a39c860.svg?invert_in_darkmode&sanitize=true" align=middle width=343.26980655pt height=26.76175259999998pt/>
 
-<img src="/tex/8776955e6030428869cce9bc42d05f80.svg?invert_in_darkmode&sanitize=true" align=middle width=90.58874879999999pt height=22.831056599999986pt/>
+  <img src="/tex/8776955e6030428869cce9bc42d05f80.svg?invert_in_darkmode&sanitize=true" align=middle width=90.58874879999999pt height=22.831056599999986pt/>
 
-<img src="/tex/a279966ad1c6df42c3dfa8291334fbe7.svg?invert_in_darkmode&sanitize=true" align=middle width=131.93364524999998pt height=22.831056599999986pt/>, &nbsp;&nbsp;&nbsp;&nbsp; <img src="/tex/131fbdb12ac9849e6ca36f10a618834b.svg?invert_in_darkmode&sanitize=true" align=middle width=65.9370855pt height=24.65753399999998pt/>
+  <img src="/tex/a279966ad1c6df42c3dfa8291334fbe7.svg?invert_in_darkmode&sanitize=true" align=middle width=131.93364524999998pt height=22.831056599999986pt/>, &nbsp;&nbsp;&nbsp;&nbsp; <img src="/tex/131fbdb12ac9849e6ca36f10a618834b.svg?invert_in_darkmode&sanitize=true" align=middle width=65.9370855pt height=24.65753399999998pt/>
 
 - <img src="/tex/4ec1a874225b934747bb34ef5828b457.svg?invert_in_darkmode&sanitize=true" align=middle width=74.74281209999998pt height=22.465723500000017pt/> - Verifier challenges Prover with value <img src="/tex/332cc365a4987aacce0ead01b8bdcc0b.svg?invert_in_darkmode&sanitize=true" align=middle width=9.39498779999999pt height=14.15524440000002pt/>.
 
 - <img src="/tex/f62b5cfd714aaeeb533f9ef8c3aa945f.svg?invert_in_darkmode&sanitize=true" align=middle width=131.58244935pt height=22.831056599999986pt/> - Prover sends several commitments that the verifier will then check.
 
-<img src="/tex/d3e7839976018ff10b0004522caa8c03.svg?invert_in_darkmode&sanitize=true" align=middle width=195.8404503pt height=26.76175259999998pt/>
+  <img src="/tex/d3e7839976018ff10b0004522caa8c03.svg?invert_in_darkmode&sanitize=true" align=middle width=195.8404503pt height=26.76175259999998pt/>
 
-<img src="/tex/21c10ff9f2eb2b517eb136bd2fb72927.svg?invert_in_darkmode&sanitize=true" align=middle width=118.2106728pt height=22.648391699999998pt/>
+  <img src="/tex/21c10ff9f2eb2b517eb136bd2fb72927.svg?invert_in_darkmode&sanitize=true" align=middle width=118.2106728pt height=22.648391699999998pt/>
 
 See [Prover.hs](https://github.com/adjoint-io/bulletproofs/blob/master/Bulletproofs/RangeProof/Prover.hs "Prover.hs") for implementation details.
 
