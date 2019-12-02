@@ -17,7 +17,7 @@ the Fiat-Shamir heuristic.
 The core algorithm of Bulletproofs is the inner-product algorithm presented by Groth [2].
 The algorithm provides an argument of knowledge of two binding vector Pedersen commitments that satisfy a given inner product relation.
 Bulletproofs build on the techniques of Bootle et al. [3] to introduce a communication efficient inner-product proof that reduces
-overall communication complexity of the argument to only 2log<sub>2</sub>(n) where n is the dimension
+overall communication complexity of the argument to only $2 \log_2(n)$ where $n$ is the dimension
 of the two vectors of commitments.
 
 
@@ -31,37 +31,38 @@ than the fact that they lie in the interval.
 
 The proof algorithm can be sketched out in 5 steps:
 
-Let _v_ be a value in _[0, n)_ and **a<sub>L</sub>** a vector of bit such that <**a<sub>L</sub>**, **2<sup>n</sup>**> = _v_.
-The components of **a<sub>L</sub>** are the binary digits of _v_.
-We construct a complementary vector **a<sub>R</sub>** = **a<sub>L</sub>** − **1**<sup>n</sup>
-and require that **a<sub>L</sub>** ◦ **a<sub>R</sub>** = 0 holds.
+Let $v$ be a value in $[0, n)$ and $\textbf{a}_L$ a vector of bit such that
+$\textbf{a}_L \cdot \textbf{2}^n = v$.
+The components of $\textbf{a}_L$ are the binary digits of $v$.
+We construct a complementary vector $\textbf{a}_R = \textbf{a}_L − \textbf{1}^n$
+and require that $\textbf{a}_L \circ \textbf{a}_R = \textbf{0}$ holds.
 
-- **P -> V : A, S** - where A and S are blinded Pedersen commitments to **a<sub>L</sub>** and **a<sub>R</sub>**.
+- $P \rightarrow V : A, S$ - where $A$ and $S$ are blinded Pedersen commitments to $\textbf{a}_L$ and $\textbf{a}_R$.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;A&space;=&space;h&space;\cdot&space;\alpha&space;&plus;&space;\textbf{g}&space;\cdot&space;\textbf{a}_L&space;&plus;&space;\textbf{h}&space;\cdot&space;\textbf{a}_R&space;\in&space;\mathbb{G}&space;$)
+  $A = h \cdot \alpha + \textbf{g} \cdot \textbf{a}_L + \textbf{h} \cdot \textbf{a}_R \in \mathbb{G}$
+  $S = h \cdot \rho + \textbf{g} \cdot \textbf{s}_L + \textbf{h} \cdot \textbf{s}_R \in \mathbb{G}$
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;S&space;=&space;h&space;\cdot&space;\rho&space;&plus;&space;\textbf{g}&space;\cdot&space;\textbf{s}_L&space;&plus;&space;\textbf{h}&space;\cdot&space;\textbf{s}_R&space;\in&space;\mathbb{G}&space;$)
+- $V \rightarrow P : y, z$ - Verifier sends challenges $y$ and $z$ to fix $A$ and $S$.
 
-- **V -> P : y, z** - Verifier sends challenges _y_ and _z_ to fix **A** and **S**.
+- $P \rightarrow V : T_1, T_2$ - where $T_1$ and $T_2$ are commitments to
+  the coefficients $t_1$, of a polynomial $t$ constructed from the existing
+  values in the protocol.
 
-- **P -> V : T<sub>1</sub>, T<sub>2</sub>** - where T<sub>1</sub> and T<sub>2</sub> are commitments to
-the coefficients t<sub>1</sub>, of a polynomial t constructed from the existing values in the protocol.
+$\textbf{l} = l(x) = \textbf{a}_L - z \textbf{1}^n + \textbf{s}_L  x \in \mathbb{Z}_p^n$
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;\textbf{l}&space;=&space;l(x)&space;=&space;\textbf{a}_L&space;-&space;z&space;\cdot&space;\textbf{1}^n&space;&plus;&space;\textbf{s}_L&space;\cdot&space;x&space;\in&space;\mathbb{Z}^n_p$)
+$\textbf{r} = r(x) = \textbf{y}^n \circ (\textbf{a}_R) + z  \textbf{1}^n + \textbf{s}_R x) + z^2 \textbf{2}^n \in \mathbb{Z}_p^n$
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;\textbf{r}&space;=&space;r(x)&space;=&space;\textbf{y}^n&space;\circ&space;(\textbf{a}_R&space;&plus;&space;z&space;\cdot&space;\textbf{1}^n&space;&plus;&space;\textbf{s}_R&space;\cdot&space;x&space;)&space;&plus;&space;z^2&space;\cdot&space;\textbf{2}^n&space;\in&space;\mathbb{Z}^n_p&space;$)
+$t = \textbf{l} \cdot \textbf{r} \in \mathbb{Z}_p$
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;t&space;=&space;\langle&space;\textbf{l},&space;\textbf{r}&space;\rangle&space;\in&space;\mathbb{Z}_p$)
+$T_i = g t_i + h \tau_i \in \mathbb{G}$, &nbsp;&nbsp;&nbsp;&nbsp; $i \in \{1, 2\}$
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$T_i&space;=&space;g&space;\cdot&space;t_i&space;&plus;&space;h&space;\cdot&space;\tau_i&space;\in&space;\mathbb{G},&space;\hspace{3em}&space;i&space;=&space;\{1,&space;2\}&space;$)
+- $V \rightarrow P : x$ - Verifier challenges Prover with value $x$.
 
-- **V -> P : x** - Verifier challenges Prover with value _x_.
+- $P \rightarrow V : \tau, \mu, t, \textbf{l}, \textbf{r}$ - Prover sends several commitments that the verifier will then check.
 
-- **P -> V : tau, mu, t, l, r** - Prover sends several commitments that the verifier will then check.
+$\tau_x = \tau_2 x^2 + \tau_1 x + z^2 \gamma \in \mathbb{Z}_p$
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;\tau_x&space;=&space;\tau_2&space;\cdot&space;x^2&space;&plus;&space;\tau_1&space;\cdot&space;x&space;&plus;&space;z^2&space;\cdot&space;\gamma&space;\in&space;\mathbb{Z}_p&space;$)
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![equation](https://latex.codecogs.com/gif.latex?\\&space;$&space;\mu&space;=&space;\alpha&space;&plus;&space;\rho&space;\cdot&space;x&space;\in&space;\mathbb{Z}_p&space;$)
+$\mu = \alpha + \rho x \in \mathbb{Z}_p$
 
 See [Prover.hs](https://github.com/adjoint-io/bulletproofs/blob/master/Bulletproofs/RangeProof/Prover.hs "Prover.hs") for implementation details.
 
@@ -70,22 +71,22 @@ challenges made by V are replaced with a hash of the transcript up until that po
 
 ## Inner-product range proof
 
-The size of the proof is further reduced by leveraging the compact O(log<sub>n</sub>) inner product proof.
+The size of the proof is further reduced by leveraging the compact $O(\log_n)$ inner product proof.
 
-The inner-product argument in the protocol allows to prove knowledge of vectors **l** and **r**, whose inner product is _t_ and
-the commitment _P_ ∈  _G_ is a commitment of these two vectors. We can therefore replace sending
-(tau, mu, t, **l**, **r**) with a transfer of (tau, mu, t) and an execution of an inner product argument.
+The inner-product argument in the protocol allows to prove knowledge of vectors $\textbf{l}$ and $\textbf{r}$, whose inner product is $t$ and
+the commitment $P \in  \mathbb{G}$ is a commitment of these two vectors. We can therefore replace sending
+($\tau, \mu, t, \textbf{l}, \textbf{r}$) with a transfer of ($\tau, \mu, t$) and an execution of an inner product argument.
 
-Then, instead of sharing **l** and **r**, which has a communication cost of 2n elements, the inner-product
-argument transmits only 2 [log<sub>2</sub>] + 2 elements. In total, the prover sends only 2 [log<sub>2</sub>(n)] + 4
-group elements and 5 elements in _Z_<sub>p</sub>
+Then, instead of sharing $\textbf{l}$ and $\textbf{r}$, which has a communication cost of $2n$ elements, the inner-product
+argument transmits only $2 \log_2 + 2$ elements. In total, the prover sends only $2 \log_2(n) + 4$
+group elements and 5 elements in $\mathbb{Z}_p$
 
 ## Aggregating Logarithmic Proofs
 
-We can construct a single proof of range of multiple values, while only incurring an additional space cost of 2 log<sub>2</sub>(m) for
-_m_ additional values _v_, as opposed to a multiplicative factor of _m_ when creating _m_ independent range proofs.
+We can construct a single proof of range of multiple values, while only incurring an additional space cost of $2 \log_2(m)$ for
+$m$ additional values $v$, as opposed to a multiplicative factor of $m$ when creating $m$ independent range proofs.
 
-The aggregate range proof makes use of the inner product argument. It uses 2 [log<sub>2</sub> (n * m)] + 4 group elements and 5 elements in Z<sub>p</sub>.
+The aggregate range proof makes use of the inner product argument. It uses ($2 \log_2 (n  m) + 4$) group elements and 5 elements in $\mathbb{Z}_p$.
 
 See [Multi range proof example](https://github.com/adjoint-io/bulletproofs/tree/master#multi-range-proof)
 
@@ -134,23 +135,23 @@ testMultiRangeProof upperBound vsAndvBlindings = do
 ```
 
 
-Note that the upper bound _u_ must be such that `u = 2 ^ n`, where _n_ is also a power of 2.
+Note that the upper bound $u$ must be such that $u = 2 ^ n$, where $n$ is also a power of 2.
 This implementation uses the elliptic curve secp256k1, a Koblitz curve, which
 has 128 bit security.
 See [Range proofs examples](./example/Example/RangeProof.hs) for further details.
 
 ## Zero-knowledge proofs for Arithmetic Circuits
 
-An arithmetic circuit over a field and variables (a<sub>1</sub>, ..., a<sub>n</sub>) is a directed acyclic graph whose vertices are called gates.
+An arithmetic circuit over a field and variables $(a_1, ..., a_n)$ is a directed acyclic graph whose vertices are called gates.
 
 Arithmetic circuit can be described alternatively as a list of multiplication gates with a collection of linear consistency equations
 relating the inputs and outputs of the gates. Any circuit described as an acyclic graph can be efficiently converted into this alternative description.
 
 Bulletproofs present a protocol to generate zero-knowledge argument for arithmetic circuits using the inner product argument,
-which allows to get a proof of size 2 log<sub>2</sub>(n) + 13 elements and include committed values as inputs to the arithmetic circuit.
+which allows to get a proof of size $2 \log_2(n) + 13$ elements and include committed values as inputs to the arithmetic circuit.
 
-In the protocol, the Prover proves that the hadamard product of _a<sub>L</sub>_ and _a<sub>R</sub>_ and a set of linear constraints hold.
-The input values _v_ used to generate the proof are then committed and shared with the Verifier.
+In the protocol, the Prover proves that the hadamard product of $\textbf{a}_L$ and $\textbf{a}_R$ and a set of linear constraints hold.
+The input values $v$ used to generate the proof are then committed and shared with the Verifier.
 
 ```haskell
 import Data.Curve.Weierstrass.SECP256K1 (Fr)
@@ -224,9 +225,9 @@ Arithmetic Circuits in the Discrete Log Setting". University College London and 
 
 **Notation**:
 
-- ◦ : Hadamard product
-- <> :Inner product
-- **a**: Vector
+- $\circ$ : Hadamard product
+- $\cdot$ :Inner product
+- $\textbf{a}$: Vector
 
 ## Disclaimer
 
