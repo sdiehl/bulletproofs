@@ -1,6 +1,5 @@
 *.sw[ponml]
 .stack-work/
-bulletproofs.cabal
 *~
 *.hi
 *.o
@@ -8,3 +7,4 @@ bulletproofs.cabal
 *.prof.html
 Rangeproof
 TAGS
+dist-newstyle

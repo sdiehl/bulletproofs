@@ -1,0 +1,156 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: ca3a33951254ea0ae39383ea5a55d40712e7cce34c986821ed5822217c5b904c
+
+name:           bulletproofs
+version:        1.1.0
+synopsis:       Bulletproofs are short zero-knowledge proofs without a trusted setup.
+description:    Bulletproofs are short zero-knowledge arguments of knowledge that do not require a trusted setup.
+category:       Cryptography
+homepage:       https://github.com/adjoint-io/bulletproofs#readme
+bug-reports:    https://github.com/adjoint-io/bulletproofs/issues
+maintainer:     Adjoint Inc (info@adjoint.io)
+license:        Apache
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/adjoint-io/bulletproofs
+
+library
+  exposed-modules:
+      Bulletproofs.RangeProof
+      Bulletproofs.RangeProof.Internal
+      Bulletproofs.RangeProof.Prover
+      Bulletproofs.RangeProof.Verifier
+      Bulletproofs.MultiRangeProof
+      Bulletproofs.MultiRangeProof.Prover
+      Bulletproofs.MultiRangeProof.Verifier
+      Bulletproofs.InnerProductProof
+      Bulletproofs.InnerProductProof.Internal
+      Bulletproofs.InnerProductProof.Prover
+      Bulletproofs.InnerProductProof.Verifier
+      Bulletproofs.ArithmeticCircuit
+      Bulletproofs.ArithmeticCircuit.Internal
+      Bulletproofs.ArithmeticCircuit.Prover
+      Bulletproofs.ArithmeticCircuit.Verifier
+      Bulletproofs.Utils
+  other-modules:
+      Paths_bulletproofs
+  hs-source-dirs:
+      ./.
+  default-extensions: LambdaCase RecordWildCards OverloadedStrings NoImplicitPrelude FlexibleInstances ExplicitForAll TypeApplications ScopedTypeVariables DeriveGeneric BangPatterns FlexibleContexts
+  ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wredundant-constraints -Wno-unused-matches -Wno-name-shadowing -Wno-type-defaults -Wno-orphans -Wno-incomplete-uni-patterns -Wno-incomplete-patterns
+  build-depends:
+      MonadRandom
+    , QuickCheck
+    , SHA
+    , arithmoi >=0.8
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , elliptic-curve >=0.3 && <0.4
+    , galois-field >=1 && <2
+    , memory
+    , protolude >=0.2
+    , text
+  default-language: Haskell2010
+
+executable bulletproofs-example
+  main-is: Main.hs
+  other-modules:
+      Example.ArithmeticCircuit
+      Example.RangeProof
+      Paths_bulletproofs
+  hs-source-dirs:
+      example
+  default-extensions: LambdaCase RecordWildCards OverloadedStrings NoImplicitPrelude FlexibleInstances ExplicitForAll TypeApplications ScopedTypeVariables DeriveGeneric BangPatterns FlexibleContexts
+  ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wredundant-constraints -Wno-unused-matches -Wno-name-shadowing -Wno-type-defaults -Wno-orphans -Wno-incomplete-uni-patterns -Wno-incomplete-patterns -O2
+  build-depends:
+      MonadRandom
+    , QuickCheck
+    , SHA
+    , arithmoi >=0.8
+    , base >=4.7 && <5
+    , bulletproofs
+    , bytestring
+    , containers
+    , elliptic-curve >=0.3 && <0.4
+    , galois-field >=1 && <2
+    , memory
+    , protolude >=0.2
+    , text
+  default-language: Haskell2010
+
+test-suite bulletproofs-test
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      Test.Common
+      Test.Field
+      Test.Protocol.ArithCircuit
+      Test.Protocol.RangeProof
+      Paths_bulletproofs
+  hs-source-dirs:
+      test
+  default-extensions: LambdaCase RecordWildCards OverloadedStrings NoImplicitPrelude FlexibleInstances ExplicitForAll TypeApplications ScopedTypeVariables DeriveGeneric BangPatterns FlexibleContexts
+  ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wredundant-constraints -Wno-unused-matches -Wno-name-shadowing -Wno-type-defaults -Wno-orphans -Wno-incomplete-uni-patterns -Wno-incomplete-patterns
+  build-depends:
+      MonadRandom
+    , QuickCheck
+    , SHA
+    , arithmoi >=0.8
+    , base
+    , bulletproofs
+    , bytestring
+    , containers
+    , cryptonite
+    , elliptic-curve >=0.3 && <0.4
+    , galois-field >=1 && <2
+    , memory
+    , protolude >=0.2
+    , tasty
+    , tasty-discover
+    , tasty-hunit
+    , tasty-quickcheck
+    , text
+  default-language: Haskell2010
+
+benchmark bulletproofs-benchmarks
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      Bench.ArithCircuit
+      Bench.RangeProof
+      Paths_bulletproofs
+  hs-source-dirs:
+      bench
+  default-extensions: LambdaCase RecordWildCards OverloadedStrings NoImplicitPrelude FlexibleInstances ExplicitForAll TypeApplications ScopedTypeVariables DeriveGeneric BangPatterns FlexibleContexts
+  ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wredundant-constraints -Wno-unused-matches -Wno-name-shadowing -Wno-type-defaults -Wno-orphans -Wno-incomplete-uni-patterns -Wno-incomplete-patterns
+  build-depends:
+      MonadRandom
+    , QuickCheck
+    , SHA
+    , arithmoi >=0.8
+    , base >=4.7 && <5
+    , bulletproofs
+    , bytestring
+    , containers
+    , criterion >=1.5.1.0
+    , elliptic-curve >=0.3 && <0.4
+    , galois-field >=1 && <2
+    , memory
+    , protolude >=0.2
+    , tasty
+    , tasty-hunit
+    , tasty-quickcheck
+    , text
+  default-language: Haskell2010
