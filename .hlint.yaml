@@ -1,0 +1,15 @@
+- ignore: {name: Avoid lambda}
+- ignore: {name: Eta reduce}
+- ignore: {name: Redundant lambda}
+- ignore: {name: Collapse lambdas}
+- ignore: {name: Use String}
+- ignore: {name: Reduce duplication}
+- ignore: {name: Redundant bracket}
+- ignore: {name: Redundant if}
+- ignore: {name: Use list comprehension}
+- ignore: {name: Use section}
+- ignore: {name: Use &&}
+- ignore: {name: Use <$>}
+- ignore: {name: Replace case with fromMaybe}
+- ignore: {name: Redundant $}
+- ignore: {name: "Use :"}

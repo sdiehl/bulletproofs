@@ -6,6 +6,8 @@
 
 [![CircleCI](http://circleci.com/gh/adjoint-io/bulletproofs.svg?style=shield)](https://circleci.com/gh/adjoint-io/bulletproofs)
 [![Hackage](https://img.shields.io/hackage/v/bulletproofs.svg)](http://hackage.haskell.org/package/bulletproofs)
+[![Build Status](https://github.com/adjoint-io/bulletproofs/workflows/Cabal%20CI/badge.svg)](https://github.com/adjoint-io/bulletproofs/actions)
+[![Build Status](https://github.com/adjoint-io/bulletproofs/workflows/Stack%20CI/badge.svg)](https://github.com/adjoint-io/bulletproofs/actions)
 
 Bulletproofs are short zero-knowledge arguments of knowledge that do not require a trusted setup.
 Argument systems are proof systems with computational soundness.
