@@ -1,0 +1,49 @@
+name: Cabal CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+    name: cabal ${{ matrix.ghc }}
+    runs-on: ubuntu-16.04
+    strategy:
+      matrix:
+        ghc: ["8.8.1", "8.6.5", "8.6.4", "8.6.3", "8.6.2"]
+        cabal: ["3.0"]
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-haskell@v1
+      name: Setup Haskell
+      with:
+        ghc-version: ${{ matrix.ghc }}
+        cabal-version: ${{ matrix.cabal }}
+
+    - uses: actions/cache@v1
+      name: Cache ~/.cabal/packages
+      with:
+        path: ~/.cabal/packages
+        key: cabal-packages-${{ matrix.ghc }}
+
+    - uses: actions/cache@v1
+      name: Cache ~/.cabal/store
+      with:
+        path: ~/.cabal/store
+        key: cabal-store-${{ matrix.ghc }}
+
+    - uses: actions/cache@v1
+      name: Cache dist-newstyle
+      with:
+        path: dist-newstyle
+        key: dist-newstyle-${{ matrix.ghc }}
+
+    - name: Install dependencies
+      run: |
+        cabal update
+    - name: Build
+      run: |
+        cabal new-build

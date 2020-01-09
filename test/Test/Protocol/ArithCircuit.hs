@@ -1,4 +1,4 @@
-{-# LANGUAGE ViewPatterns, RecordWildCards, TypeApplications  #-}
+{-# LANGUAGE RecordWildCards, TypeApplications  #-}
 
 module Test.Protocol.ArithCircuit where
 
@@ -205,4 +205,3 @@ test_arithCircuitProof_shuffle_circuit = localOption (QuickCheckTests 20) $
 
       proof <- QCM.run $ generateProof arithCircuit arithWitness
       QCM.assert $ verifyProof commitments proof arithCircuit
-

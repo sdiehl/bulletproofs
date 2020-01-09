@@ -1,0 +1,50 @@
+name: HLint CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+    name: hlint
+    runs-on: ubuntu-16.04
+    strategy:
+      matrix:
+        ghc: ["8.8.1"]
+        cabal: ["3.0"]
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-haskell@v1
+      name: Setup Haskell
+      with:
+        ghc-version: ${{ matrix.ghc }}
+        cabal-version: ${{ matrix.cabal }}
+
+    - uses: actions/cache@v1
+      name: Cache ~/.cabal/packages
+      with:
+        path: ~/.cabal/packages
+        key: cabal-packages
+
+    - uses: actions/cache@v1
+      name: Cache ~/.cabal/store
+      with:
+        path: ~/.cabal/store
+        key: cabal-store
+
+    - uses: actions/cache@v1
+      name: Cache dist-newstyle
+      with:
+        path: dist-newstyle
+        key: dist-newstyle
+
+    - name: Install hlint
+      run: |
+        cabal update
+        cabal new-install hlint --installdir=dist-newstyle
+    - name: Run hlint
+      run: |
+        dist-newstyle/hlint -g -e=hs

@@ -257,7 +257,7 @@ arithCircuitGen n m = do
           wL <- genVec
           wR <- genVec
           wO <- genVec
-          pure $ GateWeights wL wR wO
+          GateWeights <$> wL wR wO
 
         wvGen :: Integer -> Integer -> Gen [[Fr]]
         wvGen lConstraints m
@@ -293,4 +293,3 @@ arithWitnessGen assignment arith@ArithCircuit{..} m = do
   let vs = computeInputValues weights commitmentWeights assignment cs
       commitments = zipWith commit vs commitBlinders
   pure $ ArithWitness assignment commitments commitBlinders
-

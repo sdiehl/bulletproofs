@@ -1,4 +1,4 @@
-{-# LANGUAGE RecordWildCards, MultiWayIf, NamedFieldPuns  #-}
+{-# LANGUAGE RecordWildCards, MultiWayIf #-}
 
 module Bulletproofs.RangeProof.Verifier (
   verifyProof,
