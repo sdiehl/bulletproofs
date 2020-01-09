@@ -257,7 +257,7 @@ arithCircuitGen n m = do
           wL <- genVec
           wR <- genVec
           wO <- genVec
-          GateWeights <$> wL wR wO
+          pure (GateWeights wL wR wO)
 
         wvGen :: Integer -> Integer -> Gen [[Fr]]
         wvGen lConstraints m

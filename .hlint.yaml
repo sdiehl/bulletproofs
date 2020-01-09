@@ -9,6 +9,7 @@
 - ignore: {name: Use list comprehension}
 - ignore: {name: Use section}
 - ignore: {name: Use &&}
+- ignore: {name: Use <$>}
 - ignore: {name: Replace case with fromMaybe}
 - ignore: {name: Redundant $}
 - ignore: {name: "Use :"}
