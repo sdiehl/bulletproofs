@@ -1,11 +1,4 @@
-<p align="center">
-<a href="https://www.adjoint.io">
-  <img width="250" src="./.assets/adjoint.png" alt="Adjoint Logo" />
-</a>
-</p>
-
-[![CircleCI](http://circleci.com/gh/adjoint-io/bulletproofs.svg?style=shield)](https://circleci.com/gh/adjoint-io/bulletproofs)
-[![Hackage](https://img.shields.io/hackage/v/bulletproofs.svg)](http://hackage.haskell.org/package/bulletproofs)
+# Bulletproofs
 
 Bulletproofs are short zero-knowledge arguments of knowledge that do not require a trusted setup.
 Argument systems are proof systems with computational soundness.
@@ -65,7 +58,7 @@ and require that $\textbf{a}_L \circ \textbf{a}_R = \textbf{0}$ holds.
 
 &nbsp;&nbsp;&nbsp;&nbsp; $\mu = \alpha + \rho x \in \mathbb{Z}_p$
 
-See [Prover.hs](https://github.com/adjoint-io/bulletproofs/blob/master/Bulletproofs/RangeProof/Prover.hs "Prover.hs") for implementation details.
+See [Prover.hs](https://github.com/sdiehl/bulletproofs/blob/master/Bulletproofs/RangeProof/Prover.hs "Prover.hs") for implementation details.
 
 The interaction described is made non-interactive using the Fiat-Shamir Transform wherein all the random
 challenges made by V are replaced with a hash of the transcript up until that point.
@@ -89,7 +82,7 @@ $m$ additional values $v$, as opposed to a multiplicative factor of $m$ when cre
 
 The aggregate range proof makes use of the inner product argument. It uses ($2 \log_2 (n  m) + 4$) group elements and 5 elements in $\mathbb{Z}_p$.
 
-See [Multi range proof example](https://github.com/adjoint-io/bulletproofs/tree/master#multi-range-proof)
+See [Multi range proof example](https://github.com/sdiehl/bulletproofs/tree/master#multi-range-proof)
 
 ## Usage
 
@@ -238,7 +231,7 @@ use this code in production until it has matured significantly.
 ## License
 
 ```
-Copyright 2018-2020 Adjoint Inc
+Copyright 2018-2022 Stephen Diehl
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

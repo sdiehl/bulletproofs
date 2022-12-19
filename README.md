@@ -1,13 +1,4 @@
-<p align="center">
-<a href="https://www.adjoint.io">
-  <img width="250" src="./.assets/adjoint.png" alt="Adjoint Logo" />
-</a>
-</p>
-
-[![CircleCI](http://circleci.com/gh/adjoint-io/bulletproofs.svg?style=shield)](https://circleci.com/gh/adjoint-io/bulletproofs)
-[![Hackage](https://img.shields.io/hackage/v/bulletproofs.svg)](http://hackage.haskell.org/package/bulletproofs)
-[![Build Status](https://github.com/adjoint-io/bulletproofs/workflows/Cabal%20CI/badge.svg)](https://github.com/adjoint-io/bulletproofs/actions)
-[![Build Status](https://github.com/adjoint-io/bulletproofs/workflows/Stack%20CI/badge.svg)](https://github.com/adjoint-io/bulletproofs/actions)
+# Buletproofs
 
 Bulletproofs are short zero-knowledge arguments of knowledge that do not require a trusted setup.
 Argument systems are proof systems with computational soundness.
@@ -67,7 +58,7 @@ and require that <img src="/tex/9ca3a8cc8ef0c73eb5f30bc2a79c10bf.svg?invert_in_d
 
 &nbsp;&nbsp;&nbsp;&nbsp; <img src="/tex/21c10ff9f2eb2b517eb136bd2fb72927.svg?invert_in_darkmode&sanitize=true" align=middle width=118.2106728pt height=22.648391699999998pt/>
 
-See [Prover.hs](https://github.com/adjoint-io/bulletproofs/blob/master/Bulletproofs/RangeProof/Prover.hs "Prover.hs") for implementation details.
+See [Prover.hs](https://github.com/sdiehl/bulletproofs/blob/master/Bulletproofs/RangeProof/Prover.hs "Prover.hs") for implementation details.
 
 The interaction described is made non-interactive using the Fiat-Shamir Transform wherein all the random
 challenges made by V are replaced with a hash of the transcript up until that point.
@@ -91,7 +82,7 @@ We can construct a single proof of range of multiple values, while only incurrin
 
 The aggregate range proof makes use of the inner product argument. It uses (<img src="/tex/b105d53b0c1735325f002ac85419593b.svg?invert_in_darkmode&sanitize=true" align=middle width=104.96204894999998pt height=24.65753399999998pt/>) group elements and 5 elements in <img src="/tex/f627272d293c812bbe5497a7141010ca.svg?invert_in_darkmode&sanitize=true" align=middle width=17.73541934999999pt height=22.648391699999998pt/>.
 
-See [Multi range proof example](https://github.com/adjoint-io/bulletproofs/tree/master#multi-range-proof)
+See [Multi range proof example](https://github.com/sdiehl/bulletproofs/tree/master#multi-range-proof)
 
 ## Usage
 
@@ -240,7 +231,7 @@ use this code in production until it has matured significantly.
 ## License
 
 ```
-Copyright 2018-2019 Adjoint Inc
+Copyright 2018-2022 Stephen Diehl
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

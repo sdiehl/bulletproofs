@@ -1,10 +1,10 @@
 name:                bulletproofs
 version:             1.1.0
-github:              "adjoint-io/bulletproofs"
+github:              "sdiehl/bulletproofs"
 license:             Apache
 synopsis:            Bulletproofs are short zero-knowledge proofs without a trusted setup.
 description:         Bulletproofs are short zero-knowledge arguments of knowledge that do not require a trusted setup.
-maintainer:          Adjoint Inc (info@adjoint.io)
+maintainer:          Stephen Diehl (stephen.m.diehl@gmail.com)
 category:            Cryptography
 extra-source-files:
 - README.md

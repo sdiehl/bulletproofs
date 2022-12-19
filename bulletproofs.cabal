@@ -15,9 +15,9 @@ description:
   Bulletproofs are short zero-knowledge arguments of knowledge that do not require a trusted setup.
 
 category:           Cryptography
-homepage:           https://github.com/adjoint-io/bulletproofs#readme
-bug-reports:        https://github.com/adjoint-io/bulletproofs/issues
-maintainer:         Adjoint Inc (info@adjoint.io)
+homepage:           https://github.com/sdiehl/bulletproofs#readme
+bug-reports:        https://github.com/sdiehl/bulletproofs/issues
+maintainer:         Stephen Diehl (stephen.m.diehl@gmail.com)
 license:            Apache
 license-file:       LICENSE
 build-type:         Simple
@@ -27,7 +27,7 @@ extra-source-files:
 
 source-repository head
   type:     git
-  location: https://github.com/adjoint-io/bulletproofs
+  location: https://github.com/sdiehl/bulletproofs
 
 library
   exposed-modules:
